@@ -1526,16 +1526,18 @@ function rDiario(mes){
   var tipos={Venta:'bg',Compra:'br',Gasto:'by',Pago:'bb',Cobro:'bg',Ajuste:'bp'};
   var tb=gi('ldTabla');
   if(!rows.length){tb.innerHTML=er(7,'Sin asientos para este mes.');return}
-  tb.innerHTML=rows.map(r=>'<tr>'+
-    '<td class="mn">'+fd(r.fecha)+'</td>'+
-    '<td style="font-weight:500">'+r.concepto+'</td>'+
-    '<td><span class="bx '+(tipos[r.tipo]||'bm')+'">'+r.tipo+'</span></td>'+
-    '<td style="color:var(--muted);font-size:12px">'+(r.referencia||'—')+'</td>'+
-    '<td class="mn tr" style="color:var(--green)">₲ '+fmt(r.debito)+'</td>'+
-    '<td class="mn tr" style="color:var(--red)">₲ '+fmt(r.credito)+'</td>'+
-    '<td><button class="ib d" onclick="delAsiento(''+r.id+'')">'+it()+'</button></td>'+
-  '</tr>').join('');
-
+  tb.innerHTML=rows.map(function(r){
+    var tipos2={Venta:'bg',Compra:'br',Gasto:'by',Pago:'bb',Cobro:'bg',Ajuste:'bp'};
+    return '<tr>'+
+      '<td class="mn">'+fd(r.fecha)+'</td>'+
+      '<td style="font-weight:500">'+r.concepto+'</td>'+
+      '<td><span class="bx '+(tipos2[r.tipo]||'bm')+'">'+r.tipo+'</span></td>'+
+      '<td style="color:var(--muted);font-size:12px">'+(r.referencia||'—')+'</td>'+
+      '<td class="mn tr" style="color:var(--green)">₲ '+fmt(r.debito)+'</td>'+
+      '<td class="mn tr" style="color:var(--red)">₲ '+fmt(r.credito)+'</td>'+
+      '<td><button class="ib d" data-id="'+r.id+'" onclick="delAsiento(this.dataset.id)">'+it()+'</button></td>'+
+    '</tr>';
+  }).join('');
   // Init form lineas if empty
   if(!ldLineasData.length){
     ldLineasData=[{cuenta:'',tipo:'debito',monto:''},{cuenta:'',tipo:'credito',monto:''}];
