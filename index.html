@@ -1628,13 +1628,22 @@ function closeSidebar(){
   s.classList.remove('open');b.classList.remove('open');o.classList.remove('open');
 }
 (function init(){
-  // Credenciales fijas — funciona para todos los usuarios sin configurar nada
   var SUPABASE_URL='https://vnzdrvlzdvutwhzzapfy.supabase.co';
   var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuemRydmx6ZHZ1dHdoenphcGZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NjY1NDUsImV4cCI6MjA5ODE0MjU0NX0.z0vVZA5nzqwwBlJl0trr6K4XPh5U_SwggKdyKOv8s2c';
-  // Guardar en localStorage también por si acaso
   localStorage.setItem('bi_url',SUPABASE_URL);
   localStorage.setItem('bi_key',SUPABASE_KEY);
-  initSB(SUPABASE_URL,SUPABASE_KEY);
+  // Wait for supabase library to load
+  function tryInit(attempts){
+    if(typeof supabase !== 'undefined' && supabase.createClient){
+      initSB(SUPABASE_URL,SUPABASE_KEY);
+    } else if(attempts>0){
+      setTimeout(function(){tryInit(attempts-1)},300);
+    } else {
+      gi('cSt').textContent='Error: libreria no cargo';
+      gi('cDot').style.background='var(--red)';
+    }
+  }
+  tryInit(20);
 })();
 </script>
 </body>
