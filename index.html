@@ -1148,7 +1148,15 @@ function resetImport(){
 }
 
 ['mV','mC','mP','mG'].forEach(id=>{gi(id).addEventListener('click',e=>{if(e.target===e.currentTarget)cm(id)})});
-(function init(){var c=gcfg();if(c.url&&c.key)initSB(c.url,c.key);else{setConn(false);['vMeta','cMeta','pMeta'].forEach(id=>{var el=gi(id);if(el)el.textContent='Sin conexion a Supabase'});rDash()}})();
+(function init(){
+  // Credenciales fijas — funciona para todos los usuarios sin configurar nada
+  var SUPABASE_URL='https://vnzdrvlzdvutwhzzapfy.supabase.co';
+  var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuemRydmx6ZHZ1dHdoenphcGZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NjY1NDUsImV4cCI6MjA5ODE0MjU0NX0.z0vVZA5nzqwwBlJl0trr6K4XPh5U_SwggKdyKOv8s2c';
+  // Guardar en localStorage también por si acaso
+  localStorage.setItem('bi_url',SUPABASE_URL);
+  localStorage.setItem('bi_key',SUPABASE_KEY);
+  initSB(SUPABASE_URL,SUPABASE_KEY);
+})();
 </script>
 </body>
 </html>
