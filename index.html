@@ -2337,51 +2337,87 @@ function verPrevGPres(){
   if(!cliente){toast('Ingres\u00e1 el nombre del cliente','e');return;}
   var items=gpItems.filter(function(it){return it.desc.trim()&&it.costo>0;});
   if(!items.length){toast('Agrega al menos un \u00edtem con descripci\u00f3n y costo','e');return;}
-
   var fecha=gi('gp-fecha').value;
   var numero=gi('gp-numero').value.trim()||('Presupuesto '+fd(fecha));
   var descGen=gi('gp-descripcion').value.trim();
-  var intro=gi('gp-intro').value.trim()||('Nos complace presentarle el presupuesto solicitado.');
+  var intro=gi('gp-intro').value.trim()||'Nos complace presentarle el presupuesto solicitado.';
   var totalVenta=items.reduce(function(s,it){return s+Math.round(it.costo*it.qty*(1+it.margen/100));},0);
 
-  var html='<style>'+
+  var st='<style>'+
     '*{box-sizing:border-box;margin:0;padding:0}'+
-    'body{font-family:Arial,sans-serif;font-size:13px;color:#1a1a2e;background:#fff}'+
-    '.wrap{max-width:800px;margin:0 auto}'+
-    '.hdr{background:#fff;border-bottom:4px solid #8DC63F;padding:20px 28px;display:flex;align-items:center;justify-content:space-between}'+
-    '.logo-img{height:70px;width:auto}'+
-    '.hdr-right{text-align:right}'+
-    '.hdr-badge{background:#1B6B8A;color:#fff;padding:5px 16px;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;display:inline-block;margin-bottom:6px}'+
+    'body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}'+
+    '.wrap{max-width:780px;margin:0 auto}'+
+    '.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:4px solid #8DC63F;background:#fff}'+
+    '.logo{height:68px;width:auto}'+
+    '.hdr-r{text-align:right}'+
+    '.badge{display:inline-block;background:#1B6B8A;color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}'+
     '.hdr-info{font-size:12px;color:#555;line-height:1.6}'+
-    '.hdr-info strong{color:#1B6B8A;font-size:13px}'+
-    '.strip{background:linear-gradient(90deg,#1B6B8A,#8DC63F);height:5px}'+
-    '.padded{padding:24px 28px 28px}'+
-    '.cli-block{background:#f4fbf0;border-left:5px solid #8DC63F;border-radius:0 8px 8px 0;padding:13px 18px;margin-bottom:18px}'+
-    '.cli-lbl{font-size:10px;color:#6fa030;text-transform:uppercase;letter-spacing:.6px;font-weight:800;margin-bottom:3px}'+
-    '.cli-name{font-size:16px;font-weight:800;color:#1a1a2e}'+
-    '.intro{font-size:13px;color:#444;line-height:1.7;margin-bottom:18px}'+
-    '.sec-ttl{font-size:11px;font-weight:800;color:#1B6B8A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;padding-bottom:5px;border-bottom:2px solid #8DC63F}'+
-    'table{width:100%;border-collapse:collapse;margin-bottom:16px}'+
-    'thead tr{background:#1B6B8A}'+
-    'thead th{padding:10px 14px;text-align:left;font-size:12px;font-weight:700;color:#fff}'+
-    'thead th.tr{text-align:right}'+
-    'tbody td{padding:10px 14px;border-bottom:1px solid #e8f4e8;font-size:13px}'+
+    '.hdr-info b{color:#1B6B8A;font-size:13px;display:block}'+
+    '.strip{height:5px;background:linear-gradient(90deg,#1B6B8A,#8DC63F)}'+
+    '.body{padding:22px 28px 28px}'+
+    '.cli{background:#f4fbf0;border-left:5px solid #8DC63F;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px}'+
+    '.cli-l{font-size:10px;color:#5a8a20;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}'+
+    '.cli-n{font-size:16px;font-weight:800;color:#111}'+
+    '.intro{font-size:13px;color:#444;line-height:1.7;margin-bottom:16px}'+
+    '.stl{font-size:11px;font-weight:800;color:#1B6B8A;text-transform:uppercase;letter-spacing:.6px;border-bottom:2px solid #8DC63F;padding-bottom:5px;margin-bottom:10px}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:14px}'+
+    'thead th{background:#1B6B8A;color:#fff;padding:9px 13px;font-size:12px;font-weight:700;text-align:left}'+
+    'thead th:last-child{text-align:right}'+
+    'thead th:first-child{text-align:center;width:70px}'+
+    'tbody td{padding:9px 13px;border-bottom:1px solid #e4f2e4;font-size:13px}'+
+    'tbody td:first-child{text-align:center;font-weight:700;color:#1B6B8A}'+
+    'tbody td:last-child{text-align:right;font-weight:700;color:#1B6B8A;font-variant-numeric:tabular-nums}'+
     'tbody tr:nth-child(even){background:#f6fbf2}'+
-    '.td-qty{text-align:center;font-weight:700;color:#1B6B8A}'+
-    '.td-prc{text-align:right;font-weight:700;color:#1B6B8A;font-variant-numeric:tabular-nums}'+
-    '.tot-bar{background:linear-gradient(90deg,#1B6B8A,#8DC63F);border-radius:8px;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}'+
-    '.tot-lbl{color:rgba(255,255,255,.88);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}'+
-    '.tot-val{color:#fff;font-size:22px;font-weight:900;letter-spacing:-.5px}'+
-    '.ftr-text{font-size:12px;color:#555;line-height:1.7;margin-bottom:22px;background:#f4fbf0;border:1px solid #c8e8b0;border-radius:8px;padding:13px 16px}'+
-    '.firma{padding-top:16px;border-top:3px solid #8DC63F;display:flex;justify-content:space-between;align-items:flex-end}'+
-    '.f-attn{font-size:11px;color:#888;margin-bottom:6px}'+
-    '.f-name{font-size:14px;font-weight:800;color:#1a1a2e}'+
+    '.tot{background:linear-gradient(90deg,#1B6B8A,#8DC63F);border-radius:8px;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}'+
+    '.tot-l{color:rgba(255,255,255,.88);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}'+
+    '.tot-v{color:#fff;font-size:22px;font-weight:900;letter-spacing:-.5px}'+
+    '.ftr{font-size:12px;color:#555;line-height:1.7;margin-bottom:20px;background:#f4fbf0;border:1px solid #c8e8a8;border-radius:8px;padding:12px 16px}'+
+    '.firma{padding-top:14px;border-top:3px solid #8DC63F;display:flex;justify-content:space-between;align-items:flex-end}'+
+    '.f-attn{font-size:11px;color:#888;margin-bottom:5px}'+
+    '.f-name{font-size:14px;font-weight:800;color:#111}'+
     '.f-cargo{font-size:12px;color:#1B6B8A;font-weight:600}'+
-    '.f-empresa{font-size:13px;color:#6fa030;font-weight:800}'+
-    '.f-logo{height:52px;width:auto}'+
-    '</style>'+
+    '.f-emp{font-size:13px;color:#5a8a20;font-weight:800}'+
+    '.f-logo{height:50px;width:auto}'+
+    '</style>';
+
+  var rows=items.map(function(it){
+    var pv=Math.round(it.costo*it.qty*(1+it.margen/100));
+    return '<tr><td>'+it.qty+'</td><td>'+it.desc+'</td><td>Gs. '+fmt(pv)+'.-</td></tr>';
+  }).join('');
+
+  var html=st+
     '<div class="wrap">'+
-      '<div class="hdr">'+'<img class="logo-img" src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20300%20200%27%20width%3D%27120%27%20height%3D%2780%27%3E%3Cpolygon%20points%3D%27150%2C8%20292%2C100%20150%2C192%208%2C100%27%20fill%3D%27none%27%20stroke%3D%27%25231B6B8A%27%20stroke-width%3D%2712%27%20stroke-linejoin%3D%27round%27/%3E%3Ctext%20x%3D%27150%27%20y%3D%27118%27%20font-family%3D%27Arial%2Csans-serif%27%20font-weight%3D%27900%27%20font-size%3D%2782%27%20fill%3D%27%25238DC63F%27%20text-anchor%3D%27middle%27%20letter-spacing%3D%27-2%27%3EBIG%3C/text%3E%3Ctext%20x%3D%27150%27%20y%3D%27178%27%20font-family%3D%27Arial%2Csans-serif%27%20font-weight%3D%27700%27%20font-size%3D%2728%27%20fill%3D%27%25238DC63F%27%20text-anchor%3D%27middle%27%20letter-spacing%3D%272%27%3EINFORM%C3%81TICA%3C/text%3E%3C/svg%3E" alt="Big Inform\u00e1tica">'+'<div class="hdr-right">'+'<div class="hdr-badge">Soluciones IT</div>'+'<div class="hdr-info"><strong>'+numero+'</strong><br>Fecha: '+formatDateLong(fecha)+'</div>'+'</div>'+'</div>'+'<div class="strip"></div>'+'<div class="padded">'+'<div class="cli-block">'+'<div class="cli-lbl">Dirigido a</div>'+'<div class="cli-name">'+cliente+'</div>'+'</div>'+'<p class="intro">'+intro+'</p>'+(descGen?'<div class="sec-ttl">'+descGen+'</div>':'')+'<table>'+'<thead><tr><th class="td-qty" style="color:#fff;text-align:center">Cantidad</th><th>Detalles</th><th class="tr">Precio</th></tr></thead>'+'<tbody>'+items.map(function(it){var pv=Math.round(it.costo*it.qty*(1+it.margen/100));return '<tr><td class="td-qty">'+it.qty+'</td><td>'+it.desc+'</td><td class="td-prc">Gs. '+fmt(pv)+'.-</td></tr>';}).join('')+'</tbody>'+'</table>'+'<div class="tot-bar"><div class="tot-lbl">Total del Presupuesto</div><div class="tot-val">Gs. '+fmt(totalVenta)+'.-</div></div>'+'<p class="ftr-text">Esperamos que este presupuesto sea de su satisfacci\u00f3n. Quedamos atentos a cualquier consulta o requerimiento adicional que puedan tener.<br><br>Agradecemos su confianza en nuestros servicios.</p>'+'<div class="firma">'+'<div>'+'<div class="f-attn">Atentamente,</div>'+'<div class="f-name">Gustavo Lezcano</div>'+'<div class="f-cargo">Gerente de Servicios Inform\u00e1ticos</div>'+'<div class="f-empresa">Big Inform\u00e1tica</div>'+'</div>'+'<img class="f-logo" src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20300%20200%27%20width%3D%27120%27%20height%3D%2780%27%3E%3Cpolygon%20points%3D%27150%2C8%20292%2C100%20150%2C192%208%2C100%27%20fill%3D%27none%27%20stroke%3D%27%25231B6B8A%27%20stroke-width%3D%2712%27%20stroke-linejoin%3D%27round%27/%3E%3Ctext%20x%3D%27150%27%20y%3D%27118%27%20font-family%3D%27Arial%2Csans-serif%27%20font-weight%3D%27900%27%20font-size%3D%2782%27%20fill%3D%27%25238DC63F%27%20text-anchor%3D%27middle%27%20letter-spacing%3D%27-2%27%3EBIG%3C/text%3E%3Ctext%20x%3D%27150%27%20y%3D%27178%27%20font-family%3D%27Arial%2Csans-serif%27%20font-weight%3D%27700%27%20font-size%3D%2728%27%20fill%3D%27%25238DC63F%27%20text-anchor%3D%27middle%27%20letter-spacing%3D%272%27%3EINFORM%C3%81TICA%3C/text%3E%3C/svg%3E" alt="Big Inform\u00e1tica">'+'</div>'+'</div>'+'</div>'+gi('gpPreviewBody').innerHTML=html;
+      '<div class="hdr">'+
+        '<img class="logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 280 200'%3E%3Cpolygon points='140,6 274,100 140,194 6,100' fill='none' stroke='%231B6B8A' stroke-width='10' stroke-linejoin='round'/%3E%3Ctext x='140' y='115' font-family='Arial' font-weight='900' font-size='75' fill='%238DC63F' text-anchor='middle'%3EBIG%3C/text%3E%3Ctext x='140' y='160' font-family='Arial' font-weight='700' font-size='22' fill='%238DC63F' text-anchor='middle'%3EINFORM%C3%81TICA%3C/text%3E%3C/svg%3E" alt="Big Informatica">'+
+        '<div class="hdr-r">'+
+          '<div class="badge">Soluciones IT</div>'+
+          '<div class="hdr-info"><b>'+numero+'</b>Fecha: '+formatDateLong(fecha)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="strip"></div>'+
+      '<div class="body">'+
+        '<div class="cli"><div class="cli-l">Dirigido a</div><div class="cli-n">'+cliente+'</div></div>'+
+        '<p class="intro">'+intro+'</p>'+
+        (descGen?'<div class="stl">'+descGen+'</div>':'')+
+        '<table>'+
+          '<thead><tr><th>Cantidad</th><th>Detalles</th><th>Precio</th></tr></thead>'+
+          '<tbody>'+rows+'</tbody>'+
+        '</table>'+
+        '<div class="tot"><div class="tot-l">Total del Presupuesto</div><div class="tot-v">Gs. '+fmt(totalVenta)+'.-</div></div>'+
+        '<p class="ftr">Esperamos que este presupuesto sea de su satisfacci\u00f3n. Quedamos atentos a cualquier consulta o requerimiento adicional que puedan tener.<br><br>Agradecemos su confianza en nuestros servicios.</p>'+
+        '<div class="firma">'+
+          '<div>'+
+            '<div class="f-attn">Atentamente,</div>'+
+            '<div class="f-name">Gustavo Lezcano</div>'+
+            '<div class="f-cargo">Gerente de Servicios Inform\u00e1ticos</div>'+
+            '<div class="f-emp">Big Inform\u00e1tica</div>'+
+          '</div>'+
+          '<img class="f-logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 280 200'%3E%3Cpolygon points='140,6 274,100 140,194 6,100' fill='none' stroke='%231B6B8A' stroke-width='10' stroke-linejoin='round'/%3E%3Ctext x='140' y='115' font-family='Arial' font-weight='900' font-size='75' fill='%238DC63F' text-anchor='middle'%3EBIG%3C/text%3E%3Ctext x='140' y='160' font-family='Arial' font-weight='700' font-size='22' fill='%238DC63F' text-anchor='middle'%3EINFORM%C3%81TICA%3C/text%3E%3C/svg%3E" alt="Big Informatica">'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+
+  gi('gpPreviewBody').innerHTML='<div style="background:#fff;border-radius:0 0 12px 12px;overflow:auto;max-height:75vh">'+html+'</div>';
   gi('gpPreviewWrap').style.display='block';
   gi('gpPreviewWrap').scrollIntoView({behavior:'smooth'});
 }
