@@ -276,6 +276,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
     </div>
     <div class="nav-s">
       <span class="nav-lbl">Sistema</span>
+      <a class="nav-a" onclick="nav('reportes',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>Reportes PDF</a>
       <a class="nav-a" onclick="nav('importar',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Importar Excel</a>
       <a class="nav-a" onclick="nav('config',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Configuraci&#243;n</a>
     </div>
@@ -580,6 +581,97 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
   </div>
 </div>
 
+<!-- REPORTES -->
+<div class="page" id="page-reportes">
+  <div class="topbar">
+    <div><h1>Reportes PDF</h1><div class="meta">Generá reportes listos para imprimir o compartir</div></div>
+  </div>
+  <div class="content">
+
+    <div class="db-grid-3" style="margin-bottom:24px">
+      <!-- REPORTE FLUJO -->
+      <div class="db-panel">
+        <div class="db-panel-h"><span class="title">&#128200; Flujo de Caja</span></div>
+        <div class="db-panel-body">
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Ingresos, costos, gastos fijos y utilidad neta del mes seleccionado.</p>
+          <div class="fgg" style="margin-bottom:14px">
+            <label>Mes</label>
+            <select class="fs" id="rpFlujoMes" style="width:100%"></select>
+          </div>
+          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="generarPDF('flujo')">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Generar PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- REPORTE MARGENES -->
+      <div class="db-panel">
+        <div class="db-panel-h"><span class="title">&#127919; An&#225;lisis de M&#225;rgenes</span></div>
+        <div class="db-panel-body">
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Rentabilidad por presupuesto con margen bruto y utilidad de cada trabajo.</p>
+          <div class="fgg" style="margin-bottom:14px">
+            <label>Mes (opcional)</label>
+            <select class="fs" id="rpMargenMes" style="width:100%">
+              <option value="">Todos los meses</option>
+            </select>
+          </div>
+          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="generarPDF('margenes')">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Generar PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- REPORTE BALANCE -->
+      <div class="db-panel">
+        <div class="db-panel-h"><span class="title">&#9878;&#65039; Balance General</span></div>
+        <div class="db-panel-body">
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Activos, pasivos, patrimonio y posici&#243;n IVA del mes seleccionado.</p>
+          <div class="fgg" style="margin-bottom:14px">
+            <label>Mes</label>
+            <select class="fs" id="rpBalanceMes" style="width:100%"></select>
+          </div>
+          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="generarPDF('balance')">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Generar PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREVIEW AREA -->
+    <div class="db-panel" id="rpPreviewPanel" style="display:none">
+      <div class="db-panel-h">
+        <span class="title" id="rpPreviewTitle">Vista previa</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-g btn-sm" onclick="window.print()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Imprimir / Guardar PDF
+          </button>
+          <button class="btn btn-g btn-sm" onclick="gi('rpPreviewPanel').style.display='none'">Cerrar</button>
+        </div>
+      </div>
+      <div class="db-panel-body" id="rpPreviewBody" style="padding:0"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PRINT STYLES -->
+<style>
+@media print {
+  .sidebar,.topbar,.hbg,.sb-overlay,.tc,.db-panel-h button,.nav-a,.btn { display:none !important; }
+  .main { margin-left:0 !important; }
+  body { background:#fff !important; color:#000 !important; font-size:12px; }
+  .page { display:block !important; }
+  .page:not(#page-reportes) { display:none !important; }
+  #rpPreviewPanel { display:block !important; box-shadow:none; border:none; }
+  #rpPreviewPanel .db-panel-h { display:none !important; }
+  .rp-print-area { padding:0 !important; }
+}
+</style>
+
 <!-- IMPORTAR -->
 <div class="page" id="page-importar">
   <div class="topbar"><div><h1>Importar desde Excel</h1><div class="meta">Carg&#225; tu planilla Big Inform&#225;tica</div></div></div>
@@ -818,7 +910,7 @@ function clCfg(){localStorage.removeItem('bi_url');localStorage.removeItem('bi_k
 function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Conectado a Supabase','s');gi('cfgSt').textContent='Conectado correctamente';loadAll()}catch(e){setConn(false);toast('Error: '+e.message,'e')}}
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
-function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='contab'){popCtMesSel();rContab();}closeSidebar()}
+function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}closeSidebar()}
 async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos()]);popFjSel();popMgSel();popCtMesSel();rDash()}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
@@ -1619,6 +1711,262 @@ function rBalance(mes){
   gi('balUtilAcum').textContent='₲ '+fmt(utilAcum-utilMes);
   gi('balPatrimonioTotal').textContent='₲ '+fmt(patrimonioReal);
   gi('balPatrimonioSub').textContent='₲ '+fmt(patrimonioReal);
+}
+
+// ══════════════════════════════════════════════════════════
+// REPORTES PDF
+// ══════════════════════════════════════════════════════════
+function popReportesSel(){
+  var all=[...new Set([...VD.map(r=>r.fecha?r.fecha.slice(0,7):null),...CD.map(r=>r.fecha?r.fecha.slice(0,7):null)].filter(Boolean))].sort().reverse();
+  var cm=curMes();
+  ['rpFlujoMes','rpBalanceMes'].forEach(function(id){
+    var s=gi(id); s.innerHTML='';
+    all.forEach(function(m){
+      var parts=m.split('-'),o=document.createElement('option');
+      o.value=m; o.textContent=MES[parseInt(parts[1])-1]+' '+parts[0]; s.appendChild(o);
+    });
+    if(all.includes(cm)) s.value=cm; else if(all.length) s.value=all[0];
+  });
+  var sm=gi('rpMargenMes');
+  var curVal=sm.value;
+  sm.innerHTML='<option value="">Todos los meses</option>';
+  all.forEach(function(m){
+    var parts=m.split('-'),o=document.createElement('option');
+    o.value=m; o.textContent=MES[parseInt(parts[1])-1]+' '+parts[0]; sm.appendChild(o);
+  });
+  if(curVal) sm.value=curVal;
+}
+
+function fmtGs(n){ return '\u20b2 '+(Math.abs(n||0)).toLocaleString('es-PY'); }
+
+function rpStyles(){
+  return '<style>'+
+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a2e;background:#fff}'+
+    '.rp{padding:32px 36px;max-width:900px;margin:0 auto}'+
+    '.rp-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:16px;border-bottom:3px solid #2563EB}'+
+    '.rp-logo{font-size:20px;font-weight:800;color:#2563EB}'+
+    '.rp-logo span{display:block;font-size:11px;font-weight:400;color:#666;margin-top:2px}'+
+    '.rp-meta{text-align:right;font-size:11px;color:#666}'+
+    '.rp-meta strong{display:block;font-size:14px;color:#1a1a2e;font-weight:700;margin-bottom:2px}'+
+    '.rp-title{font-size:18px;font-weight:800;margin-bottom:4px;color:#1a1a2e}'+
+    '.rp-subtitle{font-size:12px;color:#666;margin-bottom:24px}'+
+    '.rp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}'+
+    '.rp-kpi{background:#f8faff;border:1px solid #e2e8f0;border-radius:8px;padding:14px}'+
+    '.rp-kpi .lbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}'+
+    '.rp-kpi .val{font-size:16px;font-weight:800}'+
+    '.rp-kpi .val.g{color:#16a34a}.rp-kpi .val.r{color:#dc2626}.rp-kpi .val.b{color:#2563EB}.rp-kpi .val.y{color:#d97706}'+
+    '.rp-section{margin-bottom:24px}'+
+    '.rp-section-title{font-size:13px;font-weight:700;color:#2563EB;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}'+
+    'table{width:100%;border-collapse:collapse;font-size:11.5px}'+
+    'thead th{background:#f1f5ff;padding:8px 10px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #2563EB;white-space:nowrap}'+
+    'thead th.tr{text-align:right}'+
+    'tbody td{padding:7px 10px;border-bottom:1px solid #f0f0f0}'+
+    'tbody td.tr{text-align:right;font-variant-numeric:tabular-nums}'+
+    'tbody tr:nth-child(even){background:#f8faff}'+
+    '.tot-row td{font-weight:700;background:#f1f5ff;border-top:2px solid #2563EB}'+
+    '.rp-footer{margin-top:32px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:10px;color:#999;display:flex;justify-content:space-between}'+
+    '.rp-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}'+
+    '.rp-box{background:#f8faff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}'+
+    '.rp-box-h{background:#2563EB;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}'+
+    '.rp-box-row{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid #e8eef8;font-size:11.5px}'+
+    '.rp-box-row:last-child{border-bottom:none}'+
+    '.rp-box-row .n{color:#555}'+
+    '.rp-box-row .v{font-weight:600}'+
+    '.rp-box-total{display:flex;justify-content:space-between;padding:8px 12px;background:#e8f0ff;font-size:12px;font-weight:700}'+
+    '.bar-wrap{background:#e2e8f0;border-radius:3px;height:5px;overflow:hidden;margin-top:4px;flex:1}'+
+    '.bar-fill{height:100%;border-radius:3px}'+
+    '.saldo-box{background:#f0fdf4;border:2px solid #16a34a;border-radius:8px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}'+
+    '.saldo-box.neg{background:#fff5f5;border-color:#dc2626}'+
+    '</style>';
+}
+
+function generarPDF(tipo){
+  var html='';
+  var now=new Date();
+  var fechaGen=now.toLocaleDateString('es-PY')+' '+now.toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'});
+
+  if(tipo==='flujo'){
+    var mes=gi('rpFlujoMes').value;
+    if(!mes){toast('Seleccion\u00e1 un mes','e');return;}
+    var parts=mes.split('-');
+    var mesNombre=MES[parseInt(parts[1])-1]+' '+parts[0];
+    var vv=VD.filter(function(r){return (r.fecha||'').startsWith(mes);});
+    var cc=CD.filter(function(r){return (r.fecha||'').startsWith(mes);});
+    var ga=GD.filter(function(r){return r.activo;});
+    var tI=vv.reduce(function(s,r){return s+r.monto;},0);
+    var tC=cc.reduce(function(s,r){return s+r.monto;},0);
+    var tGF=ga.reduce(function(s,r){return s+r.monto_mensual;},0);
+    var mb=tI-tC;
+    var ut=mb-tGF;
+    var mrg=tI>0?(mb/tI*100):0;
+
+    gi('rpPreviewTitle').textContent='Flujo de Caja \u2014 '+mesNombre;
+    html='<div class="rp">'+
+      rpStyles()+
+      '<div class="rp-header">'+
+        '<div class="rp-logo">\u26a1 Big Inform\u00e1tica<span>Sistema de Gesti\u00f3n</span></div>'+
+        '<div class="rp-meta"><strong>Flujo de Caja</strong>'+mesNombre+'<br>Generado: '+fechaGen+'</div>'+
+      '</div>'+
+      '<div class="rp-kpis">'+
+        '<div class="rp-kpi"><div class="lbl">Ingresos</div><div class="val g">'+fmtGs(tI)+'</div></div>'+
+        '<div class="rp-kpi"><div class="lbl">Costo de Ventas</div><div class="val r">'+fmtGs(tC)+'</div></div>'+
+        '<div class="rp-kpi"><div class="lbl">Margen Bruto</div><div class="val b">'+mrg.toFixed(1)+'%</div></div>'+
+        '<div class="rp-kpi"><div class="lbl">Utilidad Neta</div><div class="val '+(ut>=0?'g':'r')+'">'+fmtGs(ut)+'</div></div>'+
+      '</div>'+
+      '<div class="rp-2col">'+
+        '<div class="rp-section">'+
+          '<div class="rp-section-title">\ud83d\udce5 Ingresos del Mes</div>'+
+          '<table><thead><tr><th>Fecha</th><th>Cliente</th><th>Tipo</th><th class="tr">Monto</th></tr></thead><tbody>'+
+          vv.map(function(r){return '<tr><td>'+fd(r.fecha)+'</td><td>'+(r.cliente||'')+'</td><td>'+(r.tipo||'')+'</td><td class="tr">'+fmtGs(r.monto)+'</td></tr>';}).join('')+
+          '<tr class="tot-row"><td colspan="3">TOTAL INGRESOS</td><td class="tr">'+fmtGs(tI)+'</td></tr>'+
+          '</tbody></table>'+
+        '</div>'+
+        '<div class="rp-section">'+
+          '<div class="rp-section-title">\ud83d\udce4 Costos del Mes</div>'+
+          '<table><thead><tr><th>Fecha</th><th>Proveedor</th><th>Tipo</th><th class="tr">Monto</th></tr></thead><tbody>'+
+          cc.map(function(r){return '<tr><td>'+fd(r.fecha)+'</td><td>'+(r.proveedor||'')+'</td><td>'+(r.tipo||'')+'</td><td class="tr">'+fmtGs(r.monto)+'</td></tr>';}).join('')+
+          '<tr class="tot-row"><td colspan="3">TOTAL COSTOS</td><td class="tr">'+fmtGs(tC)+'</td></tr>'+
+          '</tbody></table>'+
+        '</div>'+
+      '</div>'+
+      '<div class="rp-section" style="margin-top:20px">'+
+        '<div class="rp-section-title">\ud83c\udfe2 Gastos Fijos del Mes</div>'+
+        '<table><thead><tr><th>Concepto</th><th>Categor\u00eda</th><th>Frecuencia</th><th class="tr">Monto Mensual</th></tr></thead><tbody>'+
+        ga.map(function(r){return '<tr><td>'+r.concepto+'</td><td>'+(r.categoria||'')+'</td><td>'+(r.frecuencia||'Mensual')+'</td><td class="tr">'+fmtGs(r.monto_mensual)+'</td></tr>';}).join('')+
+        '<tr class="tot-row"><td colspan="3">TOTAL GASTOS FIJOS</td><td class="tr">'+fmtGs(tGF)+'</td></tr>'+
+        '</tbody></table>'+
+      '</div>'+
+      '<div style="background:'+(ut>=0?'#f0fdf4':'#fff5f5')+';border:2px solid '+(ut>=0?'#16a34a':'#dc2626')+';border-radius:8px;padding:16px 20px;margin-top:20px;display:flex;justify-content:space-between;align-items:center">'+
+        '<div><div style="font-size:11px;color:#666;margin-bottom:2px">RESULTADO FINAL DEL MES</div><div style="font-size:11px;color:#666">Ingresos \u2212 Costos \u2212 Gastos Fijos</div></div>'+
+        '<div style="font-size:24px;font-weight:800;color:'+(ut>=0?'#16a34a':'#dc2626')+'">'+fmtGs(ut)+'</div>'+
+      '</div>'+
+      '<div class="rp-footer"><span>\u26a1 Big Inform\u00e1tica \u2014 Sistema de Gesti\u00f3n</span><span>Generado el '+fechaGen+'</span></div>'+
+    '</div>';
+
+  } else if(tipo==='margenes'){
+    var mes2=gi('rpMargenMes').value;
+    var titulo2=mes2?(function(){var p=mes2.split('-');return MES[parseInt(p[1])-1]+' '+p[0];})():'Todos los meses';
+    var vf=VD.filter(function(r){return !mes2||(r.fecha||'').startsWith(mes2);});
+    var cf=CD.filter(function(r){return !mes2||(r.fecha||'').startsWith(mes2);});
+    var grupos={};
+    vf.forEach(function(r){var k=r.presupuesto||'(Sin presupuesto)';if(!grupos[k])grupos[k]={p:k,cl:new Set(),i:0,c:0};grupos[k].i+=r.monto||0;if(r.cliente)grupos[k].cl.add(r.cliente);});
+    cf.forEach(function(r){var k=r.presupuesto||'(Sin presupuesto)';if(!grupos[k])grupos[k]={p:k,cl:new Set(),i:0,c:0};grupos[k].c+=r.monto||0;});
+    var rows2=Object.values(grupos).sort(function(a,b){return b.i-a.i;});
+    var totI=rows2.reduce(function(s,r){return s+r.i;},0);
+    var totC=rows2.reduce(function(s,r){return s+r.c;},0);
+    var totU=totI-totC;
+    var totMg=totI>0?(totU/totI*100):0;
+
+    gi('rpPreviewTitle').textContent='An\u00e1lisis de M\u00e1rgenes \u2014 '+titulo2;
+    html='<div class="rp">'+
+      rpStyles()+
+      '<div class="rp-header">'+
+        '<div class="rp-logo">\u26a1 Big Inform\u00e1tica<span>Sistema de Gesti\u00f3n</span></div>'+
+        '<div class="rp-meta"><strong>An\u00e1lisis de M\u00e1rgenes</strong>'+titulo2+'<br>Generado: '+fechaGen+'</div>'+
+      '</div>'+
+      '<div class="rp-kpis">'+
+        '<div class="rp-kpi"><div class="lbl">Ingresos Totales</div><div class="val g">'+fmtGs(totI)+'</div></div>'+
+        '<div class="rp-kpi"><div class="lbl">Costos Totales</div><div class="val r">'+fmtGs(totC)+'</div></div>'+
+        '<div class="rp-kpi"><div class="lbl">Utilidad Total</div><div class="val b">'+fmtGs(totU)+'</div></div>'+
+        '<div class="rp-kpi"><div class="lbl">Margen Promedio</div><div class="val '+(totMg>=0?'g':'r')+'">'+totMg.toFixed(1)+'%</div></div>'+
+      '</div>'+
+      '<div class="rp-section">'+
+        '<div class="rp-section-title">Rentabilidad por Presupuesto</div>'+
+        '<table><thead><tr><th>Presupuesto</th><th>Cliente(s)</th><th class="tr">Ingresos</th><th class="tr">Costos</th><th class="tr">Utilidad</th><th class="tr">Margen %</th></tr></thead><tbody>'+
+        rows2.map(function(r){
+          var ut2=r.i-r.c,mg2=r.i>0?(ut2/r.i*100):0;
+          return '<tr><td>'+r.p+'</td><td style="color:#666">'+(Array.from(r.cl).join(', ')||'\u2014')+'</td>'+
+            '<td class="tr" style="color:#16a34a">'+fmtGs(r.i)+'</td>'+
+            '<td class="tr" style="color:#dc2626">'+fmtGs(r.c)+'</td>'+
+            '<td class="tr" style="color:'+(ut2>=0?'#2563EB':'#dc2626');+';font-weight:700">'+fmtGs(ut2)+'</td>'+
+            '<td class="tr" style="font-weight:700;color:'+(mg2>=30?'#16a34a':mg2>=0?'#d97706':'#dc2626')+'">'+mg2.toFixed(1)+'%</td></tr>';
+        }).join('')+
+        '<tr class="tot-row"><td colspan="2">TOTALES</td><td class="tr">'+fmtGs(totI)+'</td><td class="tr">'+fmtGs(totC)+'</td><td class="tr">'+fmtGs(totU)+'</td><td class="tr">'+totMg.toFixed(1)+'%</td></tr>'+
+        '</tbody></table>'+
+      '</div>'+
+      '<div class="rp-footer"><span>\u26a1 Big Inform\u00e1tica \u2014 Sistema de Gesti\u00f3n</span><span>Generado el '+fechaGen+'</span></div>'+
+    '</div>';
+
+  } else if(tipo==='balance'){
+    var mes3=gi('rpBalanceMes').value;
+    if(!mes3){toast('Seleccion\u00e1 un mes','e');return;}
+    var parts3=mes3.split('-');
+    var mesNombre3=MES[parseInt(parts3[1])-1]+' '+parts3[0];
+    var vMes3=VD.filter(function(r){return (r.fecha||'').startsWith(mes3);});
+    var cMes3=CD.filter(function(r){return (r.fecha||'').startsWith(mes3);});
+    var ga3=GD.filter(function(r){return r.activo;});
+    var tI3=vMes3.reduce(function(s,r){return s+r.monto;},0);
+    var tC3=cMes3.reduce(function(s,r){return s+r.monto;},0);
+    var tGF3=ga3.reduce(function(s,r){return s+r.monto_mensual;},0);
+    var ut3=tI3-tC3-tGF3;
+    var ingAcum3=VD.filter(function(r){return r.fecha&&r.fecha.slice(0,7)<=mes3;}).reduce(function(s,r){return s+r.monto;},0);
+    var cosAcum3=CD.filter(function(r){return r.fecha&&r.fecha.slice(0,7)<=mes3;}).reduce(function(s,r){return s+r.monto;},0);
+    var cxc3=PD.filter(function(r){return r.estado==='Aprobado';}).reduce(function(s,r){return s+(r.monto||0);},0);
+    var ivaC3=vMes3.filter(function(r){return r.iva;}).reduce(function(s,r){return s+r.monto;},0)*0.1/1.1;
+    var ivaP3=cMes3.filter(function(r){return r.iva;}).reduce(function(s,r){return s+r.monto;},0)*0.1/1.1;
+    var ivaSaldo3=Math.max(0,ivaC3-ivaP3);
+    var totalActivo3=ingAcum3+cxc3;
+    var totalPasivo3=cosAcum3+ivaSaldo3+tGF3;
+    var patrimonioReal3=totalActivo3-totalPasivo3;
+    var utilAcum3=ingAcum3-cosAcum3;
+
+    gi('rpPreviewTitle').textContent='Balance General \u2014 '+mesNombre3;
+    html='<div class="rp">'+
+      rpStyles()+
+      '<div class="rp-header">'+
+        '<div class="rp-logo">\u26a1 Big Inform\u00e1tica<span>Sistema de Gesti\u00f3n</span></div>'+
+        '<div class="rp-meta"><strong>Balance General</strong>'+mesNombre3+'<br>Generado: '+fechaGen+'</div>'+
+      '</div>'+
+      '<div style="background:#f0f7ff;border:2px solid #2563EB;border-radius:8px;padding:14px 20px;margin-bottom:20px;display:flex;justify-content:space-around;text-align:center">'+
+        '<div><div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Activos</div><div style="font-size:20px;font-weight:800;color:#16a34a">'+fmtGs(totalActivo3)+'</div></div>'+
+        '<div style="font-size:18px;color:#999;padding-top:10px">=</div>'+
+        '<div><div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Pasivos</div><div style="font-size:20px;font-weight:800;color:#dc2626">'+fmtGs(totalPasivo3)+'</div></div>'+
+        '<div style="font-size:18px;color:#999;padding-top:10px">+</div>'+
+        '<div><div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Patrimonio</div><div style="font-size:20px;font-weight:800;color:#2563EB">'+fmtGs(patrimonioReal3)+'</div></div>'+
+      '</div>'+
+      '<div class="rp-2col">'+
+        '<div>'+
+          '<div class="rp-box">'+
+            '<div class="rp-box-h">\ud83d\udcc8 ACTIVOS</div>'+
+            '<div class="rp-box-row"><span class="n">Caja / Ingresos acumulados</span><span class="v">'+fmtGs(ingAcum3)+'</span></div>'+
+            '<div class="rp-box-row"><span class="n">Cuentas por cobrar (pres. aprobados)</span><span class="v">'+fmtGs(cxc3)+'</span></div>'+
+            '<div class="rp-box-total"><span>TOTAL ACTIVOS</span><span>'+fmtGs(totalActivo3)+'</span></div>'+
+          '</div>'+
+        '</div>'+
+        '<div>'+
+          '<div class="rp-box" style="margin-bottom:12px">'+
+            '<div class="rp-box-h">\ud83d\udcc9 PASIVOS</div>'+
+            '<div class="rp-box-row"><span class="n">Cuentas por pagar (compras acum.)</span><span class="v" style="color:#dc2626">'+fmtGs(cosAcum3)+'</span></div>'+
+            '<div class="rp-box-row"><span class="n">IVA a pagar</span><span class="v" style="color:#dc2626">'+fmtGs(ivaSaldo3)+'</span></div>'+
+            '<div class="rp-box-row"><span class="n">Gastos fijos del mes</span><span class="v" style="color:#d97706">'+fmtGs(tGF3)+'</span></div>'+
+            '<div class="rp-box-total"><span>TOTAL PASIVOS</span><span>'+fmtGs(totalPasivo3)+'</span></div>'+
+          '</div>'+
+          '<div class="rp-box">'+
+            '<div class="rp-box-h">\ud83c\udfe0 PATRIMONIO</div>'+
+            '<div class="rp-box-row"><span class="n">Utilidad del per\u00edodo</span><span class="v" style="color:#2563EB">'+fmtGs(ut3)+'</span></div>'+
+            '<div class="rp-box-row"><span class="n">Utilidades acumuladas</span><span class="v" style="color:#2563EB">'+fmtGs(utilAcum3-ut3)+'</span></div>'+
+            '<div class="rp-box-total"><span>TOTAL PATRIMONIO</span><span>'+fmtGs(patrimonioReal3)+'</span></div>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="margin-top:20px;background:#f8faff;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px">'+
+        '<div style="font-size:11px;font-weight:700;color:#2563EB;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Posici\u00f3n IVA del Mes</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">'+
+          '<div><div style="font-size:10px;color:#666;margin-bottom:3px">IVA Cobrado</div><div style="font-weight:700;color:#16a34a">'+fmtGs(ivaC3)+'</div></div>'+
+          '<div><div style="font-size:10px;color:#666;margin-bottom:3px">IVA Pagado</div><div style="font-weight:700;color:#dc2626">'+fmtGs(ivaP3)+'</div></div>'+
+          '<div><div style="font-size:10px;color:#666;margin-bottom:3px">Saldo</div><div style="font-weight:700;color:'+(ivaSaldo3>0?'#dc2626':'#16a34a')+'">'+fmtGs(ivaSaldo3)+'</div></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="rp-footer"><span>\u26a1 Big Inform\u00e1tica \u2014 Sistema de Gesti\u00f3n</span><span>* Balance estimado basado en registros del sistema \u2014 Generado el '+fechaGen+'</span></div>'+
+    '</div>';
+  }
+
+  if(html){
+    gi('rpPreviewBody').innerHTML='<div class="rp-print-area" style="background:#fff;border-radius:0 0 12px 12px;overflow:auto;max-height:70vh">'+html+'</div>';
+    gi('rpPreviewPanel').style.display='block';
+    gi('rpPreviewPanel').scrollIntoView({behavior:'smooth'});
+  }
 }
 
 function toggleSidebar(){
