@@ -2251,14 +2251,22 @@ function addGPItem(){
   renderGPItems();
 }
 
+
+function fmtInput(n){
+  if(!n&&n!==0) return '';
+  return Math.round(n).toLocaleString('es-PY');
+}
+function parseFmt(s){
+  return parseFloat(String(s).replace(/\./g,'').replace(/,/g,'.'))||0;
+}
 function renderGPItems(){
   var cont=gi('gpItems');
   cont.innerHTML=gpItems.map(function(it,i){
     var pventa=it.costo>0?Math.round(it.costo*it.qty*(1+it.margen/100)):0;
     return '<div class="gp-item-row" data-idx="'+i+'">'+
       '<input type="text" class="gpi-desc" data-idx="'+i+'" placeholder="Descripción del ítem" value="'+it.desc.replace(/"/g,'&quot;')+'">'+
-      '<input type="number" class="gpi-qty" data-idx="'+i+'" placeholder="1" value="'+it.qty+'" min="1" style="text-align:center">'+
-      '<input type="number" class="gpi-costo" data-idx="'+i+'" placeholder="0" value="'+(it.costo||'')+'" min="0" style="text-align:right">'+
+      '<input type="text" class="gpi-qty" data-idx="'+i+'" placeholder="1" value="'+it.qty+'" style="text-align:center;width:100%">'+
+      '<input type="text" class="gpi-costo" data-idx="'+i+'" placeholder="0" value="'+(it.costo>0?it.costo.toLocaleString(\'es-PY\'):\'\')+'" style="text-align:right">'+
       '<select class="gpi-margen" data-idx="'+i+'">'+
         [10,15,20,25,30,35,40,45,50].map(function(p){return '<option value="'+p+'"'+(it.margen===p?' selected':'')+'>'+p+'%</option>';}).join('')+
       '</select>'+
@@ -2276,13 +2284,15 @@ function renderGPItems(){
   });
   cont.querySelectorAll('.gpi-qty').forEach(function(el){
     el.addEventListener('input',function(){
-      gpItems[parseInt(this.dataset.idx)].qty=parseFloat(this.value)||1;
+      gpItems[parseInt(this.dataset.idx)].qty=parseFmt(this.value)||1;
       updateGPRow(parseInt(this.dataset.idx));
     });
   });
   cont.querySelectorAll('.gpi-costo').forEach(function(el){
     el.addEventListener('input',function(){
-      gpItems[parseInt(this.dataset.idx)].costo=parseFloat(this.value)||0;
+      var idx=parseInt(this.dataset.idx);
+      var raw=parseFmt(this.value);
+      gpItems[idx].costo=raw;
       updateGPRow(parseInt(this.dataset.idx));
     });
   });
@@ -2388,7 +2398,7 @@ function verPrevGPres(){
   var html=st+
     '<div class="wrap">'+
       '<div class="hdr">'+
-        '<img class="logo" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20320%20220%22%3E%3Cpath%20d%3D%22M160%208%20L308%20110%20L160%20212%20L12%20110%20Z%22%20fill%3D%22none%22%20stroke%3D%22%25231B6B8A%22%20stroke-width%3D%2211%22%20stroke-linejoin%3D%22round%22%2F%3E%3Ctext%20x%3D%22160%22%20y%3D%22128%22%20font-family%3D%22Arial%20Black%2CArial%22%20font-weight%3D%22900%22%20font-size%3D%2288%22%20fill%3D%22%25238DC63F%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22auto%22%3EBIG%3C%2Ftext%3E%3Ctext%20x%3D%22160%22%20y%3D%22175%22%20font-family%3D%22Arial%2Csans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2221%22%20fill%3D%22%25238DC63F%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%223%22%3EINFORM%C3%81TICA%3C%2Ftext%3E%3C%2Fsvg%3E" alt="Big Informatica">'+
+        '<img class="logo" src="https://raw.githubusercontent.com/glezcano87/biginformatica/main/logo.png" alt="Big Informatica">'+
         '<div class="hdr-r">'+
           '<div class="badge">Soluciones IT</div>'+
           '<div class="hdr-info"><b>'+numero+'</b>Fecha: '+formatDateLong(fecha)+'</div>'+
