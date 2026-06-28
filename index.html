@@ -1435,97 +1435,134 @@ function normalizeMonto(val){
 }
 
 function parseExcel(wb){
-  // Find sheets
-  var sheetNames=wb.SheetNames.map(s=>s.toLowerCase());
-  var wsV=null,wsC=null;
-  wb.SheetNames.forEach(s=>{
-    var sl=s.toLowerCase();
+  var wsV=null, wsC=null;
+  wb.SheetNames.forEach(function(s){
+    var sl=s.toLowerCase().trim();
     if(sl.includes('venta')) wsV=wb.Sheets[s];
     if(sl.includes('compra')) wsC=wb.Sheets[s];
   });
-  if(!wsV&&!wsC){toast('No se encontraron hojas de Ventas o Compras en el archivo','e');return;}
+  if(!wsV&&!wsC){toast('No se encontraron hojas de Ventas o Compras','e');return;}
 
   impVentas=[];
   impCompras=[];
 
-  // Parse Ventas
-  // Columns: Presupuesto_Venta | Fecha | Factura N° | Cliente | Tipo de venta | Descripcion | Monto | Iva
+  function excelDateToISO(val){
+    if(!val) return null;
+    if(val instanceof Date){
+      var y=val.getFullYear(),m=String(val.getMonth()+1).padStart(2,'0'),d=String(val.getDate()).padStart(2,'0');
+      return y+'-'+m+'-'+d;
+    }
+    if(typeof val==='number'&&val>40000&&val<60000){
+      var d=new Date(Math.round((val-25569)*86400*1000));
+      return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');
+    }
+    if(typeof val==='string'){
+      var p=val.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+      if(p) return p[3]+'-'+p[2].padStart(2,'0')+'-'+p[1].padStart(2,'0');
+      if(/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+    }
+    return null;
+  }
+
+  function normIVA(v){
+    if(v===undefined||v===null||v==='') return true;
+    var s=String(v).toLowerCase().trim();
+    return s==='si'||s==='sí'||s==='s'||s==='true'||s==='1';
+  }
+
+  function normMonto(v){
+    if(!v) return 0;
+    var n=parseFloat(String(v).replace(/[^\d.-]/g,''));
+    return isNaN(n)?0:Math.abs(n);
+  }
+
+  function findHeaderRow(rows){
+    for(var i=0;i<Math.min(rows.length,10);i++){
+      var joined=rows[i].join(' ').toLowerCase();
+      if(joined.includes('fecha')&&joined.includes('monto')) return i;
+    }
+    return -1;
+  }
+
+  function findCol(hdrs, terms){
+    for(var t=0;t<terms.length;t++){
+      for(var i=0;i<hdrs.length;i++){
+        if(hdrs[i].toLowerCase().trim().includes(terms[t])) return i;
+      }
+    }
+    return -1;
+  }
+
+  // VENTAS
   if(wsV){
-    var rows=XLSX.utils.sheet_to_json(wsV,{header:1,defval:'',raw:false});
-    // Find header row
-    var hIdx=-1;
-    rows.forEach(function(r,i){
-      var joined=r.join(' ').toLowerCase();
-      if(joined.includes('fecha')&&joined.includes('monto')) hIdx=i;
-    });
-    if(hIdx>=0){
-      var hdrs=rows[hIdx].map(h=>String(h).toLowerCase().trim());
-      var iP=hdrs.findIndex(h=>h.includes('presupuesto'));
-      var iF=hdrs.findIndex(h=>h==='fecha');
-      var iFac=hdrs.findIndex(h=>h.includes('factura'));
-      var iCl=hdrs.findIndex(h=>h.includes('cliente'));
-      var iTp=hdrs.findIndex(h=>h.includes('tipo'));
-      var iD=hdrs.findIndex(h=>h.includes('descri'));
-      var iM=hdrs.findIndex(h=>h==='monto');
-      var iI=hdrs.findIndex(h=>h==='iva');
-      // Re-parse with raw for dates
-      var rawRows=XLSX.utils.sheet_to_json(wsV,{header:1,defval:'',raw:true});
-      for(var i=hIdx+1;i<rawRows.length;i++){
-        var r=rawRows[i];
-        var fecha=excelDateToISO(r[iF]);
-        var monto=normalizeMonto(r[iM]);
-        if(!fecha||!monto) continue; // skip invalid rows
+    var rawV=XLSX.utils.sheet_to_json(wsV,{header:1,defval:'',raw:true});
+    var hV=findHeaderRow(rawV);
+    if(hV>=0){
+      var hh=rawV[hV].map(function(x){return String(x).toLowerCase().trim();});
+      var cols={
+        pres: findCol(hh,['presupuesto']),
+        fecha: findCol(hh,['fecha']),
+        fac: findCol(hh,['factura']),
+        cli: findCol(hh,['cliente']),
+        tipo: findCol(hh,['tipo']),
+        desc: findCol(hh,['descri']),
+        monto: findCol(hh,['monto']),
+        iva: findCol(hh,['iva'])
+      };
+      for(var i=hV+1;i<rawV.length;i++){
+        var r=rawV[i];
+        var fecha=excelDateToISO(r[cols.fecha]);
+        var monto=normMonto(r[cols.monto]);
+        if(!fecha||!monto) continue;
+        var tipo=String(r[cols.tipo]||'').trim();
         impVentas.push({
           fecha:fecha,
-          presupuesto:String(r[iP]||'').trim()||null,
-          factura:String(r[iFac]||'').trim()||null,
-          cliente:String(r[iCl]||'').trim()||null,
-          tipo: String(r[iTp]||'').includes('roducto')?'Producto':'Servicio',
-          descripcion:String(r[iD]||'').trim()||null,
+          presupuesto:String(r[cols.pres]||'').trim()||null,
+          factura:String(r[cols.fac]||'').replace('-','').trim()||null,
+          cliente:String(r[cols.cli]||'').trim()||null,
+          tipo:tipo.includes('roducto')?'Producto':'Servicio',
+          descripcion:String(r[cols.desc]||'').trim()||null,
           monto:monto,
-          iva:normalizeIVA(r[iI])
+          iva:normIVA(r[cols.iva])
         });
       }
     }
   }
 
-  // Parse Compras
-  // Columns: Presupuesto_Compra | Fecha | Factura N° | Proveedor | Tipo | Descripcion | Cantidad | Monto | Iva
+  // COMPRAS
   if(wsC){
-    var rows2=XLSX.utils.sheet_to_json(wsC,{header:1,defval:'',raw:false});
-    var hIdx2=-1;
-    rows2.forEach(function(r,i){
-      var joined=r.join(' ').toLowerCase();
-      if(joined.includes('fecha')&&joined.includes('monto')) hIdx2=i;
-    });
-    if(hIdx2>=0){
-      var hdrs2=rows2[hIdx2].map(h=>String(h).toLowerCase().trim());
-      var iP2=hdrs2.findIndex(h=>h.includes('presupuesto'));
-      var iF2=hdrs2.findIndex(h=>h==='fecha');
-      var iFac2=hdrs2.findIndex(h=>h.includes('factura'));
-      var iPv=hdrs2.findIndex(h=>h.includes('proveedor'));
-      var iTp2=hdrs2.findIndex(h=>h.includes('tipo'));
-      var iD2=hdrs2.findIndex(h=>h.includes('descri'));
-      var iM2=hdrs2.findIndex(h=>h==='monto');
-      var iI2=hdrs2.findIndex(h=>h==='iva');
-      var rawRows2=XLSX.utils.sheet_to_json(wsC,{header:1,defval:'',raw:true});
-      for(var i=hIdx2+1;i<rawRows2.length;i++){
-        var r=rawRows2[i];
-        var fecha=excelDateToISO(r[iF2]);
-        var monto=normalizeMonto(r[iM2]);
+    var rawC=XLSX.utils.sheet_to_json(wsC,{header:1,defval:'',raw:true});
+    var hC=findHeaderRow(rawC);
+    if(hC>=0){
+      var hh2=rawC[hC].map(function(x){return String(x).toLowerCase().trim();});
+      var cols2={
+        pres: findCol(hh2,['presupuesto']),
+        fecha: findCol(hh2,['fecha']),
+        fac: findCol(hh2,['factura']),
+        prov: findCol(hh2,['proveedor']),
+        tipo: findCol(hh2,['tipo']),
+        desc: findCol(hh2,['descri']),
+        monto: findCol(hh2,['monto']),
+        iva: findCol(hh2,['iva'])
+      };
+      console.log('Compras cols:', JSON.stringify(cols2));
+      for(var i=hC+1;i<rawC.length;i++){
+        var r=rawC[i];
+        var fecha=excelDateToISO(r[cols2.fecha]);
+        var monto=normMonto(r[cols2.monto]);
         if(!fecha||!monto) continue;
-        // Skip OBS rows
-        var desc=String(r[iD2]||'').trim();
-        if(desc.startsWith('*')||desc.toUpperCase().startsWith('OBS')) continue;
+        var desc2=String(r[cols2.desc]||'').trim();
+        if(desc2.startsWith('*')) continue;
+        var tipo2=String(r[cols2.tipo]||'').trim();
         impCompras.push({
           fecha:fecha,
-          presupuesto:String(r[iP2]||'').trim()||null,
-          factura:String(r[iFac2]||'-').replace('-','').trim()||null,
-          proveedor:String(r[iPv]||'').trim()||null,
-          tipo: String(r[iTp2]||'').includes('roducto')?'Producto':'Servicio',
-          descripcion:desc||null,
+          presupuesto:String(r[cols2.pres]||'').trim()||null,
+          factura:String(r[cols2.fac]||'').replace('-','').trim()||null,
+          proveedor:String(r[cols2.prov]||'').trim()||null,
+          tipo:tipo2.includes('roducto')?'Producto':'Servicio',
+          descripcion:desc2||null,
           monto:monto,
-          iva:normalizeIVA(r[iI2])
+          iva:normIVA(r[cols2.iva])
         });
       }
     }
