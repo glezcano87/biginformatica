@@ -244,6 +244,40 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 .balance-ecuacion .be-val{font-size:20px;font-weight:800;letter-spacing:-.5px}
 .balance-ecuacion .be-op{font-size:22px;color:var(--muted);font-weight:300}
 @media(max-width:768px){.iva-grid{grid-template-columns:1fr 1fr}.asiento-linea{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}.balance-ecuacion{flex-direction:column;gap:8px}}
+
+/* PENDIENTES */
+.pend-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.pend-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.pend-card-h{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.pend-card-h .pt{font-size:13px;font-weight:600}
+.pend-card-h .pc{font-size:12px;font-weight:700}
+.pend-item{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid rgba(30,51,88,.4);gap:12px}
+.pend-item:last-child{border-bottom:none}
+.pend-item:hover{background:rgba(37,99,235,.05)}
+.pend-item .pi-name{font-size:13px;font-weight:500;margin-bottom:2px}
+.pend-item .pi-sub{font-size:11.5px;color:var(--muted)}
+.pend-item .pi-amt{font-size:14px;font-weight:700;white-space:nowrap}
+.pend-item .pi-days{font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap}
+/* GENERADOR PRESUPUESTO */
+.gp-wrap{max-width:900px;margin:0 auto}
+.gp-form{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.gp-form h3{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px}
+.gp-items-header{display:grid;grid-template-columns:3fr 1fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:6px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:0 4px}
+.gp-item-row{display:grid;grid-template-columns:3fr 1fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+.gp-item-row input,.gp-item-row select{font-size:12px;padding:7px 9px}
+.gp-item-row .calc-val{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12px;font-weight:600;color:var(--green);text-align:right;font-variant-numeric:tabular-nums}
+.gp-total-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:16px;flex-wrap:wrap}
+.gp-total-item{text-align:center}
+.gp-total-item .gtl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.gp-total-item .gtv{font-size:16px;font-weight:800;letter-spacing:-.4px}
+.gp-margen-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.gp-mb{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s;font-family:inherit}
+.gp-mb:hover{border-color:var(--accent2);color:var(--accent2)}
+.gp-mb.active{background:var(--accent);border-color:var(--accent);color:#fff}
+/* PDF PREVIEW */
+.pdf-preview-wrap{background:#e8ecf0;border-radius:12px;padding:20px;margin-top:16px}
+.pdf-preview-inner{background:#fff;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.15);overflow:hidden}
+@media(max-width:768px){.pend-grid{grid-template-columns:1fr}.gp-items-header{display:none}.gp-item-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto}}
 </style>
 </head>
 <body>
@@ -276,6 +310,8 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
     </div>
     <div class="nav-s">
       <span class="nav-lbl">Sistema</span>
+      <a class="nav-a" onclick="nav('pendientes',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Pendientes</a>
+      <a class="nav-a" onclick="nav('gpres',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Crear Presupuesto</a>
       <a class="nav-a" onclick="nav('reportes',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>Reportes PDF</a>
       <a class="nav-a" onclick="nav('importar',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Importar Excel</a>
       <a class="nav-a" onclick="nav('config',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Configuraci&#243;n</a>
@@ -672,6 +708,137 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 }
 </style>
 
+<!-- PENDIENTES -->
+<div class="page" id="page-pendientes">
+  <div class="topbar">
+    <div><h1>Pendientes</h1><div class="meta" id="pendMeta">&#8212;</div></div>
+    <button class="btn btn-g" onclick="rPendientes()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      Actualizar
+    </button>
+  </div>
+  <div class="content">
+    <div class="srow" style="margin-bottom:24px">
+      <div class="sc"><div class="lbl">Cobros Pendientes</div><div class="val r" id="pend-total-cobro">&#8370; 0</div><div style="font-size:11px;color:var(--muted);margin-top:3px" id="pend-count-cobro">0 presupuestos</div></div>
+      <div class="sc"><div class="lbl">Presupuestos en Espera</div><div class="val y" id="pend-total-apro">&#8370; 0</div><div style="font-size:11px;color:var(--muted);margin-top:3px" id="pend-count-apro">0 presupuestos</div></div>
+      <div class="sc"><div class="lbl">Total Potencial</div><div class="val b" id="pend-total-pot">&#8370; 0</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Si se aprueban todos</div></div>
+      <div class="sc"><div class="lbl">Tasa de Aprobaci&#243;n</div><div class="val g" id="pend-tasa">0%</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Aprobados vs total</div></div>
+    </div>
+    <div class="pend-grid">
+      <!-- COBROS PENDIENTES -->
+      <div class="pend-card">
+        <div class="pend-card-h">
+          <span class="pt">&#128176; Cobros Pendientes</span>
+          <span class="pc r" id="pend-cobro-total">&#8370; 0</span>
+        </div>
+        <div id="pend-cobro-list"><div class="es" style="padding:30px"><p>Sin cobros pendientes</p></div></div>
+      </div>
+      <!-- PRESUPUESTOS PENDIENTES -->
+      <div class="pend-card">
+        <div class="pend-card-h">
+          <span class="pt">&#9200; Esperando Aprobaci&#243;n</span>
+          <span class="pc y" id="pend-apro-total">&#8370; 0</span>
+        </div>
+        <div id="pend-apro-list"><div class="es" style="padding:30px"><p>Sin presupuestos pendientes</p></div></div>
+      </div>
+    </div>
+    <!-- TIMELINE -->
+    <div class="db-panel">
+      <div class="db-panel-h"><span class="title">&#128203; Todos los presupuestos por estado</span></div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Fecha</th><th>N&#176;</th><th>Cliente</th><th>Descripci&#243;n</th><th class="tr">Monto</th><th>Estado</th><th>D&#237;as</th><th></th></tr></thead>
+        <tbody id="pend-tabla"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<!-- GENERADOR PRESUPUESTO -->
+<div class="page" id="page-gpres">
+  <div class="topbar">
+    <div><h1>Crear Presupuesto</h1><div class="meta">Calculador con margen de ganancia y generador de PDF</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-g" onclick="limpiarGPres()">Limpiar</button>
+      <button class="btn btn-p" onclick="verPrevGPres()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        Vista Previa / PDF
+      </button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="gp-wrap">
+
+      <!-- DATOS DEL PRESUPUESTO -->
+      <div class="gp-form">
+        <h3>Datos del Presupuesto</h3>
+        <div class="fg" style="margin-bottom:0">
+          <div class="fgg"><label>Cliente / Empresa *</label><input type="text" id="gp-cliente" placeholder="Ej: Genetyx S.A." oninput="calcGPres()"></div>
+          <div class="fgg"><label>Fecha</label><input type="date" id="gp-fecha"></div>
+          <div class="fgg"><label>N&#176; Presupuesto</label><input type="text" id="gp-numero" placeholder="Ej: Presupuesto 08-06-26"></div>
+          <div class="fgg"><label>Descripci&#243;n general</label><input type="text" id="gp-descripcion" placeholder="Ej: Equipos inform&#225;ticos, Servicio de soporte&#8230;"></div>
+          <div class="fgg full"><label>Introducci&#243;n (opcional)</label><textarea id="gp-intro" placeholder="Ej: Nos complace presentarle el presupuesto de impresoras Epson EcoTank." style="min-height:52px" oninput="calcGPres()"></textarea></div>
+        </div>
+      </div>
+
+      <!-- MARGEN GLOBAL -->
+      <div class="gp-form">
+        <h3>Margen de Ganancia Global</h3>
+        <div class="gp-margen-btns" id="gpMargenBtns">
+          <button class="gp-mb" onclick="setMargenGlobal(10,this)">10%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(15,this)">15%</button>
+          <button class="gp-mb active" onclick="setMargenGlobal(20,this)">20%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(25,this)">25%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(30,this)">30%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(35,this)">35%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(40,this)">40%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(45,this)">45%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(50,this)">50%</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted)">El margen global se aplica a todos los &#237;tems. Pod&#233;s ajustar cada &#237;tem individualmente.</div>
+      </div>
+
+      <!-- ITEMS -->
+      <div class="gp-form">
+        <h3>&#205;tems del Presupuesto</h3>
+        <div class="gp-items-header">
+          <span>Descripci&#243;n</span><span>Cant.</span><span>Costo Prov.</span><span>Margen</span><span>Precio Venta</span><span></span>
+        </div>
+        <div id="gpItems"></div>
+        <button class="btn btn-g" onclick="addGPItem()" style="margin-top:4px;font-size:12px">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+          Agregar &#237;tem
+        </button>
+        <div class="gp-total-bar">
+          <div class="gp-total-item"><div class="gtl">Costo Total Proveedor</div><div class="gtv r" id="gp-costo-total">&#8370; 0</div></div>
+          <div style="font-size:20px;color:var(--muted)">&#8594;</div>
+          <div class="gp-total-item"><div class="gtl">Ganancia Estimada</div><div class="gtv g" id="gp-ganancia-total">&#8370; 0</div></div>
+          <div style="font-size:20px;color:var(--muted)">+</div>
+          <div class="gp-total-item"><div class="gtl">PRECIO FINAL AL CLIENTE</div><div class="gtv b" id="gp-venta-total">&#8370; 0</div></div>
+        </div>
+      </div>
+
+      <!-- PREVIEW PDF -->
+      <div id="gpPreviewWrap" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:600">Vista previa del presupuesto</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-p btn-sm" onclick="window.print()">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              Imprimir / Guardar PDF
+            </button>
+            <button class="btn btn-g btn-sm" onclick="guardarPresDesdeGP()">&#128190; Guardar en Sistema</button>
+            <button class="btn btn-g btn-sm" onclick="gi('gpPreviewWrap').style.display='none'">Cerrar</button>
+          </div>
+        </div>
+        <div class="pdf-preview-wrap">
+          <div class="pdf-preview-inner" id="gpPreviewBody"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- IMPORTAR -->
 <div class="page" id="page-importar">
   <div class="topbar"><div><h1>Importar desde Excel</h1><div class="meta">Carg&#225; tu planilla Big Inform&#225;tica</div></div></div>
@@ -910,7 +1077,7 @@ function clCfg(){localStorage.removeItem('bi_url');localStorage.removeItem('bi_k
 function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Conectado a Supabase','s');gi('cfgSt').textContent='Conectado correctamente';loadAll()}catch(e){setConn(false);toast('Error: '+e.message,'e')}}
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
-function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}closeSidebar()}
+function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='pendientes'){rPendientes();}if(p==='gpres'){initGPres();}closeSidebar()}
 async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos()]);popFjSel();popMgSel();popCtMesSel();rDash()}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
@@ -1967,6 +2134,281 @@ function generarPDF(tipo){
     gi('rpPreviewPanel').style.display='block';
     gi('rpPreviewPanel').scrollIntoView({behavior:'smooth'});
   }
+}
+
+// ══════════════════════════════════════════════════════════
+// PENDIENTES
+// ══════════════════════════════════════════════════════════
+function rPendientes(){
+  var hoy=new Date();
+  // Cobros pendientes = presupuestos APROBADOS
+  var aprobados=PD.filter(function(r){return r.estado==='Aprobado';});
+  // Pendientes de aprobacion
+  var pendientes=PD.filter(function(r){return r.estado==='Pendiente';});
+  // Todos
+  var todos=PD.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
+
+  var totalCobro=aprobados.reduce(function(s,r){return s+(r.monto||0);},0);
+  var totalApro=pendientes.reduce(function(s,r){return s+(r.monto||0);},0);
+  var totalPot=PD.reduce(function(s,r){return s+(r.monto||0);},0);
+  var tasaApro=PD.length>0?(PD.filter(function(r){return r.estado==='Aprobado';}).length/PD.length*100):0;
+
+  gi('pend-total-cobro').textContent='\u20b2 '+fmt(totalCobro);
+  gi('pend-total-apro').textContent='\u20b2 '+fmt(totalApro);
+  gi('pend-total-pot').textContent='\u20b2 '+fmt(totalPot);
+  gi('pend-tasa').textContent=tasaApro.toFixed(0)+'%';
+  gi('pend-count-cobro').textContent=aprobados.length+' presupuesto'+(aprobados.length!==1?'s':'');
+  gi('pend-count-apro').textContent=pendientes.length+' presupuesto'+(pendientes.length!==1?'s':'');
+  gi('pend-cobro-total').textContent='\u20b2 '+fmt(totalCobro);
+  gi('pend-apro-total').textContent='\u20b2 '+fmt(totalApro);
+  gi('pendMeta').textContent='Total por cobrar: \u20b2 '+fmt(totalCobro)+' \u00b7 En espera: \u20b2 '+fmt(totalApro);
+
+  function diasDesde(fecha){
+    if(!fecha) return 0;
+    var d=new Date(fecha);
+    return Math.floor((hoy-d)/(1000*60*60*24));
+  }
+  function diasBadge(dias){
+    var color=dias<=7?'bg':dias<=30?'by':'br';
+    return '<span class="bx '+color+' pi-days">'+dias+' d\u00edas</span>';
+  }
+
+  // Lista cobros
+  var cl=gi('pend-cobro-list');
+  if(!aprobados.length){cl.innerHTML='<div class="es" style="padding:24px"><p>Sin cobros pendientes</p></div>';}
+  else{cl.innerHTML=aprobados.map(function(r){
+    var dias=diasDesde(r.fecha);
+    return '<div class="pend-item">'+
+      '<div><div class="pi-name">'+(r.numero||r.cliente||'Presupuesto')+'</div>'+
+      '<div class="pi-sub">'+(r.cliente||'')+' \u00b7 '+fd(r.fecha)+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+      diasBadge(dias)+
+      '<span class="pi-amt" style="color:var(--red)">\u20b2 '+fmt(r.monto||0)+'</span></div>'+
+    '</div>';
+  }).join('');}
+
+  // Lista pendientes aprobacion
+  var al=gi('pend-apro-list');
+  if(!pendientes.length){al.innerHTML='<div class="es" style="padding:24px"><p>Sin presupuestos pendientes</p></div>';}
+  else{al.innerHTML=pendientes.map(function(r){
+    var dias=diasDesde(r.fecha);
+    return '<div class="pend-item">'+
+      '<div><div class="pi-name">'+(r.numero||r.cliente||'Presupuesto')+'</div>'+
+      '<div class="pi-sub">'+(r.cliente||'')+' \u00b7 '+fd(r.fecha)+'</div>'+
+      (r.descripcion?'<div class="pi-sub" style="margin-top:2px">'+r.descripcion.slice(0,60)+(r.descripcion.length>60?'...':'')+'</div>':'')+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+      diasBadge(dias)+
+      '<span class="pi-amt" style="color:var(--yellow)">\u20b2 '+fmt(r.monto||0)+'</span></div>'+
+    '</div>';
+  }).join('');}
+
+  // Tabla completa
+  var eb={'Pendiente':'by','Aprobado':'bg','Rechazado':'br'};
+  var tb=gi('pend-tabla');
+  if(!todos.length){tb.innerHTML=er(8,'No hay presupuestos registrados.');return;}
+  tb.innerHTML=todos.map(function(r){
+    var dias=diasDesde(r.fecha);
+    return '<tr>'+
+      '<td class="mn">'+fd(r.fecha)+'</td>'+
+      '<td style="font-weight:500">'+(r.numero||'\u2014')+'</td>'+
+      '<td>'+(r.cliente||'\u2014')+'</td>'+
+      '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r.descripcion||'\u2014')+'</td>'+
+      '<td class="mn tr" style="font-weight:600">'+(r.monto?'\u20b2 '+fmt(r.monto):'\u2014')+'</td>'+
+      '<td><span class="bx '+(eb[r.estado]||'bm')+'">'+r.estado+'</span></td>'+
+      '<td><span class="bx '+(dias<=7?'bg':dias<=30?'by':'br')+'">'+dias+' d</span></td>'+
+      '<td><button class="btn btn-g btn-sm" onclick="editPres(\''+r.id+'\')" style="font-size:11px;padding:4px 8px">Editar</button></td>'+
+    '</tr>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// GENERADOR DE PRESUPUESTOS
+// ══════════════════════════════════════════════════════════
+var gpItems=[];
+var gpMargen=20;
+
+function initGPres(){
+  if(!gi('gp-fecha').value) gi('gp-fecha').value=new Date().toISOString().slice(0,10);
+  if(!gpItems.length){
+    gpItems=[{desc:'',qty:1,costo:0,margen:gpMargen}];
+    renderGPItems();
+  }
+}
+
+function setMargenGlobal(pct,btn){
+  gpMargen=pct;
+  document.querySelectorAll('.gp-mb').forEach(function(b){b.classList.remove('active')});
+  btn.classList.add('active');
+  // Apply to all items
+  gpItems.forEach(function(it){it.margen=pct;});
+  renderGPItems();
+  calcGPres();
+}
+
+function addGPItem(){
+  gpItems.push({desc:'',qty:1,costo:0,margen:gpMargen});
+  renderGPItems();
+}
+
+function renderGPItems(){
+  var cont=gi('gpItems');
+  cont.innerHTML=gpItems.map(function(it,i){
+    var pventa=it.costo>0?Math.round(it.costo*it.qty*(1+it.margen/100)):0;
+    return '<div class="gp-item-row">'+
+      '<input type="text" placeholder="Descripci\u00f3n del \u00edtem" value="'+it.desc+'" oninput="gpItems['+i+'].desc=this.value;calcGPres()">'+
+      '<input type="number" placeholder="1" value="'+it.qty+'" min="1" oninput="gpItems['+i+'].qty=parseFloat(this.value)||1;calcGPres();renderGPItems()" style="text-align:center">'+
+      '<input type="number" placeholder="Gs. 0" value="'+(it.costo||'')+'" min="0" oninput="gpItems['+i+'].costo=parseFloat(this.value)||0;calcGPres();renderGPItems()" style="text-align:right">'+
+      '<select onchange="gpItems['+i+'].margen=parseInt(this.value);calcGPres();renderGPItems()">'+
+        [10,15,20,25,30,35,40,45,50].map(function(p){return '<option value="'+p+'"'+(it.margen===p?' selected':'')+'>'+p+'%</option>';}).join('')+
+      '</select>'+
+      '<div class="calc-val">'+(pventa>0?'\u20b2 '+fmt(pventa):'\u2014')+'</div>'+
+      '<button class="rem-btn" onclick="gpItems.splice('+i+',1);renderGPItems();calcGPres()">\u2212</button>'+
+    '</div>';
+  }).join('');
+  calcGPres();
+}
+
+function calcGPres(){
+  var totalCosto=gpItems.reduce(function(s,it){return s+it.costo*it.qty;},0);
+  var totalVenta=gpItems.reduce(function(s,it){return s+Math.round(it.costo*it.qty*(1+it.margen/100));},0);
+  var ganancia=totalVenta-totalCosto;
+  gi('gp-costo-total').textContent='\u20b2 '+fmt(totalCosto);
+  gi('gp-ganancia-total').textContent='\u20b2 '+fmt(ganancia);
+  gi('gp-venta-total').textContent='\u20b2 '+fmt(totalVenta);
+}
+
+function limpiarGPres(){
+  if(!confirm('\u00bfLimpiar todos los datos?')) return;
+  gpItems=[{desc:'',qty:1,costo:0,margen:gpMargen}];
+  gi('gp-cliente').value='';
+  gi('gp-fecha').value=new Date().toISOString().slice(0,10);
+  gi('gp-numero').value='';
+  gi('gp-descripcion').value='';
+  gi('gp-intro').value='';
+  gi('gpPreviewWrap').style.display='none';
+  renderGPItems();
+  calcGPres();
+}
+
+function verPrevGPres(){
+  var cliente=gi('gp-cliente').value.trim();
+  if(!cliente){toast('Ingres\u00e1 el nombre del cliente','e');return;}
+  var items=gpItems.filter(function(it){return it.desc.trim()&&it.costo>0;});
+  if(!items.length){toast('Agrega al menos un \u00edtem con descripci\u00f3n y costo','e');return;}
+
+  var fecha=gi('gp-fecha').value;
+  var numero=gi('gp-numero').value.trim()||('Presupuesto '+fd(fecha));
+  var descGen=gi('gp-descripcion').value.trim();
+  var intro=gi('gp-intro').value.trim()||('Nos complace presentarle el presupuesto solicitado.');
+  var totalVenta=items.reduce(function(s,it){return s+Math.round(it.costo*it.qty*(1+it.margen/100));},0);
+
+  var html='<style>'+
+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:Arial,sans-serif;font-size:13px;color:#1a1a2e;background:#fff}'+
+    '.wrap{padding:36px 40px;max-width:800px;margin:0 auto}'+
+    '.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding-bottom:20px;border-bottom:3px solid #2563EB}'+
+    '.logo-area{display:flex;align-items:center;gap:14px}'+
+    '.logo-box{background:#2563EB;border-radius:10px;width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;letter-spacing:-1px}'+
+    '.logo-text .brand{font-size:18px;font-weight:800;color:#2563EB;letter-spacing:-0.5px}'+
+    '.logo-text .slogan{font-size:10px;color:#666;margin-top:2px;max-width:200px;line-height:1.4}'+
+    '.header-right{text-align:right}'+
+    '.header-right .badge{background:#2563EB;color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:inline-block;margin-bottom:6px}'+
+    '.header-right .info{font-size:12px;color:#666;line-height:1.6}'+
+    '.client-block{background:#f8faff;border-left:4px solid #2563EB;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:20px}'+
+    '.client-block .label{font-size:10px;color:#2563EB;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px}'+
+    '.client-block .name{font-size:16px;font-weight:700;color:#1a1a2e}'+
+    '.intro-text{font-size:13px;color:#444;line-height:1.7;margin-bottom:20px}'+
+    '.section-title{font-size:12px;font-weight:700;color:#2563EB;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:20px}'+
+    'thead th{background:#2563EB;color:#fff;padding:10px 12px;text-align:left;font-size:12px;font-weight:700}'+
+    'thead th.tr{text-align:right}'+
+    'tbody td{padding:10px 12px;border-bottom:1px solid #eef0f8;font-size:13px}'+
+    'tbody td.tr{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}'+
+    'tbody tr:nth-child(even){background:#f8faff}'+
+    '.total-row{background:#2563EB !important}'+
+    '.total-row td{color:#fff !important;font-weight:700;font-size:14px;border:none}'+
+    '.footer-text{font-size:12px;color:#555;line-height:1.7;margin-bottom:24px}'+
+    '.firma{margin-top:32px;padding-top:20px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:flex-end}'+
+    '.firma-block .name{font-size:14px;font-weight:700;color:#1a1a2e}'+
+    '.firma-block .cargo{font-size:12px;color:#2563EB;font-weight:600}'+
+    '.firma-block .empresa{font-size:12px;color:#666}'+
+    '.firma-right{text-align:right;font-size:11px;color:#999}'+
+    '</style>'+
+    '<div class="wrap">'+
+      '<div class="header">'+
+        '<div class="logo-area">'+
+          '<div class="logo-box">BIG</div>'+
+          '<div class="logo-text">'+
+            '<div class="brand">Big Inform\u00e1tica</div>'+
+            '<div class="slogan">Dise\u00f1amos planes de soporte t\u00e9cnico personalizados en base a las necesidades y presupuesto de cada empresa.</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="header-right">'+
+          '<div class="badge">Soluciones IT</div>'+
+          '<div class="info">'+numero+'<br>Fecha: '+formatDateLong(fecha)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="client-block">'+
+        '<div class="label">Dirigido a</div>'+
+        '<div class="name">'+cliente+'</div>'+
+      '</div>'+
+      '<p class="intro-text">'+intro+'</p>'+
+      (descGen?'<div class="section-title">'+descGen+'</div>':'')+
+      '<table>'+
+        '<thead><tr><th>Cantidad</th><th>Detalles</th><th class="tr">Precio</th></tr></thead>'+
+        '<tbody>'+
+        items.map(function(it){
+          var pv=Math.round(it.costo*it.qty*(1+it.margen/100));
+          return '<tr><td style="text-align:center;font-weight:700">'+it.qty+'</td><td>'+it.desc+'</td><td class="tr">Gs. '+fmt(pv)+'.-</td></tr>';
+        }).join('')+
+        '<tr class="total-row"><td colspan="2" style="text-align:right;padding-right:16px">TOTAL</td><td class="tr">Gs. '+fmt(totalVenta)+'.-</td></tr>'+
+        '</tbody>'+
+      '</table>'+
+      '<p class="footer-text">Esperamos que este presupuesto sea de su satisfacci\u00f3n. Quedamos atentos a cualquier consulta o requerimiento adicional que puedan tener.<br><br>Agradecemos su confianza en nuestros servicios.</p>'+
+      '<div class="firma">'+
+        '<div class="firma-block">'+
+          '<div style="margin-bottom:8px;font-size:11px;color:#999">Atentamente,</div>'+
+          '<div class="name">Gustavo Lezcano</div>'+
+          '<div class="cargo">Gerente de Servicios Inform\u00e1ticos</div>'+
+          '<div class="empresa">Big Inform\u00e1tica</div>'+
+        '</div>'+
+        '<div class="firma-right">'+
+          '<div style="font-weight:700;color:#2563EB;font-size:13px">Big Inform\u00e1tica</div>'+
+          '<div>Soluciones IT</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+
+  gi('gpPreviewBody').innerHTML=html;
+  gi('gpPreviewWrap').style.display='block';
+  gi('gpPreviewWrap').scrollIntoView({behavior:'smooth'});
+}
+
+function formatDateLong(d){
+  if(!d) return '';
+  var parts=d.split('-');
+  var meses2=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return parseInt(parts[2])+' de '+meses2[parseInt(parts[1])-1]+' de '+parts[0];
+}
+
+async function guardarPresDesdeGP(){
+  if(!sb){toast('Conecta Supabase primero','e');return;}
+  var cliente=gi('gp-cliente').value.trim();
+  var fecha=gi('gp-fecha').value;
+  var numero=gi('gp-numero').value.trim()||('Presupuesto '+fd(fecha));
+  var items=gpItems.filter(function(it){return it.desc.trim()&&it.costo>0;});
+  var totalVenta=items.reduce(function(s,it){return s+Math.round(it.costo*it.qty*(1+it.margen/100));},0);
+  var payload={
+    fecha:fecha, numero:numero, cliente:cliente,
+    descripcion:gi('gp-descripcion').value.trim()||null,
+    monto:totalVenta, estado:'Pendiente',
+    notas:'Generado desde el sistema. Margen aplicado: '+gpMargen+'%'
+  };
+  var {error}=await sb.from('presupuestos').insert(payload);
+  if(error){toast('Error: '+error.message,'e');return;}
+  toast('Presupuesto guardado en el sistema \u2713','s');
+  await lP();
 }
 
 function toggleSidebar(){
