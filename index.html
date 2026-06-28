@@ -2266,7 +2266,7 @@ function renderGPItems(){
     return '<div class="gp-item-row" data-idx="'+i+'">'+
       '<input type="text" class="gpi-desc" data-idx="'+i+'" placeholder="Descripción del ítem" value="'+it.desc.replace(/"/g,'&quot;')+'">'+
       '<input type="text" class="gpi-qty" data-idx="'+i+'" placeholder="1" value="'+it.qty+'" style="text-align:center;width:100%">'+
-      '<input type="text" class="gpi-costo" data-idx="'+i+'" placeholder="0" value="'+(it.costo>0?it.costo.toLocaleString(\'es-PY\'):\'\')+'" style="text-align:right">'+
+      '<input type="text" class="gpi-costo" data-idx="'+i+'" placeholder="0" value="'+( it.costo>0 ? Math.round(it.costo).toLocaleString("es-PY") : "")+'" style="text-align:right">'+ 
       '<select class="gpi-margen" data-idx="'+i+'">'+
         [10,15,20,25,30,35,40,45,50].map(function(p){return '<option value="'+p+'"'+(it.margen===p?' selected':'')+'>'+p+'%</option>';}).join('')+
       '</select>'+
