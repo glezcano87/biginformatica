@@ -822,7 +822,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div style="font-size:13px;font-weight:600">Vista previa del presupuesto</div>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-p btn-sm" onclick="window.print()">
+            <button class="btn btn-p btn-sm" onclick="imprimirPresupuesto()">
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
               Imprimir / Guardar PDF
             </button>
@@ -2446,16 +2446,29 @@ async function guardarPresDesdeGP(){
   var numero=gi('gp-numero').value.trim()||('Presupuesto '+fd(fecha));
   var items=gpItems.filter(function(it){return it.desc.trim()&&it.costo>0;});
   var totalVenta=items.reduce(function(s,it){return s+Math.round(it.costo*it.qty*(1+it.margen/100));},0);
+  var itemsTexto=items.map(function(it){
+    var pv=Math.round(it.costo*it.qty*(1+it.margen/100));
+    return it.qty+'x '+it.desc+' = Gs. '+fmt(pv)+'.-';
+  }).join(' | ');
   var payload={
     fecha:fecha, numero:numero, cliente:cliente,
     descripcion:gi('gp-descripcion').value.trim()||null,
     monto:totalVenta, estado:'Pendiente',
-    notas:'Generado desde el sistema. Margen aplicado: '+gpMargen+'%'
+    notas:'Items: '+itemsTexto+' | Margen: '+gpMargen+'%'
   };
   var {error}=await sb.from('presupuestos').insert(payload);
   if(error){toast('Error: '+error.message,'e');return;}
   toast('Presupuesto guardado en el sistema \u2713','s');
   await lP();
+}
+
+function imprimirPresupuesto(){
+  var contenido = gi('gpPreviewBody').innerHTML;
+  var ventana = window.open('','_blank','width=900,height=700');
+  ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Presupuesto</title></head><body>'+contenido+'</body></html>');
+  ventana.document.close();
+  ventana.focus();
+  setTimeout(function(){ ventana.print(); }, 500);
 }
 
 function toggleSidebar(){
