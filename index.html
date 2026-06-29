@@ -2690,8 +2690,8 @@ function rCobros(){
       '<td><span class="bx '+(eb[r.estado]||'bm')+'">'+r.estado+'</span></td>'+
       '<td><span style="font-size:12px;font-weight:600;color:'+diasColor+'">'+dias+' d</span></td>'+
       '<td><div class="acts">'+
-        '<button class="ib" onclick="editCobro(''+r.id+'')" title="Editar">'+ie()+'</button>'+
-        '<button class="ib d" onclick="deleteCobro(''+r.id+'')" title="Eliminar">'+it()+'</button>'+
+        '<button class="ib" onclick="editCobro(this.dataset.id)" data-id="'+r.id+'" title="Editar">'+ie()+'</button>'+
+        '<button class="ib d" onclick="deleteCobro(this.dataset.id)" data-id="'+r.id+'" title="Eliminar">'+it()+'</button>'+
       '</div></td>'+
     '</tr>';
   }).join('');
