@@ -310,6 +310,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
     </div>
     <div class="nav-s">
       <span class="nav-lbl">Sistema</span>
+      <a class="nav-a" onclick="nav('cobros',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 002 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>Cobros Pendientes</a>
       <a class="nav-a" onclick="nav('pendientes',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Pendientes</a>
       <a class="nav-a" onclick="nav('gpres',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Crear Presupuesto</a>
       <a class="nav-a" onclick="nav('reportes',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>Reportes PDF</a>
@@ -708,6 +709,46 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 }
 </style>
 
+<!-- COBROS PENDIENTES -->
+<div class="page" id="page-cobros">
+  <div class="topbar">
+    <div><h1>Cobros Pendientes</h1><div class="meta" id="cobrosMeta">&#8212;</div></div>
+    <button class="btn btn-p" onclick="openModalCobro()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4v16m8-8H4"/></svg>
+      Nuevo Cobro
+    </button>
+  </div>
+  <div class="content">
+    <div class="srow">
+      <div class="sc"><div class="lbl">Total Pendiente</div><div class="val r" id="cb-total">&#8370; 0</div></div>
+      <div class="sc"><div class="lbl">Cobros Vencidos</div><div class="val r" id="cb-vencidos">0</div><div style="font-size:11px;color:var(--muted);margin-top:3px">M&#225;s de 30 d&#237;as</div></div>
+      <div class="sc"><div class="lbl">Cobros al D&#237;a</div><div class="val g" id="cb-aldia">0</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Menos de 30 d&#237;as</div></div>
+      <div class="sc"><div class="lbl">Cobrados</div><div class="val g" id="cb-cobrados">&#8370; 0</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Total cobrado</div></div>
+    </div>
+    <div class="tw">
+      <div class="ttb">
+        <div class="sb"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="qCobros" placeholder="Buscar cliente, presupuesto&#8230;" oninput="rCobros()"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select class="fs" id="fEstCobros" onchange="rCobros()">
+            <option value="">Todos los estados</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Cobrado">Cobrado</option>
+            <option value="Vencido">Vencido</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr>
+          <th>Fecha Factura</th><th>N&#176; Presupuesto</th><th>N&#176; Factura</th>
+          <th>Cliente</th><th>Descripci&#243;n</th>
+          <th class="tr">Monto</th><th>Estado</th><th>D&#237;as</th><th></th>
+        </tr></thead>
+        <tbody id="tblCobros"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
 <!-- PENDIENTES -->
 <div class="page" id="page-pendientes">
   <div class="topbar">
@@ -998,7 +1039,26 @@ ALTER TABLE gastos_fijos ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "all" ON ventas FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON compras FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON presupuestos FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "all" ON gastos_fijos FOR ALL USING (true) WITH CHECK (true);</pre>
+CREATE POLICY "all" ON gastos_fijos FOR ALL USING (true) WITH CHECK (true);
+
+-- COBROS PENDIENTES
+CREATE TABLE cobros_pendientes (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  fecha date NOT NULL,
+  presupuesto_id uuid,
+  presupuesto_num text,
+  factura text,
+  cliente text NOT NULL,
+  descripcion text,
+  monto numeric NOT NULL,
+  estado text DEFAULT 'Pendiente'
+    CHECK (estado IN ('Pendiente','Cobrado','Vencido')),
+  vencimiento date,
+  notas text,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE cobros_pendientes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "all" ON cobros_pendientes FOR ALL USING (true) WITH CHECK (true);</pre>
       </div>
     </div>
   </div>
@@ -1066,6 +1126,43 @@ CREATE POLICY "all" ON gastos_fijos FOR ALL USING (true) WITH CHECK (true);</pre
   <div class="mf"><button class="btn btn-g" onclick="cm('mG')">Cancelar</button><button class="btn btn-p" id="bsG" onclick="sG()">Guardar</button></div>
 </div></div>
 
+<!-- MODAL COBRO -->
+<div class="ov" id="modalCobro">
+  <div class="modal">
+    <div class="mh">
+      <h2 id="mCobroTitle">Nuevo Cobro Pendiente</h2>
+      <button class="ib" onclick="cm('modalCobro')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mb">
+      <div class="fg">
+        <div class="fgg"><label>Fecha de Factura *</label><input type="date" id="cb-fecha"></div>
+        <div class="fgg"><label>N&#176; Presupuesto</label>
+          <select id="cb-presupuesto" onchange="autoFillCobro()">
+            <option value="">Sin presupuesto vinculado</option>
+          </select>
+        </div>
+        <div class="fgg"><label>N&#176; Factura</label><input type="text" id="cb-factura" placeholder="001-001-0000001"></div>
+        <div class="fgg"><label>Estado</label>
+          <select id="cb-estado">
+            <option value="Pendiente">Pendiente</option>
+            <option value="Cobrado">Cobrado</option>
+            <option value="Vencido">Vencido</option>
+          </select>
+        </div>
+        <div class="fgg full"><label>Cliente *</label><input type="text" id="cb-cliente" placeholder="Nombre del cliente"></div>
+        <div class="fgg full"><label>Descripci&#243;n</label><input type="text" id="cb-desc" placeholder="Descripci&#243;n del cobro"></div>
+        <div class="fgg"><label>Monto (&#8370;) *</label><input type="number" id="cb-monto" placeholder="0" min="0"></div>
+        <div class="fgg"><label>Fecha de Vencimiento</label><input type="date" id="cb-vencimiento"></div>
+        <div class="fgg full"><label>Notas</label><textarea id="cb-notas" placeholder="Observaciones&#8230;" style="min-height:50px"></textarea></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-g" onclick="cm('modalCobro')">Cancelar</button>
+      <button class="btn btn-p" id="btnSaveCobro" onclick="guardarCobro()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div class="tc" id="toasts"></div>
 
 <script>
@@ -1077,8 +1174,8 @@ function clCfg(){localStorage.removeItem('bi_url');localStorage.removeItem('bi_k
 function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Conectado a Supabase','s');gi('cfgSt').textContent='Conectado correctamente';loadAll()}catch(e){setConn(false);toast('Error: '+e.message,'e')}}
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
-function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='pendientes'){rPendientes();}if(p==='gpres'){initGPres();}closeSidebar()}
-async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos()]);popFjSel();popMgSel();popCtMesSel();rDash()}
+function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='pendientes'){rPendientes();}if(p==='cobros'){rCobros();}if(p==='gpres'){initGPres();}closeSidebar()}
+async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros()]);popFjSel();popMgSel();popCtMesSel();rDash()}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
 async function lP(){if(!sb)return;var r=await sb.from('presupuestos').select('*').order('fecha',{ascending:false});if(r.error){toast('Error presupuestos: '+r.error.message,'e');return}PD=r.data||[];popMF('fmP',PD);rPres();usPS()}
@@ -2325,7 +2422,7 @@ function parseFmt(s){
 function renderGPItems(){
   var cont=gi('gpItems');
   cont.innerHTML=gpItems.map(function(it,i){
-    var pventa=it.costo>0?Math.round(it.costo*it.qty*(1+it.margen/100)):0;
+    var pventa=it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0;
     return '<div class="gp-item-row" data-idx="'+i+'">'+
       '<input type="text" class="gpi-desc" data-idx="'+i+'" placeholder="Descripción del ítem" value="'+it.desc.replace(/"/g,'&quot;')+'">'+
       '<input type="text" class="gpi-qty" data-idx="'+i+'" placeholder="1" value="'+it.qty+'" style="text-align:center;width:100%">'+
@@ -2377,7 +2474,7 @@ function renderGPItems(){
 
 function updateGPRow(i){
   var it=gpItems[i];
-  var pventa=it.costo>0?Math.round(it.costo*it.qty*(1+it.margen/100)):0;
+  var pventa=it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0;
   var res=document.querySelector('.gpi-result[data-idx="'+i+'"]');
   if(res) res.textContent=pventa>0?'₲ '+fmt(pventa):'—';
   calcGPres();
@@ -2385,7 +2482,7 @@ function updateGPRow(i){
 
 function calcGPres(){
   var totalCosto=gpItems.reduce(function(s,it){return s+it.costo*it.qty;},0);
-  var totalVenta=gpItems.reduce(function(s,it){return s+Math.round(it.costo*it.qty*(1+it.margen/100));},0);
+  var totalVenta=gpItems.reduce(function(s,it){return s+(it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0);},0);
   var ganancia=totalVenta-totalCosto;
   gi('gp-costo-total').textContent='\u20b2 '+fmt(totalCosto);
   gi('gp-ganancia-total').textContent='\u20b2 '+fmt(ganancia);
@@ -2414,7 +2511,7 @@ function verPrevGPres(){
   var numero=gi('gp-numero').value.trim()||('Presupuesto '+fd(fecha));
   var descGen=gi('gp-descripcion').value.trim();
   var intro=gi('gp-intro').value.trim()||'Nos complace presentarle el presupuesto solicitado.';
-  var totalVenta=items.reduce(function(s,it){return s+Math.round(it.costo*it.qty*(1+it.margen/100));},0);
+  var totalVenta=items.reduce(function(s,it){return s+(it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0);},0);
 
   var st='<style>'+
     '*{box-sizing:border-box;margin:0;padding:0}'+
@@ -2454,7 +2551,7 @@ function verPrevGPres(){
     '</style>';
 
   var rows=items.map(function(it){
-    var pv=Math.round(it.costo*it.qty*(1+it.margen/100));
+    var pv=it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0;
     return '<tr><td>'+it.qty+'</td><td>'+it.desc+'</td><td>Gs. '+fmt(pv)+'.-</td></tr>';
   }).join('');
 
@@ -2508,9 +2605,9 @@ async function guardarPresDesdeGP(){
   var fecha=gi('gp-fecha').value;
   var numero=gi('gp-numero').value.trim()||('Presupuesto '+fd(fecha));
   var items=gpItems.filter(function(it){return it.desc.trim()&&it.costo>0;});
-  var totalVenta=items.reduce(function(s,it){return s+Math.round(it.costo*it.qty*(1+it.margen/100));},0);
+  var totalVenta=items.reduce(function(s,it){return s+(it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0);},0);
   var itemsTexto=items.map(function(it){
-    var pv=Math.round(it.costo*it.qty*(1+it.margen/100));
+    var pv=it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0;
     return it.qty+'x '+it.desc+' = Gs. '+fmt(pv)+'.-';
   }).join(' | ');
   var payload={
@@ -2532,6 +2629,181 @@ function imprimirPresupuesto(){
   ventana.document.close();
   ventana.focus();
   setTimeout(function(){ ventana.print(); }, 500);
+}
+
+// ══════════════════════════════════════════════════════════
+// COBROS PENDIENTES
+// ══════════════════════════════════════════════════════════
+var cobrosData = [];
+var editingCobro = null;
+
+async function lCobros(){
+  if(!sb) return;
+  var r = await sb.from('cobros_pendientes').select('*').order('fecha',{ascending:false});
+  if(r.error){ cobrosData=[]; return; }
+  cobrosData = r.data||[];
+}
+
+function rCobros(){
+  var q = gi('qCobros').value.toLowerCase();
+  var est = gi('fEstCobros').value;
+  var hoy = new Date();
+
+  var rows = cobrosData.filter(function(r){
+    return (!q||(r.cliente||'').toLowerCase().includes(q)||(r.presupuesto_num||'').toLowerCase().includes(q)||(r.factura||'').toLowerCase().includes(q))&&
+           (!est||r.estado===est);
+  });
+
+  var totalPend = cobrosData.filter(function(r){return r.estado==='Pendiente'||r.estado==='Vencido';}).reduce(function(s,r){return s+(r.monto||0);},0);
+  var vencidos = cobrosData.filter(function(r){
+    if(r.estado==='Cobrado') return false;
+    var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
+    return dias > 30;
+  }).length;
+  var aldia = cobrosData.filter(function(r){
+    if(r.estado==='Cobrado') return false;
+    var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
+    return dias <= 30;
+  }).length;
+  var totalCobrado = cobrosData.filter(function(r){return r.estado==='Cobrado';}).reduce(function(s,r){return s+(r.monto||0);},0);
+
+  gi('cb-total').textContent = '₲ '+fmt(totalPend);
+  gi('cb-vencidos').textContent = vencidos;
+  gi('cb-aldia').textContent = aldia;
+  gi('cb-cobrados').textContent = '₲ '+fmt(totalCobrado);
+  gi('cobrosMeta').textContent = rows.length+' registro'+(rows.length!==1?'s':'')+' · Pendiente: ₲ '+fmt(totalPend);
+
+  var tb = gi('tblCobros');
+  if(!rows.length){ tb.innerHTML=er(9,sb?'No hay cobros registrados.':'⚠️ Conecta Supabase desde Configuración.'); return; }
+
+  var eb = {Pendiente:'by', Cobrado:'bg', Vencido:'br'};
+  tb.innerHTML = rows.map(function(r){
+    var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
+    var diasColor = dias>30?'var(--red)':dias>15?'var(--yellow)':'var(--green)';
+    return '<tr>'+
+      '<td class="mn">'+fd(r.fecha)+'</td>'+
+      '<td style="color:var(--muted);font-size:12px">'+(r.presupuesto_num||'—')+'</td>'+
+      '<td style="color:var(--muted);font-size:12px">'+(r.factura||'—')+'</td>'+
+      '<td style="font-weight:500">'+(r.cliente||'—')+'</td>'+
+      '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r.descripcion||'—')+'</td>'+
+      '<td class="mn tr" style="font-weight:700;color:var(--green)">₲ '+fmt(r.monto)+'</td>'+
+      '<td><span class="bx '+(eb[r.estado]||'bm')+'">'+r.estado+'</span></td>'+
+      '<td><span style="font-size:12px;font-weight:600;color:'+diasColor+'">'+dias+' d</span></td>'+
+      '<td><div class="acts">'+
+        '<button class="ib" onclick="editCobro(''+r.id+'')" title="Editar">'+ie()+'</button>'+
+        '<button class="ib d" onclick="deleteCobro(''+r.id+'')" title="Eliminar">'+it()+'</button>'+
+      '</div></td>'+
+    '</tr>';
+  }).join('');
+}
+
+function openModalCobro(){
+  if(!sb){ toast('Conecta Supabase primero','e'); return; }
+  editingCobro = null;
+  gi('mCobroTitle').textContent = 'Nuevo Cobro Pendiente';
+  gi('btnSaveCobro').textContent = 'Guardar';
+  gi('cb-fecha').value = new Date().toISOString().slice(0,10);
+  gi('cb-presupuesto').value = '';
+  gi('cb-factura').value = '';
+  gi('cb-estado').value = 'Pendiente';
+  gi('cb-cliente').value = '';
+  gi('cb-desc').value = '';
+  gi('cb-monto').value = '';
+  gi('cb-vencimiento').value = '';
+  gi('cb-notas').value = '';
+  // Populate presupuestos dropdown
+  var sel = gi('cb-presupuesto');
+  sel.innerHTML = '<option value="">Sin presupuesto vinculado</option>';
+  PD.forEach(function(p){
+    var o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = (p.numero||'Sin numero')+' — '+(p.cliente||'');
+    o.dataset.cliente = p.cliente||'';
+    o.dataset.monto = p.monto||0;
+    o.dataset.desc = p.descripcion||'';
+    sel.appendChild(o);
+  });
+  gi('modalCobro').classList.add('open');
+}
+
+function autoFillCobro(){
+  var sel = gi('cb-presupuesto');
+  var opt = sel.options[sel.selectedIndex];
+  if(opt && opt.dataset.cliente){
+    gi('cb-cliente').value = opt.dataset.cliente;
+    gi('cb-monto').value = opt.dataset.monto;
+    gi('cb-desc').value = opt.dataset.desc;
+  }
+}
+
+function editCobro(id){
+  var r = cobrosData.find(function(x){return x.id===id;});
+  if(!r) return;
+  editingCobro = id;
+  openModalCobro();
+  gi('mCobroTitle').textContent = 'Editar Cobro';
+  gi('btnSaveCobro').textContent = 'Actualizar';
+  gi('cb-fecha').value = r.fecha||'';
+  gi('cb-presupuesto').value = r.presupuesto_id||'';
+  gi('cb-factura').value = r.factura||'';
+  gi('cb-estado').value = r.estado||'Pendiente';
+  gi('cb-cliente').value = r.cliente||'';
+  gi('cb-desc').value = r.descripcion||'';
+  gi('cb-monto').value = r.monto||'';
+  gi('cb-vencimiento').value = r.vencimiento||'';
+  gi('cb-notas').value = r.notas||'';
+}
+
+async function guardarCobro(){
+  var fecha = gi('cb-fecha').value;
+  var cliente = gi('cb-cliente').value.trim();
+  var monto = parseFloat(gi('cb-monto').value);
+  if(!fecha||!cliente||isNaN(monto)||monto<=0){ toast('Completa fecha, cliente y monto','e'); return; }
+
+  var sel = gi('cb-presupuesto');
+  var presId = sel.value||null;
+  var presNum = presId ? (sel.options[sel.selectedIndex].textContent.split('—')[0].trim()) : (gi('cb-factura').value.trim()||null);
+
+  var payload = {
+    fecha: fecha,
+    presupuesto_id: presId,
+    presupuesto_num: presId ? PD.find(function(p){return p.id===presId;})?.numero||null : null,
+    factura: gi('cb-factura').value.trim()||null,
+    cliente: cliente,
+    descripcion: gi('cb-desc').value.trim()||null,
+    monto: monto,
+    estado: gi('cb-estado').value,
+    vencimiento: gi('cb-vencimiento').value||null,
+    notas: gi('cb-notas').value.trim()||null
+  };
+
+  var btn = gi('btnSaveCobro');
+  btn.disabled=true; btn.textContent='Guardando…';
+  var error;
+  if(editingCobro){
+    var r = await sb.from('cobros_pendientes').update(payload).eq('id',editingCobro);
+    error = r.error;
+  } else {
+    var r = await sb.from('cobros_pendientes').insert(payload);
+    error = r.error;
+  }
+  btn.disabled=false; btn.textContent=editingCobro?'Actualizar':'Guardar';
+
+  if(error){ toast('Error: '+error.message,'e'); return; }
+  toast((editingCobro?'Cobro actualizado':'Cobro guardado')+' ✓','s');
+  cm('modalCobro');
+  editingCobro=null;
+  await lCobros();
+  rCobros();
+}
+
+async function deleteCobro(id){
+  if(!confirm('¿Eliminar este cobro?')) return;
+  var r = await sb.from('cobros_pendientes').delete().eq('id',id);
+  if(r.error){ toast('Error: '+r.error.message,'e'); return; }
+  toast('Eliminado ✓','s');
+  await lCobros();
+  rCobros();
 }
 
 function toggleSidebar(){
