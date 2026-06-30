@@ -278,6 +278,15 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 .pdf-preview-wrap{background:#e8ecf0;border-radius:12px;padding:20px;margin-top:16px}
 .pdf-preview-inner{background:#fff;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.15);overflow:hidden}
 @media(max-width:768px){.pend-grid{grid-template-columns:1fr}.gp-items-header{display:none}.gp-item-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto}}
+
+.cotiz-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:6px 28px;display:flex;align-items:center;gap:16px;font-size:12px;flex-wrap:wrap}
+.cotiz-item{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.cotiz-item strong{color:var(--text);font-variant-numeric:tabular-nums}
+.cotiz-edit{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:3px 8px;cursor:pointer;font-family:inherit;transition:all .15s}
+.cotiz-edit:hover{border-color:var(--accent2);color:var(--accent2)}
+.moneda-btns{display:flex;gap:4px}
+.moneda-btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s;font-family:inherit}
+.moneda-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
 </style>
 </head>
 <body>
@@ -322,6 +331,15 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 </aside>
 
 <main class="main">
+<div class="cotiz-bar" id="cotizBar">
+  <div class="cotiz-item">
+    <span>&#128178; USD / &#8370;</span>
+    <strong id="cotizValor">7.800</strong>
+    <button class="cotiz-edit" onclick="editCotiz()">Actualizar cotizaci&#243;n</button>
+  </div>
+  <div style="margin-left:auto;font-size:11px;color:var(--muted)" id="cotizFecha"></div>
+</div>
+
 
 <!-- DASHBOARD -->
 <div class="page active" id="page-dash">
@@ -1151,7 +1169,9 @@ CREATE POLICY "all" ON cobros_pendientes FOR ALL USING (true) WITH CHECK (true);
         </div>
         <div class="fgg full"><label>Cliente *</label><input type="text" id="cb-cliente" placeholder="Nombre del cliente"></div>
         <div class="fgg full"><label>Descripci&#243;n</label><input type="text" id="cb-desc" placeholder="Descripci&#243;n del cobro"></div>
-        <div class="fgg"><label>Monto (&#8370;) *</label><input type="number" id="cb-monto" placeholder="0" min="0"></div>
+        <div class="fgg"><label>Moneda</label><div class="moneda-btns"><button class="moneda-btn active" id="cbMonedaGS" onclick="setMon('cb','GS',this)">&#8370; Gs.</button><button class="moneda-btn" id="cbMonedaUSD" onclick="setMon('cb','USD',this)">$ USD</button></div></div>
+        <div class="fgg"><label>Cotiz. USD (si aplica)</label><input type="number" id="cbCotiz" placeholder="7800" style="display:none"></div>
+        <div class="fgg"><label>Monto *</label><input type="number" id="cb-monto" placeholder="0" min="0"></div>
         <div class="fgg"><label>Fecha de Vencimiento</label><input type="date" id="cb-vencimiento"></div>
         <div class="fgg full"><label>Notas</label><textarea id="cb-notas" placeholder="Observaciones&#8230;" style="min-height:50px"></textarea></div>
       </div>
@@ -1322,17 +1342,17 @@ function rDbPieChart(comprasMes){
 }
 var td=()=>new Date().toISOString().slice(0,10);
 function sf(obj,px){Object.entries(obj).forEach(([k,v])=>{var el=gi(px+k);if(el)el.value=v})}
-function oV(){if(!sb){toast('Conecta Supabase primero','e');return}eV=null;gi('mVt').textContent='Nueva Venta';gi('bsV').textContent='Guardar Venta';sf({f:td(),p:'',fa:'',cl:'',t:'Servicio',d:'',m:'',i:'true'},'v');gi('mV').classList.add('open')}
-function oC(){if(!sb){toast('Conecta Supabase primero','e');return}eC=null;gi('mCt').textContent='Nueva Compra';gi('bsC').textContent='Guardar Compra';sf({f:td(),p:'',fa:'',pv:'',t:'Servicio',d:'',m_:'',i:'true'},'c');gi('mC').classList.add('open')}
-function oP(){if(!sb){toast('Conecta Supabase primero','e');return}eP=null;gi('mPt').textContent='Nuevo Presupuesto';gi('bsP').textContent='Guardar';sf({f:td(),n:'',cl:'',d:'',m:'',e:'Pendiente',no:''},'p');gi('mP').classList.add('open')}
+function oV(){if(!sb){toast('Conecta Supabase primero','e');return}eV=null;initMon('v');gi('mVt').textContent='Nueva Venta';gi('bsV').textContent='Guardar Venta';sf({f:td(),p:'',fa:'',cl:'',t:'Servicio',d:'',m:'',i:'true'},'v');gi('mV').classList.add('open')}
+function oC(){if(!sb){toast('Conecta Supabase primero','e');return}eC=null;initMon('c');gi('mCt').textContent='Nueva Compra';gi('bsC').textContent='Guardar Compra';sf({f:td(),p:'',fa:'',pv:'',t:'Servicio',d:'',m_:'',i:'true'},'c');gi('mC').classList.add('open')}
+function oP(){if(!sb){toast('Conecta Supabase primero','e');return}eP=null;initMon('p');gi('mPt').textContent='Nuevo Presupuesto';gi('bsP').textContent='Guardar';sf({f:td(),n:'',cl:'',d:'',m:'',e:'Pendiente',no:''},'p');gi('mP').classList.add('open')}
 function oG(){if(!sb){toast('Conecta Supabase primero','e');return}eG=null;gi('mGt').textContent='Nuevo Gasto Fijo';gi('bsG').textContent='Guardar';sf({c:'',cat:'Personal',fr:'Mensual',m:'',a:'true'},'g');gi('mG').classList.add('open')}
 function cm(id){gi(id).classList.remove('open')}
 function edV(id){var r=VD.find(x=>x.id===id);if(!r)return;eV=id;gi('mVt').textContent='Editar Venta';gi('bsV').textContent='Actualizar Venta';gi('vf').value=r.fecha;gi('vp').value=r.presupuesto||'';gi('vfa').value=r.factura||'';gi('vcl').value=r.cliente||'';gi('vt').value=r.tipo||'Servicio';gi('vd').value=r.descripcion||'';gi('vm').value=r.monto;gi('vi').value=String(r.iva);gi('mV').classList.add('open')}
 function edC(id){var r=CD.find(x=>x.id===id);if(!r)return;eC=id;gi('mCt').textContent='Editar Compra';gi('bsC').textContent='Actualizar Compra';gi('cf').value=r.fecha;gi('cp').value=r.presupuesto||'';gi('cfa').value=r.factura||'';gi('cpv').value=r.proveedor||'';gi('ct').value=r.tipo||'Servicio';gi('cd').value=r.descripcion||'';gi('cm_').value=r.monto;gi('ci').value=String(r.iva);gi('mC').classList.add('open')}
 function edP(id){var r=PD.find(x=>x.id===id);if(!r)return;eP=id;gi('mPt').textContent='Editar Presupuesto';gi('bsP').textContent='Actualizar';gi('pf').value=r.fecha;gi('pn').value=r.numero||'';gi('pcl').value=r.cliente||'';gi('pd').value=r.descripcion||'';gi('pm').value=r.monto||'';gi('pe').value=r.estado||'Pendiente';gi('pno').value=r.notas||'';gi('mP').classList.add('open')}
 function edG(id){var r=GD.find(x=>x.id===id);if(!r)return;eG=id;gi('mGt').textContent='Editar Gasto Fijo';gi('bsG').textContent='Actualizar';gi('gc').value=r.concepto;gi('gcat').value=r.categoria||'Personal';gi('gfr').value=r.frecuencia||'Mensual';gi('gm').value=r.monto_mensual;gi('ga').value=String(r.activo);gi('mG').classList.add('open')}
-async function sV(){var f=gi('vf').value,m=parseFloat(gi('vm').value);if(!f||isNaN(m)||m<=0){toast('Completa fecha y monto','e');return}var pay={fecha:f,presupuesto:gi('vp').value.trim()||null,factura:gi('vfa').value.trim()||null,cliente:gi('vcl').value.trim()||null,tipo:gi('vt').value,descripcion:gi('vd').value.trim()||null,monto:m,iva:gi('vi').value==='true'};await sv2('ventas','bsV',eV,pay,'mV','Venta');eV=null;await lV();usV()}
-async function sC(){var f=gi('cf').value,m=parseFloat(gi('cm_').value);if(!f||isNaN(m)||m<=0){toast('Completa fecha y monto','e');return}var pay={fecha:f,presupuesto:gi('cp').value.trim()||null,factura:gi('cfa').value.trim()||null,proveedor:gi('cpv').value.trim()||null,tipo:gi('ct').value,descripcion:gi('cd').value.trim()||null,monto:m,iva:gi('ci').value==='true'};await sv2('compras','bsC',eC,pay,'mC','Compra');eC=null;await lC();usC()}
+async function sV(){var f=gi('vf').value,mRaw=parseFloat(gi('vm').value);if(!f||isNaN(mRaw)||mRaw<=0){toast('Completa fecha y monto','e');return}var m=monToGs('v',mRaw);var pay={fecha:f,presupuesto:gi('vp').value.trim()||null,factura:gi('vfa').value.trim()||null,cliente:gi('vcl').value.trim()||null,tipo:gi('vt').value,descripcion:gi('vd').value.trim()||null,monto:m,iva:gi('vi').value==='true',moneda:monLabel('v')};await sv2('ventas','bsV',eV,pay,'mV','Venta');eV=null;await lV();usV()}
+async function sC(){var f=gi('cf').value,mRaw=parseFloat(gi('cm_').value);if(!f||isNaN(mRaw)||mRaw<=0){toast('Completa fecha y monto','e');return}var m=monToGs('c',mRaw);var pay={fecha:f,presupuesto:gi('cp').value.trim()||null,factura:gi('cfa').value.trim()||null,proveedor:gi('cpv').value.trim()||null,tipo:gi('ct').value,descripcion:gi('cd').value.trim()||null,monto:m,iva:gi('ci').value==='true',moneda:monLabel('c')};await sv2('compras','bsC',eC,pay,'mC','Compra');eC=null;await lC();usC()}
 async function sP(){var f=gi('pf').value;if(!f){toast('Completa la fecha','e');return}var m=parseFloat(gi('pm').value)||null;var pay={fecha:f,numero:gi('pn').value.trim()||null,cliente:gi('pcl').value.trim()||null,descripcion:gi('pd').value.trim()||null,monto:m,estado:gi('pe').value,notas:gi('pno').value.trim()||null};await sv2('presupuestos','bsP',eP,pay,'mP','Presupuesto');eP=null;await lP();usPS()}
 async function sG(){var c=gi('gc').value.trim(),m=parseFloat(gi('gm').value);if(!c||isNaN(m)||m<0){toast('Completa concepto y monto','e');return}var pay={concepto:c,categoria:gi('gcat').value,frecuencia:gi('gfr').value,monto_mensual:m,activo:gi('ga').value==='true'};await sv2('gastos_fijos','bsG',eG,pay,'mG','Gasto');eG=null;await lG();usGF()}
 async function sv2(tbl,btnId,editing,pay,modalId,lbl){var btn=gi(btnId);btn.disabled=true;btn.textContent='Guardando\u2026';var err;if(editing){var r=await sb.from(tbl).update(pay).eq('id',editing);err=r.error}else{var r=await sb.from(tbl).insert(pay);err=r.error}btn.disabled=false;btn.textContent=editing?'Actualizar '+lbl:'Guardar '+lbl;if(err){toast('Error: '+err.message,'e');return}toast(lbl+(editing?' actualizado':' guardado')+' \u2713','s');cm(modalId)}
@@ -2757,8 +2777,9 @@ function editCobro(id){
 async function guardarCobro(){
   var fecha = gi('cb-fecha').value;
   var cliente = gi('cb-cliente').value.trim();
-  var monto = parseFloat(gi('cb-monto').value);
-  if(!fecha||!cliente||isNaN(monto)||monto<=0){ toast('Completa fecha, cliente y monto','e'); return; }
+  var montoRaw = parseFloat(gi('cb-monto').value);
+  if(!fecha||!cliente||isNaN(montoRaw)||montoRaw<=0){ toast('Completa fecha, cliente y monto','e'); return; }
+  var monto = monToGs('cb', montoRaw);
 
   var sel = gi('cb-presupuesto');
   var presId = sel.value||null;
@@ -2806,6 +2827,69 @@ async function deleteCobro(id){
   rCobros();
 }
 
+// ══════════════════════════════════════════════════════════
+// COTIZACION Y MONEDA
+// ══════════════════════════════════════════════════════════
+var cotizacion = parseFloat(localStorage.getItem('bi_cotiz'))||7800;
+var cotizFechaStr = localStorage.getItem('bi_cotiz_fecha')||'';
+var modalMonedas = {};
+
+function initCotiz(){
+  gi('cotizValor').textContent = cotizacion.toLocaleString('es-PY');
+  if(cotizFechaStr) gi('cotizFecha').textContent = 'Actualizado: '+cotizFechaStr;
+}
+
+function editCotiz(){
+  var nueva = prompt('Cotizaci\u00f3n del d\u00eda (Gs. por 1 USD):', cotizacion);
+  if(!nueva||isNaN(parseFloat(nueva))) return;
+  cotizacion = parseFloat(nueva);
+  var ahora = new Date().toLocaleDateString('es-PY')+' '+new Date().toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'});
+  cotizFechaStr = ahora;
+  localStorage.setItem('bi_cotiz', cotizacion);
+  localStorage.setItem('bi_cotiz_fecha', ahora);
+  gi('cotizValor').textContent = cotizacion.toLocaleString('es-PY');
+  gi('cotizFecha').textContent = 'Actualizado: '+ahora;
+  toast('Cotizaci\u00f3n: \u20b2 '+cotizacion.toLocaleString('es-PY')+' / USD \u2713','s');
+}
+
+function setMon(prefix, moneda, btn){
+  modalMonedas[prefix] = moneda;
+  var gsId = prefix==='cb'?'cbMonedaGS':prefix+'MonedaGS';
+  var usdId = prefix==='cb'?'cbMonedaUSD':prefix+'MonedaUSD';
+  var cotizId = prefix==='cb'?'cbCotiz':prefix+'Cotiz';
+  gi(gsId).classList.toggle('active', moneda==='GS');
+  gi(usdId).classList.toggle('active', moneda==='USD');
+  var cotizEl = gi(cotizId);
+  if(cotizEl){
+    cotizEl.style.display = moneda==='USD'?'block':'none';
+    if(moneda==='USD' && !cotizEl.value) cotizEl.value = cotizacion;
+  }
+}
+
+function initMon(prefix){
+  modalMonedas[prefix] = 'GS';
+  var gsId = prefix==='cb'?'cbMonedaGS':prefix+'MonedaGS';
+  var usdId = prefix==='cb'?'cbMonedaUSD':prefix+'MonedaUSD';
+  var cotizId = prefix==='cb'?'cbCotiz':prefix+'Cotiz';
+  var g=gi(gsId),u=gi(usdId),co=gi(cotizId);
+  if(g) g.classList.add('active');
+  if(u) u.classList.remove('active');
+  if(co){ co.style.display='none'; co.value=''; }
+}
+
+function monToGs(prefix, raw){
+  var n = parseFloat(raw)||0;
+  if((modalMonedas[prefix]||'GS')==='USD'){
+    var cotizId = prefix==='cb'?'cbCotiz':prefix+'Cotiz';
+    var cotizEl = gi(cotizId);
+    var tc = parseFloat(cotizEl?cotizEl.value:0)||cotizacion;
+    return Math.round(n*tc);
+  }
+  return n;
+}
+
+function monLabel(prefix){ return (modalMonedas[prefix]||'GS')==='USD'?'USD':'GS'; }
+
 function toggleSidebar(){
   var s=gi('sidebar'),b=gi('hbgBtn'),o=gi('sbOverlay');
   s.classList.toggle('open');b.classList.toggle('open');o.classList.toggle('open');
@@ -2817,7 +2901,7 @@ function closeSidebar(){
 (function init(){
   var SUPABASE_URL='https://vnzdrvlzdvutwhzzapfy.supabase.co';
   var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuemRydmx6ZHZ1dHdoenphcGZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NjY1NDUsImV4cCI6MjA5ODE0MjU0NX0.z0vVZA5nzqwwBlJl0trr6K4XPh5U_SwggKdyKOv8s2c';
-  localStorage.setItem('bi_url',SUPABASE_URL);
+  localStorage.setItem('bi_url',SUPABASE_URL);initCotiz();
   localStorage.setItem('bi_key',SUPABASE_KEY);
   // Wait for supabase library to load
   function tryInit(attempts){
