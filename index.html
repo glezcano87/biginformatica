@@ -853,6 +853,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
       <div class="gp-form">
         <h3>Margen de Ganancia Global</h3>
         <div class="gp-margen-btns" id="gpMargenBtns">
+          <button class="gp-mb" onclick="setMargenGlobal(0,this)">0%</button>
           <button class="gp-mb" onclick="setMargenGlobal(10,this)">10%</button>
           <button class="gp-mb" onclick="setMargenGlobal(15,this)">15%</button>
           <button class="gp-mb active" onclick="setMargenGlobal(20,this)">20%</button>
@@ -2578,7 +2579,7 @@ function verPrevGPres(){
   var numero=gi('gp-numero').value.trim()||('Presupuesto '+fd(fecha));
   var descGen=gi('gp-descripcion').value.trim();
   var intro=gi('gp-intro').value.trim()||'Nos complace presentarle el presupuesto solicitado.';
-  var totalVenta=items.reduce(function(s,it){return s+(it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0);},0);
+  var totalVenta=items.reduce(function(s,it){return s+gpPrecioVenta(it);},0);
 
   var st='<style>'+
     '*{box-sizing:border-box;margin:0;padding:0}'+
@@ -2618,8 +2619,8 @@ function verPrevGPres(){
     '</style>';
 
   var rows=items.map(function(it){
-    var pv=it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0;
-    return '<tr><td>'+it.qty+'</td><td>'+it.desc+'</td><td>Gs. '+fmt(pv)+'.-</td></tr>';
+    var pv=gpPrecioVenta(it);
+    return '<tr><td>'+it.qty+'</td><td>'+it.desc+'</td><td>'+gpSimboloMoneda()+pv.toLocaleString('es-PY')+'.-</td></tr>';
   }).join('');
 
   var html=st+
@@ -2640,7 +2641,7 @@ function verPrevGPres(){
           '<thead><tr><th>Cantidad</th><th>Detalles</th><th>Precio</th></tr></thead>'+
           '<tbody>'+rows+'</tbody>'+
         '</table>'+
-        '<div class="tot"><div class="tot-l">Total del Presupuesto</div><div class="tot-v">Gs. '+fmt(totalVenta)+'.-</div></div>'+
+        '<div class="tot"><div class="tot-l">Total del Presupuesto</div><div class="tot-v">'+gpSimboloMoneda()+totalVenta.toLocaleString('es-PY')+'.-</div></div>'+
         '<p class="ftr">Esperamos que este presupuesto sea de su satisfacci\u00f3n. Quedamos atentos a cualquier consulta o requerimiento adicional que puedan tener.<br><br>Agradecemos su confianza en nuestros servicios.</p>'+
         '<div class="firma">'+
           '<div>'+
