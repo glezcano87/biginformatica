@@ -836,6 +836,16 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
           <div class="fgg"><label>N&#176; Presupuesto</label><input type="text" id="gp-numero" placeholder="Ej: Presupuesto 08-06-26"></div>
           <div class="fgg"><label>Descripci&#243;n general</label><input type="text" id="gp-descripcion" placeholder="Ej: Equipos inform&#225;ticos, Servicio de soporte&#8230;"></div>
           <div class="fgg full"><label>Introducci&#243;n (opcional)</label><textarea id="gp-intro" placeholder="Ej: Nos complace presentarle el presupuesto de impresoras Epson EcoTank." style="min-height:52px" oninput="calcGPres()"></textarea></div>
+          <div class="fgg"><label>Moneda del Presupuesto</label>
+            <div class="moneda-btns">
+              <button class="moneda-btn active" id="gpMonedaGS" onclick="setGPMoneda('GS',this)">&#8370; Guaran&#237;es</button>
+              <button class="moneda-btn" id="gpMonedaUSD" onclick="setGPMoneda('USD',this)">&#36; D&#243;lares</button>
+            </div>
+          </div>
+          <div class="fgg" id="gpCotizWrap" style="display:none">
+            <label>Cotizaci&#243;n USD (&#8370; por 1 USD)</label>
+            <input type="number" id="gpCotiz" placeholder="7800" min="0" oninput="calcGPres()">
+          </div>
         </div>
       </div>
 
@@ -2410,10 +2420,46 @@ var gpMargen=20;
 
 function initGPres(){
   if(!gi('gp-fecha').value) gi('gp-fecha').value=new Date().toISOString().slice(0,10);
+  gpMoneda='GS';gi('gpMonedaGS').classList.add('active');gi('gpMonedaUSD').classList.remove('active');gi('gpCotizWrap').style.display='none';
   if(!gpItems.length){
     gpItems=[{desc:'',qty:1,costo:0,margen:gpMargen}];
     renderGPItems();
   }
+}
+
+var gpMoneda = 'GS'; // GS o USD
+
+function setGPMoneda(moneda, btn){
+  gpMoneda = moneda;
+  gi('gpMonedaGS').classList.toggle('active', moneda==='GS');
+  gi('gpMonedaUSD').classList.toggle('active', moneda==='USD');
+  var wrap = gi('gpCotizWrap');
+  wrap.style.display = moneda==='USD' ? 'flex' : 'none';
+  if(moneda==='USD' && !gi('gpCotiz').value) gi('gpCotiz').value = cotizacion;
+  calcGPres();
+  renderGPItems();
+}
+
+function gpPrecioVenta(it){
+  // costo en la moneda seleccionada / (1 - margen)
+  if(!it.costo||it.costo<=0) return 0;
+  return Math.round(it.costo * it.qty / (1 - it.margen/100));
+}
+
+function gpSimboloMoneda(){
+  return gpMoneda==='USD' ? 'U$S ' : 'Gs. ';
+}
+
+function gpFmtMonto(n){
+  return gpSimboloMoneda() + Math.abs(n||0).toLocaleString('es-PY') + '.-';
+}
+
+function gpTotalGs(totalVenta){
+  if(gpMoneda==='USD'){
+    var tc = parseFloat(gi('gpCotiz').value)||cotizacion;
+    return Math.round(totalVenta * tc);
+  }
+  return totalVenta;
 }
 
 function setMargenGlobal(pct,btn){
@@ -2502,11 +2548,12 @@ function updateGPRow(i){
 
 function calcGPres(){
   var totalCosto=gpItems.reduce(function(s,it){return s+it.costo*it.qty;},0);
-  var totalVenta=gpItems.reduce(function(s,it){return s+(it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0);},0);
+  var totalVenta=gpItems.reduce(function(s,it){return s+gpPrecioVenta(it);},0);
   var ganancia=totalVenta-totalCosto;
-  gi('gp-costo-total').textContent='\u20b2 '+fmt(totalCosto);
-  gi('gp-ganancia-total').textContent='\u20b2 '+fmt(ganancia);
-  gi('gp-venta-total').textContent='\u20b2 '+fmt(totalVenta);
+  var sym=gpSimboloMoneda();
+  gi('gp-costo-total').textContent=sym+totalCosto.toLocaleString('es-PY');
+  gi('gp-ganancia-total').textContent=sym+ganancia.toLocaleString('es-PY');
+  gi('gp-venta-total').textContent=sym+totalVenta.toLocaleString('es-PY');
 }
 
 function limpiarGPres(){
@@ -2625,7 +2672,8 @@ async function guardarPresDesdeGP(){
   var fecha=gi('gp-fecha').value;
   var numero=gi('gp-numero').value.trim()||('Presupuesto '+fd(fecha));
   var items=gpItems.filter(function(it){return it.desc.trim()&&it.costo>0;});
-  var totalVenta=items.reduce(function(s,it){return s+(it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0);},0);
+  var totalVenta=items.reduce(function(s,it){return s+gpPrecioVenta(it);},0);
+  var totalGs=gpTotalGs(totalVenta);
   var itemsTexto=items.map(function(it){
     var pv=it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0;
     return it.qty+'x '+it.desc+' = Gs. '+fmt(pv)+'.-';
@@ -2633,7 +2681,7 @@ async function guardarPresDesdeGP(){
   var payload={
     fecha:fecha, numero:numero, cliente:cliente,
     descripcion:gi('gp-descripcion').value.trim()||null,
-    monto:totalVenta, estado:'Pendiente',
+    monto:totalGs, estado:'Pendiente',
     notas:'Items: '+itemsTexto+' | Margen: '+gpMargen+'%'
   };
   var {error}=await sb.from('presupuestos').insert(payload);
