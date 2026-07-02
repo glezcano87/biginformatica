@@ -808,51 +808,6 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
   </div>
 </div>
 
-<!-- PENDIENTES -->
-<div class="page" id="page-pendientes">
-  <div class="topbar">
-    <div><h1>Presupuestos Pendientes</h1><div class="meta" id="pendMeta">&#8212;</div></div>
-    <button class="btn btn-g" onclick="rPendientes()">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-      Actualizar
-    </button>
-  </div>
-  <div class="content">
-    <div class="srow" style="margin-bottom:24px">
-      <div class="sc"><div class="lbl">Cobros Pendientes</div><div class="val r" id="pend-total-cobro">&#8370; 0</div><div style="font-size:11px;color:var(--muted);margin-top:3px" id="pend-count-cobro">0 presupuestos</div></div>
-      <div class="sc"><div class="lbl">Presupuestos en Espera</div><div class="val y" id="pend-total-apro">&#8370; 0</div><div style="font-size:11px;color:var(--muted);margin-top:3px" id="pend-count-apro">0 presupuestos</div></div>
-      <div class="sc"><div class="lbl">Total Potencial</div><div class="val b" id="pend-total-pot">&#8370; 0</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Si se aprueban todos</div></div>
-      <div class="sc"><div class="lbl">Tasa de Aprobaci&#243;n</div><div class="val g" id="pend-tasa">0%</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Aprobados vs total</div></div>
-    </div>
-    <div class="pend-grid">
-      <!-- COBROS PENDIENTES -->
-      <div class="pend-card">
-        <div class="pend-card-h">
-          <span class="pt">&#128176; Cobros Pendientes</span>
-          <span class="pc r" id="pend-cobro-total">&#8370; 0</span>
-        </div>
-        <div id="pend-cobro-list"><div class="es" style="padding:30px"><p>Sin cobros pendientes</p></div></div>
-      </div>
-      <!-- PRESUPUESTOS PENDIENTES -->
-      <div class="pend-card">
-        <div class="pend-card-h">
-          <span class="pt">&#9200; Esperando Aprobaci&#243;n</span>
-          <span class="pc y" id="pend-apro-total">&#8370; 0</span>
-        </div>
-        <div id="pend-apro-list"><div class="es" style="padding:30px"><p>Sin presupuestos pendientes</p></div></div>
-      </div>
-    </div>
-    <!-- TIMELINE -->
-    <div class="db-panel">
-      <div class="db-panel-h"><span class="title">&#128203; Todos los presupuestos por estado</span></div>
-      <div style="overflow-x:auto"><table>
-        <thead><tr><th>Fecha</th><th>N&#176;</th><th>Cliente</th><th>Descripci&#243;n</th><th class="tr">Monto</th><th>Estado</th><th>D&#237;as</th><th></th></tr></thead>
-        <tbody id="pend-tabla"></tbody>
-      </table></div>
-    </div>
-  </div>
-</div>
-
 <!-- GENERADOR PRESUPUESTO -->
 <div class="page" id="page-gpres">
   <div class="topbar">
@@ -1246,11 +1201,11 @@ function clCfg(){localStorage.removeItem('bi_url');localStorage.removeItem('bi_k
 function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Conectado a Supabase','s');gi('cfgSt').textContent='Conectado correctamente';loadAll()}catch(e){setConn(false);toast('Error: '+e.message,'e')}}
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
-function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='presupuestos'){usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='gpres'){initGPres();}closeSidebar()}
+function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='gpres'){initGPres();}closeSidebar()}
 async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros()]);popFjSel();popMgSel();popCtMesSel();rDash()}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
-async function lP(){if(!sb)return;var r=await sb.from('presupuestos').select('*').order('fecha',{ascending:false});if(r.error){toast('Error presupuestos: '+r.error.message,'e');return}PD=r.data||[];popMF('fmP',PD);rPres();usPS()}
+async function lP(){if(!sb)return;var r=await sb.from('presupuestos').select('*').order('fecha',{ascending:false});if(r.error){toast('Error presupuestos: '+r.error.message,'e');return}PD=r.data||[];popMF('fmP',PD);usPS();rPres()}
 async function lG(){if(!sb)return;var r=await sb.from('gastos_fijos').select('*').order('concepto');if(r.error){toast('Error gastos: '+r.error.message,'e');return}GD=r.data||[];rG();usGF()}
 function popMF(id,data){var s=gi(id),cur=s.value,ms=[...new Set(data.map(r=>r.fecha?r.fecha.slice(0,7):null).filter(Boolean))].sort().reverse();s.innerHTML='<option value="">Todos los meses</option>';ms.forEach(m=>{var[y,mo]=m.split('-'),o=document.createElement('option');o.value=m;o.textContent=MES[parseInt(mo)-1]+' '+y;s.appendChild(o)});if(cur)s.value=cur}
 function popFjSel(){var all=[...new Set([...VD.map(r=>r.fecha?r.fecha.slice(0,7):null),...CD.map(r=>r.fecha?r.fecha.slice(0,7):null)].filter(Boolean))].sort().reverse();var s=gi('fjSel'),cur=s.value,cm=curMes();s.innerHTML='';if(!all.length){s.innerHTML='<option value="">Sin datos</option>';return}all.forEach(m=>{var[y,mo]=m.split('-'),o=document.createElement('option');o.value=m;o.textContent=MES[parseInt(mo)-1]+' '+y;s.appendChild(o)});s.value=cur||(all.includes(cm)?cm:all[0]);rFlujo()}
@@ -2870,6 +2825,7 @@ function imprimirPresupuesto(){
 // ══════════════════════════════════════════════════════════
 var cobrosData = [];
 var editingCobro = null;
+var presTabActivo = 'todos';
 
 async function lCobros(){
   if(!sb) return;
