@@ -320,7 +320,6 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
     <div class="nav-s">
       <span class="nav-lbl">Sistema</span>
       <a class="nav-a" onclick="nav('cobros',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 002 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>Cobros Pendientes</a>
-      <a class="nav-a" onclick="nav('pendientes',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Presupuestos Pendientes</a>
       <a class="nav-a" onclick="nav('gpres',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Crear Presupuesto</a>
       <a class="nav-a" onclick="nav('reportes',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>Reportes PDF</a>
       <a class="nav-a" onclick="nav('importar',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Importar Excel</a>
@@ -479,24 +478,66 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 
 <!-- PRESUPUESTOS -->
 <div class="page" id="page-presupuestos">
-  <div class="topbar"><div><h1>Presupuestos</h1><div class="meta" id="pMeta">&#8212;</div></div>
-  <button class="btn btn-p" onclick="oP()"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4v16m8-8H4"/></svg>Nuevo Presupuesto</button></div>
+  <div class="topbar">
+    <div><h1>Presupuestos</h1><div class="meta" id="presMeta">&#8212;</div></div>
+    <button class="btn btn-p" onclick="oP()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4v16m8-8H4"/></svg>
+      Nuevo Presupuesto
+    </button>
+  </div>
   <div class="content">
+    <!-- STATS -->
     <div class="srow">
       <div class="sc"><div class="lbl">Total</div><div class="val b" id="ps0">0</div></div>
-      <div class="sc"><div class="lbl">Aprobados</div><div class="val g" id="ps1">0</div></div>
-      <div class="sc"><div class="lbl">Pendientes</div><div class="val y" id="ps2">0</div></div>
+      <div class="sc"><div class="lbl">Pendientes</div><div class="val y" id="ps2">0</div><div style="font-size:11px;color:var(--muted);margin-top:3px" id="ps2monto">&#8370; 0</div></div>
+      <div class="sc"><div class="lbl">Aprobados</div><div class="val g" id="ps1">0</div><div style="font-size:11px;color:var(--muted);margin-top:3px" id="ps1monto">&#8370; 0</div></div>
       <div class="sc"><div class="lbl">Rechazados</div><div class="val r" id="ps3">0</div></div>
     </div>
-    <div class="tw"><div class="ttb">
-      <div class="sb"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="qP" placeholder="Buscar&#8230;" oninput="rPres()"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <select class="fs" id="fmP" onchange="rPres()"><option value="">Todos los meses</option></select>
-        <select class="fs" id="feP" onchange="rPres()"><option value="">Todos los estados</option><option>Pendiente</option><option>Aprobado</option><option>Rechazado</option></select>
+
+    <!-- TABS -->
+    <div class="ct-tabs" style="margin-bottom:16px">
+      <div class="ct-tab active" id="ptab-todos" onclick="setPTab('todos',this)">Todos</div>
+      <div class="ct-tab" id="ptab-pendiente" onclick="setPTab('pendiente',this)">&#9200; Pendientes</div>
+      <div class="ct-tab" id="ptab-aprobado" onclick="setPTab('aprobado',this)">&#10003; Aprobados</div>
+      <div class="ct-tab" id="ptab-rechazado" onclick="setPTab('rechazado',this)">&#10005; Rechazados</div>
+    </div>
+
+    <!-- FILTROS + TABLA -->
+    <div class="tw">
+      <div class="ttb">
+        <div class="sb"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="qP" placeholder="Buscar cliente, n&#176;..." oninput="rPres()">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select class="fs" id="fmP" onchange="rPres()"><option value="">Todos los meses</option></select>
+        </div>
       </div>
-    </div><div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>N&#176; Presupuesto</th><th>Cliente</th><th>Descripci&#243;n</th><th class="tr">Monto</th><th>Estado</th><th></th></tr></thead><tbody id="tbP"></tbody></table></div></div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr>
+          <th>Fecha</th><th>N&#176;</th><th>Cliente</th><th>Descripci&#243;n</th>
+          <th class="tr">Monto</th><th>Estado</th><th>D&#237;as</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="tbP"></tbody>
+      </table></div>
+    </div>
+
+    <!-- PREVIEW PANEL -->
+    <div class="db-panel" id="presPreviewPanel" style="display:none;margin-top:16px">
+      <div class="db-panel-h">
+        <span class="title" id="presPreviewTitle">Vista Previa del Presupuesto</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-p btn-sm" onclick="imprimirPresPreview()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 002 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Imprimir / PDF
+          </button>
+          <button class="btn btn-g btn-sm" onclick="gi('presPreviewPanel').style.display='none'">Cerrar</button>
+        </div>
+      </div>
+      <div class="db-panel-body" id="presPreviewBody" style="background:#fff;padding:0;border-radius:0 0 12px 12px;overflow:auto;max-height:70vh"></div>
+    </div>
   </div>
 </div>
+
 
 <!-- GASTOS FIJOS -->
 <div class="page" id="page-gastos">
@@ -1205,7 +1246,7 @@ function clCfg(){localStorage.removeItem('bi_url');localStorage.removeItem('bi_k
 function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Conectado a Supabase','s');gi('cfgSt').textContent='Conectado correctamente';loadAll()}catch(e){setConn(false);toast('Error: '+e.message,'e')}}
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
-function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='pendientes'){rPendientes();}if(p==='cobros'){rCobros();}if(p==='gpres'){initGPres();}closeSidebar()}
+function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='presupuestos'){usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='gpres'){initGPres();}closeSidebar()}
 async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros()]);popFjSel();popMgSel();popCtMesSel();rDash()}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
@@ -1248,8 +1289,128 @@ function rFlujo(){var mes=gi('fjSel').value;if(!mes)return;var[y,mo]=mes.split('
 function rFjChart(){var all=[...new Set([...VD.map(r=>r.fecha?r.fecha.slice(0,7):null),...CD.map(r=>r.fecha?r.fecha.slice(0,7):null)].filter(Boolean))].sort(),l6=all.slice(-6),tG=GD.filter(r=>r.activo).reduce((s,r)=>s+r.monto_mensual,0);var labels=l6.map(m=>{var[y,mo]=m.split('-');return MES[parseInt(mo)-1].slice(0,3)+' '+y.slice(2)});var ing=l6.map(m=>VD.filter(r=>(r.fecha||'').startsWith(m)).reduce((s,r)=>s+r.monto,0));var cos=l6.map(m=>CD.filter(r=>(r.fecha||'').startsWith(m)).reduce((s,r)=>s+r.monto,0));var ut=l6.map((_,i)=>ing[i]-cos[i]-tG);var ctx=gi('fjChart');if(fjCh)fjCh.destroy();fjCh=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Ingresos',data:ing,backgroundColor:'rgba(34,197,94,.7)',borderRadius:4},{label:'Costos',data:cos,backgroundColor:'rgba(239,68,68,.6)',borderRadius:4},{type:'line',label:'Utilidad Neta',data:ut,borderColor:'#3B82F6',backgroundColor:'rgba(59,130,246,.1)',borderWidth:2,tension:.3,fill:true,pointBackgroundColor:'#3B82F6',pointRadius:4}]},options:{responsive:true,plugins:{legend:{labels:{color:'#6B85AD',font:{size:11}}}},scales:{x:{ticks:{color:'#6B85AD',font:{size:11}},grid:{color:'rgba(30,51,88,.5)'}},y:{ticks:{color:'#6B85AD',font:{size:11},callback:v=>'\u20b2'+fmt(v)},grid:{color:'rgba(30,51,88,.5)'}}}}});
 }
 function rMarg(){var q=gi('qM').value.toLowerCase(),mes=gi('mgSel').value;var vf=VD.filter(r=>!mes||(r.fecha||'').startsWith(mes)),cf=CD.filter(r=>!mes||(r.fecha||'').startsWith(mes));var g={};vf.forEach(r=>{var k=r.presupuesto||'(Sin presupuesto)';if(!g[k])g[k]={p:k,cl:new Set(),i:0,c:0};g[k].i+=r.monto||0;if(r.cliente)g[k].cl.add(r.cliente)});cf.forEach(r=>{var k=r.presupuesto||'(Sin presupuesto)';if(!g[k])g[k]={p:k,cl:new Set(),i:0,c:0};g[k].c+=r.monto||0});var rows=Object.values(g).filter(x=>!q||(x.p.toLowerCase().includes(q)||[...x.cl].join(' ').toLowerCase().includes(q))).sort((a,b)=>b.i-a.i);var tI=rows.reduce((s,r)=>s+r.i,0),tC=rows.reduce((s,r)=>s+r.c,0),tU=tI-tC,mp=tI>0?tU/tI*100:0;gi('mg0').textContent='\u20b2 '+fmt(tI);gi('mg1').textContent='\u20b2 '+fmt(tC);gi('mg2').textContent='\u20b2 '+fmt(tU);var me=gi('mg3');me.textContent=mp.toFixed(1)+'%';me.className='val '+(mp>=0?'p':'r');var tb=gi('tbM');if(!rows.length){tb.innerHTML=er(6,mes?'Sin datos para este mes.':'Sin datos registrados.');return}tb.innerHTML=rows.map(r=>{var ut=r.i-r.c,mg=r.i>0?ut/r.i*100:0,bc=mg>=30?'var(--green)':mg>=0?'var(--yellow)':'var(--red)',bw=Math.min(Math.abs(mg),100);return'<tr><td style="font-weight:500">'+r.p+'</td><td style="color:var(--muted);font-size:12px">'+([...r.cl].join(', ')||'&#8212;')+'</td><td class="mn tr" style="color:var(--green)">\u20b2 '+fmt(r.i)+'</td><td class="mn tr" style="color:var(--red)">\u20b2 '+fmt(r.c)+'</td><td class="mn tr" style="color:'+(ut>=0?'var(--accent2)':'var(--red)')+';font-weight:600">\u20b2 '+fmt(ut)+'</td><td style="min-width:120px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;color:'+bc+';min-width:44px">'+mg.toFixed(1)+'%</span><div class="mb-bar" style="flex:1"><div class="mb-fill" style="width:'+bw+'%;background:'+bc+'"></div></div></div></td></tr>'}).join('')}
-function rPres(){var q=gi('qP').value.toLowerCase(),m=gi('fmP').value,e=gi('feP').value,rows=PD.filter(r=>(!q||(r.cliente||'').toLowerCase().includes(q)||(r.descripcion||'').toLowerCase().includes(q)||(r.numero||'').toLowerCase().includes(q))&&(!m||(r.fecha||'').startsWith(m))&&(!e||r.estado===e));gi('pMeta').textContent=rows.length+' presupuesto'+(rows.length!==1?'s':'');var tb=gi('tbP'),eb={'Pendiente':'by','Aprobado':'bg','Rechazado':'br'};if(!rows.length){tb.innerHTML=er(7,sb?'No hay presupuestos en este filtro.':'\u26a0\ufe0f Conecta Supabase desde Configuracion.');return}tb.innerHTML=rows.map(r=>'<tr><td class="mn">'+fd(r.fecha)+'</td><td style="font-weight:500">'+(r.numero||'&#8212;')+'</td><td>'+(r.cliente||'&#8212;')+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r.descripcion||'&#8212;')+'</td><td class="mn tr" style="font-weight:600">'+(r.monto?'\u20b2 '+fmt(r.monto):'&#8212;')+'</td><td><span class="bx '+(eb[r.estado]||'bm')+'">'+(r.estado||'&#8212;')+'</span></td><td><div class="acts"><button class="ib" onclick="edP(\''+r.id+'\')" title="Editar">'+ie()+'</button><button class="ib d" onclick="dlP(\''+r.id+'\')" title="Eliminar">'+it()+'</button></div></td></tr>').join('')}
-function usPS(){gi('ps0').textContent=PD.length;gi('ps1').textContent=PD.filter(r=>r.estado==='Aprobado').length;gi('ps2').textContent=PD.filter(r=>r.estado==='Pendiente').length;gi('ps3').textContent=PD.filter(r=>r.estado==='Rechazado').length}
+function rPres(){
+  var q=gi('qP').value.toLowerCase();
+  var m=gi('fmP').value;
+  var eb={Pendiente:'by',Aprobado:'bg',Rechazado:'br'};
+  var hoy=new Date();
+
+  var rows=PD.filter(function(r){
+    var matchQ=!q||(r.cliente||'').toLowerCase().includes(q)||(r.descripcion||'').toLowerCase().includes(q)||(r.numero||'').toLowerCase().includes(q);
+    var matchM=!m||(r.fecha||'').startsWith(m);
+    var matchTab=presTabActivo==='todos'||r.estado.toLowerCase()===presTabActivo;
+    return matchQ&&matchM&&matchTab;
+  });
+
+  gi('presMeta').textContent=rows.length+' presupuesto'+(rows.length!==1?'s':'')+
+    (presTabActivo!=='todos'?' · '+presTabActivo:'');
+
+  var tb=gi('tbP');
+  if(!rows.length){tb.innerHTML=er(8,sb?'No hay presupuestos en este filtro.':'⚠️ Conecta Supabase desde Configuración.');return;}
+
+  tb.innerHTML=rows.map(function(r){
+    var dias=Math.floor((hoy-new Date(r.fecha))/(1000*60*60*24));
+    var diasColor=dias<=7?'var(--green)':dias<=30?'var(--yellow)':'var(--red)';
+    return '<tr>'+
+      '<td class="mn">'+fd(r.fecha)+'</td>'+
+      '<td style="font-weight:500">'+(r.numero||'—')+'</td>'+
+      '<td>'+(r.cliente||'—')+'</td>'+
+      '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r.descripcion||'')+'">'+(r.descripcion||'—')+'</td>'+
+      '<td class="mn tr" style="font-weight:600">'+(r.monto?'₲ '+fmt(r.monto):'—')+'</td>'+
+      '<td><span class="bx '+(eb[r.estado]||'bm')+'">'+r.estado+'</span></td>'+
+      '<td><span style="font-size:12px;font-weight:600;color:'+diasColor+'">'+dias+' d</span></td>'+
+      '<td><div class="acts">'+
+        '<button class="ib" data-id="'+r.id+'" onclick="verPresPrev(this.dataset.id)" title="Vista previa"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>'+
+        '<button class="ib" data-id="'+r.id+'" onclick="editPres(this.dataset.id)" title="Editar">'+ie()+'</button>'+
+        '<button class="ib d" data-id="'+r.id+'" onclick="dlP(this.dataset.id)" title="Eliminar">'+it()+'</button>'+
+        (r.estado==='Pendiente'?'<button class="btn btn-p btn-sm" data-id="'+r.id+'" onclick="aprobarPres(this.dataset.id)" style="font-size:11px;padding:4px 10px;background:var(--green);border:none;cursor:pointer">✓ Aprobar</button>':'')+
+        (r.estado==='Pendiente'?'<button class="btn btn-g btn-sm" data-id="'+r.id+'" onclick="rechazarPres(this.dataset.id)" style="font-size:11px;padding:4px 8px">✕ Rechazar</button>':'')+
+      '</div></td>'+
+    '</tr>';
+  }).join('');
+}
+
+function verPresPrev(id){
+  var r=PD.find(function(x){return x.id===id;});
+  if(!r) return;
+  gi('presPreviewTitle').textContent='Vista Previa: '+(r.numero||r.cliente||'Presupuesto');
+
+  var svg_logo='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20320%20230%22%3E%3Cpath%20d%3D%22M160%2012%20L305%20115%20L160%20218%20L15%20115%20Z%22%20fill%3D%22white%22%20stroke%3D%22%231B6B8A%22%20stroke-width%3D%2212%22%20stroke-linejoin%3D%22round%22%2F%3E%3Ctext%20x%3D%22160%22%20y%3D%22130%22%20font-family%3D%22Arial%20Black%2CArial%22%20font-weight%3D%22900%22%20font-size%3D%2290%22%20fill%3D%22%238DC63F%22%20text-anchor%3D%22middle%22%3EBIG%3C%2Ftext%3E%3Ctext%20x%3D%22160%22%20y%3D%22178%22%20font-family%3D%22Arial%22%20font-weight%3D%22700%22%20font-size%3D%2222%22%20fill%3D%22%238DC63F%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%223%22%3EINFORM%C3%81TICA%3C%2Ftext%3E%3C%2Fsvg%3E';
+  var logo_url='https://raw.githubusercontent.com/glezcano87/biginformatica/main/logo.png';
+
+  var st='<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}.wrap{max-width:780px;margin:0 auto}.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:4px solid #8DC63F;background:#fff}.logo{height:68px;width:auto}.hdr-r{text-align:right}.badge{display:inline-block;background:#1B6B8A;color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}.hdr-info{font-size:12px;color:#555;line-height:1.6}.hdr-info b{color:#1B6B8A;font-size:13px;display:block}.strip{height:5px;background:linear-gradient(90deg,#1B6B8A,#8DC63F)}.body{padding:22px 28px 28px}.cli{background:#f4fbf0;border-left:5px solid #8DC63F;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px}.cli-l{font-size:10px;color:#5a8a20;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}.cli-n{font-size:16px;font-weight:800;color:#111}.info-box{background:#f0f7ff;border:1px solid #d0e4f7;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#444}.estado-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-left:8px}.pendiente{background:#fef3c7;color:#92400e}.aprobado{background:#d1fae5;color:#065f46}.rechazado{background:#fee2e2;color:#991b1b}table{width:100%;border-collapse:collapse;margin-bottom:16px}thead th{background:#1B6B8A;color:#fff;padding:9px 13px;font-size:12px;font-weight:700;text-align:left}thead th:last-child{text-align:right}thead th:first-child{text-align:center;width:70px}tbody td{padding:9px 13px;border-bottom:1px solid #e4f2e4;font-size:13px}tbody td:first-child{text-align:center;font-weight:700;color:#1B6B8A}tbody td:last-child{text-align:right;font-weight:700;color:#1B6B8A}tbody tr:nth-child(even){background:#f6fbf2}.tot{background:linear-gradient(90deg,#1B6B8A,#8DC63F);border-radius:8px;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.tot-l{color:rgba(255,255,255,.88);font-size:12px;font-weight:600;text-transform:uppercase}.tot-v{color:#fff;font-size:22px;font-weight:900}.notas{font-size:12px;color:#555;line-height:1.7;background:#f4fbf0;border:1px solid #c8e8a8;border-radius:8px;padding:12px 16px;margin-bottom:16px}.firma{padding-top:14px;border-top:3px solid #8DC63F;display:flex;justify-content:space-between;align-items:flex-end}.f-attn{font-size:11px;color:#888;margin-bottom:5px}.f-name{font-size:14px;font-weight:800;color:#111}.f-cargo{font-size:12px;color:#1B6B8A;font-weight:600}.f-emp{font-size:13px;color:#5a8a20;font-weight:800}</style>';
+
+  var estadoClass=r.estado==='Aprobado'?'aprobado':r.estado==='Rechazado'?'rechazado':'pendiente';
+  var monto=r.monto?'₲ '+fmt(r.monto)+'.-':'—';
+
+  var html=st+
+    '<div class="wrap">'+
+      '<div class="hdr">'+
+        '<img class="logo" src="'+logo_url+'" onerror="this.src=''+svg_logo+''" alt="Big Informatica">'+
+        '<div class="hdr-r">'+
+          '<div class="badge">Soluciones IT</div>'+
+          '<div class="hdr-info"><b>'+(r.numero||'Sin número')+'</b>Fecha: '+formatDateLong(r.fecha)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="strip"></div>'+
+      '<div class="body">'+
+        '<div class="cli"><div class="cli-l">Dirigido a</div><div class="cli-n">'+(r.cliente||'Sin cliente')+'</div></div>'+
+        '<div class="info-box">'+
+          'Estado: <span class="estado-badge '+estadoClass+'">'+r.estado+'</span>'+
+          (r.monto?'&nbsp;&nbsp;|&nbsp;&nbsp;Monto: <strong>'+monto+'</strong>':'')+
+        '</div>'+
+        (r.descripcion?'<p style="font-size:13px;color:#444;line-height:1.7;margin-bottom:16px">'+r.descripcion+'</p>':'')+
+        '<table>'+
+          '<thead><tr><th>Item</th><th>Detalle</th><th>Monto</th></tr></thead>'+
+          '<tbody>'+
+            '<tr><td>1</td><td>'+(r.descripcion||'Ver descripción')+'</td><td>'+monto+'</td></tr>'+
+          '</tbody>'+
+        '</table>'+
+        '<div class="tot"><div class="tot-l">Total del Presupuesto</div><div class="tot-v">'+monto+'</div></div>'+
+        (r.notas?'<div class="notas"><strong>Notas:</strong> '+r.notas+'</div>':'')+
+        '<div class="firma">'+
+          '<div>'+
+            '<div class="f-attn">Atentamente,</div>'+
+            '<div class="f-name">Gustavo Lezcano</div>'+
+            '<div class="f-cargo">Gerente de Servicios Informáticos</div>'+
+            '<div class="f-emp">Big Informática</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+
+  gi('presPreviewBody').innerHTML=html;
+  gi('presPreviewPanel').style.display='block';
+  gi('presPreviewPanel').scrollIntoView({behavior:'smooth'});
+}
+
+function imprimirPresPreview(){
+  var contenido=gi('presPreviewBody').innerHTML;
+  var v=window.open('','_blank','width=900,height=700');
+  v.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Presupuesto</title></head><body>'+contenido+'</body></html>');
+  v.document.close();v.focus();
+  setTimeout(function(){v.print();},500);
+}
+
+async function rechazarPres(id){
+  if(!confirm('¿Rechazar este presupuesto?')) return;
+  var r=await sb.from('presupuestos').update({estado:'Rechazado'}).eq('id',id);
+  if(r.error){toast('Error: '+r.error.message,'e');return;}
+  toast('Presupuesto rechazado','s');
+  await lP();usPS();rPres();
+}
+
+
+function usPS(){
+  gi('ps0').textContent=PD.length;
+  var apro=PD.filter(function(r){return r.estado==='Aprobado';});
+  var pend=PD.filter(function(r){return r.estado==='Pendiente';});
+  gi('ps1').textContent=apro.length;
+  gi('ps2').textContent=pend.length;
+  gi('ps3').textContent=PD.filter(function(r){return r.estado==='Rechazado';}).length;
+  gi('ps1monto').textContent='₲ '+fmt(apro.reduce(function(s,r){return s+(r.monto||0);},0));
+  gi('ps2monto').textContent='₲ '+fmt(pend.reduce(function(s,r){return s+(r.monto||0);},0));
+}
 function rG(){var tb=gi('tbG');if(!GD.length){tb.innerHTML=er(6,sb?'No hay gastos fijos registrados.':'\u26a0\ufe0f Conecta Supabase desde Configuracion.');return}tb.innerHTML=GD.map(r=>'<tr><td style="font-weight:500">'+r.concepto+'</td><td><span class="bx bb">'+(r.categoria||'&#8212;')+'</span></td><td style="color:var(--muted);font-size:12px">'+(r.frecuencia||'Mensual')+'</td><td class="mn tr" style="font-weight:600;color:var(--yellow)">\u20b2 '+fmt(r.monto_mensual)+'</td><td><span class="bx '+(r.activo?'bg':'bm')+'">'+(r.activo?'Activo':'Inactivo')+'</span></td><td><div class="acts"><button class="ib" onclick="edG(\''+r.id+'\')" title="Editar">'+ie()+'</button><button class="ib d" onclick="dlG(\''+r.id+'\')" title="Eliminar">'+it()+'</button></div></td></tr>').join('')}
 function usGF(){var a=GD.filter(r=>r.activo),tm=a.reduce((s,r)=>s+r.monto_mensual,0),cats=new Set(GD.map(r=>r.categoria).filter(Boolean));gi('gf0').textContent='\u20b2 '+fmt(tm);gi('gf1').textContent='\u20b2 '+fmt(tm*12);gi('gf2').textContent=a.length;gi('gf3').textContent=cats.size}
 
