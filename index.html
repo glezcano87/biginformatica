@@ -2712,38 +2712,18 @@ async function lCobros(){
 }
 
 function rCobros(){
-  var q = gi('qCobros').value.toLowerCase();
-  var est = gi('fEstCobros').value;
-  var hoy = new Date();
-
-  var rows = cobrosData.filter(function(r){
-    return (!q||(r.cliente||'').toLowerCase().includes(q)||(r.presupuesto_num||'').toLowerCase().includes(q)||(r.factura||'').toLowerCase().includes(q))&&
-           (!est||r.estado===est);
+  var tb=gi('tbCobros');if(!tb)return;
+  var term=gi('sbCobros').value.toLowerCase();
+  var rows=cobrosData.filter(function(r){
+    return r.cliente.toLowerCase().includes(term)||
+           (r.presupuesto_num||'').toLowerCase().includes(term)||
+           (r.factura||'').toLowerCase().includes(term)||
+           (r.descripcion||'').toLowerCase().includes(term);
   });
-
-  var totalPend = cobrosData.filter(function(r){return r.estado==='Pendiente'||r.estado==='Vencido';}).reduce(function(s,r){return s+(r.monto||0);},0);
-  var vencidos = cobrosData.filter(function(r){
-    if(r.estado==='Cobrado') return false;
-    var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
-    return dias > 30;
-  }).length;
-  var aldia = cobrosData.filter(function(r){
-    if(r.estado==='Cobrado') return false;
-    var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
-    return dias <= 30;
-  }).length;
-  var totalCobrado = cobrosData.filter(function(r){return r.estado==='Cobrado';}).reduce(function(s,r){return s+(r.monto||0);},0);
-
-  gi('cb-total').textContent = '₲ '+fmt(totalPend);
-  gi('cb-vencidos').textContent = vencidos;
-  gi('cb-aldia').textContent = aldia;
-  gi('cb-cobrados').textContent = '₲ '+fmt(totalCobrado);
-  gi('cobrosMeta').textContent = rows.length+' registro'+(rows.length!==1?'s':'')+' · Pendiente: ₲ '+fmt(totalPend);
-
-  var tb = gi('tblCobros');
-  if(!rows.length){ tb.innerHTML=er(9,sb?'No hay cobros registrados.':'⚠️ Conecta Supabase desde Configuración.'); return; }
-
-  var eb = {Pendiente:'by', Cobrado:'bg', Vencido:'br'};
+  
+  var eb={'Pendiente':'by','Vencido':'br','Cobrado':'bg'};
+  var hoy=new Date();
+  
   tb.innerHTML = rows.map(function(r){
     var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
     var diasColor = dias>30?'var(--red)':dias>15?'var(--yellow)':'var(--green)';
@@ -2757,13 +2737,46 @@ function rCobros(){
       '<td><span class="bx '+(eb[r.estado]||'bm')+'">'+r.estado+'</span></td>'+
       '<td><span style="font-size:12px;font-weight:600;color:'+diasColor+'">'+dias+' d</span></td>'+
       '<td><div class="acts">'+
-        '<button class="ib" onclick="editCobro(this.dataset.id)" data-id="'+r.id+'" title="Editar">'+ie()+'</button>'+
-        '<button class="ib d" onclick="deleteCobro(this.dataset.id)" data-id="'+r.id+'" title="Eliminar">'+it()+'</button>'+
+        (r.estado !== 'Cobrado' ? '<button class="btn btn-p btn-sm" onclick="marcarCobrado(\''+r.id+'\')" style="font-size:11px;padding:4px 10px;background:var(--green);border:none;cursor:pointer">✓ Cobrar</button>' : '')+
+        '<button class="ib" onclick="editCobro(\''+r.id+'\')" title="Editar">'+ie()+'</button>'+
+        '<button class="ib d" onclick="deleteCobro(\''+r.id+'\')" title="Eliminar">'+it()+'</button>'+
       '</div></td>'+
     '</tr>';
   }).join('');
 }
 
+async function marcarCobrado(id) {
+  var cobro = cobrosData.find(function(x) { return x.id === id; });
+  if(!cobro) return;
+
+  if(!confirm('¿Confirmar el cobro por ₲ ' + fmt(cobro.monto) + ' y registrarlo en el Libro de Ventas?')) return;
+
+  var r1 = await sb.from('cobros_pendientes').update({ estado: 'Cobrado' }).eq('id', id);
+  if(r1.error) { 
+    toast('Error actualizando cobro: ' + r1.error.message, 'e'); 
+    return; 
+  }
+
+  var ventaPayload = {
+    fecha: new Date().toISOString().slice(0,10),
+    presupuesto: cobro.presupuesto_num || null,
+    factura: cobro.factura || null,
+    cliente: cobro.cliente || null,
+    tipo: 'Servicio',
+    descripcion: cobro.descripcion || 'Cobro de saldo pendiente',
+    monto: cobro.monto,
+    iva: true
+  };
+
+  var r2 = await sb.from('ventas').insert(ventaPayload);
+  if(r2.error) { 
+    toast('Error al registrar en Ventas: ' + r2.error.message, 'e'); 
+    return; 
+  }
+
+  toast('¡Cobrado y registrado en Ventas ✓!', 's');
+  await loadAll();
+}
 function openModalCobro(){
   if(!sb){ toast('Conecta Supabase primero','e'); return; }
   editingCobro = null;
