@@ -1671,6 +1671,39 @@ document.addEventListener('DOMContentLoaded',function(){
   });
 });
 
+function excelDateToISO(val){
+  if(!val) return null;
+  if(val instanceof Date){
+    var y=val.getFullYear(),m=String(val.getMonth()+1).padStart(2,'0'),d=String(val.getDate()).padStart(2,'0');
+    return y+'-'+m+'-'+d;
+  }
+  if(typeof val==='number'&&val>40000&&val<60000){
+    var d=new Date(Math.round((val-25569)*86400*1000));
+    var y=d.getUTCFullYear(),m=String(d.getUTCMonth()+1).padStart(2,'0'),day=String(d.getUTCDate()).padStart(2,'0');
+    return y+'-'+m+'-'+day;
+  }
+  if(typeof val==='string'){
+    // dd/mm/yyyy
+    var p=val.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+    if(p) return p[3]+'-'+p[2].padStart(2,'0')+'-'+p[1].padStart(2,'0');
+    // yyyy-mm-dd
+    if(/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  }
+  return null;
+}
+
+function normalizeIVA(val){
+  if(val===undefined||val===null||val==='') return true;
+  var s=String(val).toLowerCase().trim();
+  return s==='si'||s==='sí'||s==='s'||s==='true'||s==='1';
+}
+
+function normalizeMonto(val){
+  if(!val) return 0;
+  var n=parseFloat(String(val).replace(/[^\d.-]/g,''));
+  return isNaN(n)?0:Math.abs(n); // compras vienen negativas en el Excel
+}
+
 function parseExcel(wb){
   var wsV=null, wsC=null;
   wb.SheetNames.forEach(function(s){
@@ -2320,7 +2353,7 @@ function generarPDF(tipo){
           return '<tr><td>'+r.p+'</td><td style="color:#666">'+(Array.from(r.cl).join(', ')||'\u2014')+'</td>'+
             '<td class="tr" style="color:#16a34a">'+fmtGs(r.i)+'</td>'+
             '<td class="tr" style="color:#dc2626">'+fmtGs(r.c)+'</td>'+
-            '<td class="tr" style="color:'+(ut2>=0?'#2563EB':'#dc2626')+';font-weight:700">'+fmtGs(ut2)+'</td>'+
+            '<td class="tr" style="color:'+(ut2>=0?'#2563EB':'#dc2626');+';font-weight:700">'+fmtGs(ut2)+'</td>'+
             '<td class="tr" style="font-weight:700;color:'+(mg2>=30?'#16a34a':mg2>=0?'#d97706':'#dc2626')+'">'+mg2.toFixed(1)+'%</td></tr>';
         }).join('')+
         '<tr class="tot-row"><td colspan="2">TOTALES</td><td class="tr">'+fmtGs(totI)+'</td><td class="tr">'+fmtGs(totC)+'</td><td class="tr">'+fmtGs(totU)+'</td><td class="tr">'+totMg.toFixed(1)+'%</td></tr>'+
@@ -2408,6 +2441,96 @@ function generarPDF(tipo){
     gi('rpPreviewPanel').style.display='block';
     gi('rpPreviewPanel').scrollIntoView({behavior:'smooth'});
   }
+}
+
+// ══════════════════════════════════════════════════════════
+// PENDIENTES
+// ══════════════════════════════════════════════════════════
+function rPendientes(){
+  var hoy=new Date();
+  // Cobros pendientes = presupuestos APROBADOS
+  var aprobados=PD.filter(function(r){return r.estado==='Aprobado';});
+  // Pendientes de aprobacion
+  var pendientes=PD.filter(function(r){return r.estado==='Pendiente';});
+  // Todos
+  var todos=PD.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
+
+  var totalCobro=aprobados.reduce(function(s,r){return s+(r.monto||0);},0);
+  var totalApro=pendientes.reduce(function(s,r){return s+(r.monto||0);},0);
+  var totalPot=PD.reduce(function(s,r){return s+(r.monto||0);},0);
+  var tasaApro=PD.length>0?(PD.filter(function(r){return r.estado==='Aprobado';}).length/PD.length*100):0;
+
+  gi('pend-total-cobro').textContent='\u20b2 '+fmt(totalCobro);
+  gi('pend-total-apro').textContent='\u20b2 '+fmt(totalApro);
+  gi('pend-total-pot').textContent='\u20b2 '+fmt(totalPot);
+  gi('pend-tasa').textContent=tasaApro.toFixed(0)+'%';
+  gi('pend-count-cobro').textContent=aprobados.length+' presupuesto'+(aprobados.length!==1?'s':'');
+  gi('pend-count-apro').textContent=pendientes.length+' presupuesto'+(pendientes.length!==1?'s':'');
+  gi('pend-cobro-total').textContent='\u20b2 '+fmt(totalCobro);
+  gi('pend-apro-total').textContent='\u20b2 '+fmt(totalApro);
+  gi('pendMeta').textContent='Total por cobrar: \u20b2 '+fmt(totalCobro)+' \u00b7 En espera: \u20b2 '+fmt(totalApro);
+
+  function diasDesde(fecha){
+    if(!fecha) return 0;
+    var d=new Date(fecha);
+    return Math.floor((hoy-d)/(1000*60*60*24));
+  }
+  function diasBadge(dias){
+    var color=dias<=7?'bg':dias<=30?'by':'br';
+    return '<span class="bx '+color+' pi-days">'+dias+' d\u00edas</span>';
+  }
+
+  // Lista cobros
+  var cl=gi('pend-cobro-list');
+  if(!aprobados.length){cl.innerHTML='<div class="es" style="padding:24px"><p>Sin cobros pendientes</p></div>';}
+  else{cl.innerHTML=aprobados.map(function(r){
+    var dias=diasDesde(r.fecha);
+    return '<div class="pend-item">'+
+      '<div><div class="pi-name">'+(r.numero||r.cliente||'Presupuesto')+'</div>'+
+      '<div class="pi-sub">'+(r.cliente||'')+' \u00b7 '+fd(r.fecha)+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+      diasBadge(dias)+
+      '<span class="pi-amt" style="color:var(--red)">\u20b2 '+fmt(r.monto||0)+'</span></div>'+
+    '</div>';
+  }).join('');}
+
+  // Lista pendientes aprobacion
+  var al=gi('pend-apro-list');
+  if(!pendientes.length){al.innerHTML='<div class="es" style="padding:24px"><p>Sin presupuestos pendientes</p></div>';}
+  else{al.innerHTML=pendientes.map(function(r){
+    var dias=diasDesde(r.fecha);
+    return '<div class="pend-item">'+
+      '<div><div class="pi-name">'+(r.numero||r.cliente||'Presupuesto')+'</div>'+
+      '<div class="pi-sub">'+(r.cliente||'')+' \u00b7 '+fd(r.fecha)+'</div>'+
+      (r.descripcion?'<div class="pi-sub" style="margin-top:2px">'+r.descripcion.slice(0,60)+(r.descripcion.length>60?'...':'')+'</div>':'')+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+      diasBadge(dias)+
+      '<span class="pi-amt" style="color:var(--yellow)">\u20b2 '+fmt(r.monto||0)+'</span></div>'+
+    '</div>';
+  }).join('');}
+
+  // Tabla completa
+  var eb={'Pendiente':'by','Aprobado':'bg','Rechazado':'br'};
+  var tb=gi('pend-tabla');
+  if(!todos.length){tb.innerHTML=er(8,'No hay presupuestos registrados.');return;}
+  tb.innerHTML=todos.map(function(r){
+    var dias=diasDesde(r.fecha);
+    return '<tr>'+
+      '<td class="mn">'+fd(r.fecha)+'</td>'+
+      '<td style="font-weight:500">'+(r.numero||'\u2014')+'</td>'+
+      '<td>'+(r.cliente||'\u2014')+'</td>'+
+      '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r.descripcion||'\u2014')+'</td>'+
+      '<td class="mn tr" style="font-weight:600">'+(r.monto?'\u20b2 '+fmt(r.monto):'\u2014')+'</td>'+
+      '<td><span class="bx '+(eb[r.estado]||'bm')+'">'+r.estado+'</span></td>'+
+      '<td><span class="bx '+(dias<=7?'bg':dias<=30?'by':'br')+'">'+dias+' d</span></td>'+
+      '<td><div class="acts">'+
+        '<button class="ib" data-id="'+r.id+'" onclick="editPres(this.dataset.id)" title="Editar">'+ie()+'</button>'+
+        '<button class="ib d" data-id="'+r.id+'" onclick="dlP(this.dataset.id)" title="Eliminar">'+it()+'</button>'+
+        (r.estado==='Pendiente'?'<button class="btn btn-p btn-sm" data-id="'+r.id+'" onclick="aprobarPres(this.dataset.id)" style="font-size:11px;padding:4px 10px;background:var(--green);border:none;cursor:pointer">&#10003; Aprobar</button>':'')+
+      '</div></td>'+
+    '</tr>';
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2712,18 +2835,38 @@ async function lCobros(){
 }
 
 function rCobros(){
-  var tb=gi('tbCobros');if(!tb)return;
-  var term=gi('sbCobros').value.toLowerCase();
-  var rows=cobrosData.filter(function(r){
-    return r.cliente.toLowerCase().includes(term)||
-           (r.presupuesto_num||'').toLowerCase().includes(term)||
-           (r.factura||'').toLowerCase().includes(term)||
-           (r.descripcion||'').toLowerCase().includes(term);
+  var q = gi('qCobros').value.toLowerCase();
+  var est = gi('fEstCobros').value;
+  var hoy = new Date();
+
+  var rows = cobrosData.filter(function(r){
+    return (!q||(r.cliente||'').toLowerCase().includes(q)||(r.presupuesto_num||'').toLowerCase().includes(q)||(r.factura||'').toLowerCase().includes(q))&&
+           (!est||r.estado===est);
   });
-  
-  var eb={'Pendiente':'by','Vencido':'br','Cobrado':'bg'};
-  var hoy=new Date();
-  
+
+  var totalPend = cobrosData.filter(function(r){return r.estado==='Pendiente'||r.estado==='Vencido';}).reduce(function(s,r){return s+(r.monto||0);},0);
+  var vencidos = cobrosData.filter(function(r){
+    if(r.estado==='Cobrado') return false;
+    var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
+    return dias > 30;
+  }).length;
+  var aldia = cobrosData.filter(function(r){
+    if(r.estado==='Cobrado') return false;
+    var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
+    return dias <= 30;
+  }).length;
+  var totalCobrado = cobrosData.filter(function(r){return r.estado==='Cobrado';}).reduce(function(s,r){return s+(r.monto||0);},0);
+
+  gi('cb-total').textContent = '₲ '+fmt(totalPend);
+  gi('cb-vencidos').textContent = vencidos;
+  gi('cb-aldia').textContent = aldia;
+  gi('cb-cobrados').textContent = '₲ '+fmt(totalCobrado);
+  gi('cobrosMeta').textContent = rows.length+' registro'+(rows.length!==1?'s':'')+' · Pendiente: ₲ '+fmt(totalPend);
+
+  var tb = gi('tblCobros');
+  if(!rows.length){ tb.innerHTML=er(9,sb?'No hay cobros registrados.':'⚠️ Conecta Supabase desde Configuración.'); return; }
+
+  var eb = {Pendiente:'by', Cobrado:'bg', Vencido:'br'};
   tb.innerHTML = rows.map(function(r){
     var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
     var diasColor = dias>30?'var(--red)':dias>15?'var(--yellow)':'var(--green)';
@@ -2737,46 +2880,14 @@ function rCobros(){
       '<td><span class="bx '+(eb[r.estado]||'bm')+'">'+r.estado+'</span></td>'+
       '<td><span style="font-size:12px;font-weight:600;color:'+diasColor+'">'+dias+' d</span></td>'+
       '<td><div class="acts">'+
-        (r.estado !== 'Cobrado' ? '<button class="btn btn-p btn-sm" onclick="marcarCobrado(\''+r.id+'\')" style="font-size:11px;padding:4px 10px;background:var(--green);border:none;cursor:pointer">✓ Cobrar</button>' : '')+
-        '<button class="ib" onclick="editCobro(\''+r.id+'\')" title="Editar">'+ie()+'</button>'+
-        '<button class="ib d" onclick="deleteCobro(\''+r.id+'\')" title="Eliminar">'+it()+'</button>'+
+        (r.estado==='Pendiente'?'<button class="btn btn-p btn-sm" data-id="'+r.id+'" onclick="marcarCobrado(this.dataset.id)" style="font-size:11px;padding:4px 10px;background:var(--green);border:none;cursor:pointer">✔ Cobrado</button>':'')+
+        '<button class="ib" onclick="editCobro(this.dataset.id)" data-id="'+r.id+'" title="Editar">'+ie()+'</button>'+
+        '<button class="ib d" onclick="deleteCobro(this.dataset.id)" data-id="'+r.id+'" title="Eliminar">'+it()+'</button>'+
       '</div></td>'+
     '</tr>';
   }).join('');
 }
 
-async function marcarCobrado(id) {
-  var cobro = cobrosData.find(function(x) { return x.id === id; });
-  if(!cobro) return;
-
-  if(!confirm('¿Confirmar el cobro por ₲ ' + fmt(cobro.monto) + ' y registrarlo en el Libro de Ventas?')) return;
-
-  var r1 = await sb.from('cobros_pendientes').update({ estado: 'Cobrado' }).eq('id', id);
-  if(r1.error) { 
-    toast('Error actualizando cobro: ' + r1.error.message, 'e'); 
-    return; 
-  }
-
-  var ventaPayload = {
-    fecha: new Date().toISOString().slice(0,10),
-    presupuesto: cobro.presupuesto_num || null,
-    factura: cobro.factura || null,
-    cliente: cobro.cliente || null,
-    tipo: 'Servicio',
-    descripcion: cobro.descripcion || 'Cobro de saldo pendiente',
-    monto: cobro.monto,
-    iva: true
-  };
-
-  var r2 = await sb.from('ventas').insert(ventaPayload);
-  if(r2.error) { 
-    toast('Error al registrar en Ventas: ' + r2.error.message, 'e'); 
-    return; 
-  }
-
-  toast('¡Cobrado y registrado en Ventas ✓!', 's');
-  await loadAll();
-}
 function openModalCobro(){
   if(!sb){ toast('Conecta Supabase primero','e'); return; }
   editingCobro = null;
@@ -2840,42 +2951,141 @@ async function guardarCobro(){
   var montoRaw = parseFloat(gi('cb-monto').value);
   if(!fecha||!cliente||isNaN(montoRaw)||montoRaw<=0){ toast('Completa fecha, cliente y monto','e'); return; }
   var monto = monToGs('cb', montoRaw);
+  var nuevoEstado = gi('cb-estado').value;
 
   var sel = gi('cb-presupuesto');
   var presId = sel.value||null;
-  var presNum = presId ? (sel.options[sel.selectedIndex].textContent.split('—')[0].trim()) : (gi('cb-factura').value.trim()||null);
+  var presNum = presId ? PD.find(function(p){return p.id===presId;})||{} : {};
 
   var payload = {
     fecha: fecha,
     presupuesto_id: presId,
-    presupuesto_num: presId ? PD.find(function(p){return p.id===presId;})?.numero||null : null,
+    presupuesto_num: presId ? (presNum.numero||null) : null,
     factura: gi('cb-factura').value.trim()||null,
     cliente: cliente,
     descripcion: gi('cb-desc').value.trim()||null,
     monto: monto,
-    estado: gi('cb-estado').value,
+    estado: nuevoEstado,
     vencimiento: gi('cb-vencimiento').value||null,
     notas: gi('cb-notas').value.trim()||null
   };
 
   var btn = gi('btnSaveCobro');
   btn.disabled=true; btn.textContent='Guardando…';
+
   var error;
+
   if(editingCobro){
+    // Check if changing to Cobrado
+    var cobroActual = cobrosData.find(function(x){return x.id===editingCobro;});
+    var eraCobrado = cobroActual && cobroActual.estado==='Cobrado';
+
     var r = await sb.from('cobros_pendientes').update(payload).eq('id',editingCobro);
     error = r.error;
+
+    // Si se marca como Cobrado y no estaba cobrado antes
+    if(!error && nuevoEstado==='Cobrado' && !eraCobrado){
+      // 1. Registrar en Libro de Ventas
+      var ventaPayload = {
+        fecha: fecha,
+        presupuesto: payload.presupuesto_num||null,
+        factura: payload.factura||null,
+        cliente: cliente,
+        tipo: 'Servicio',
+        descripcion: payload.descripcion||null,
+        monto: monto,
+        iva: true
+      };
+      var rv = await sb.from('ventas').insert(ventaPayload);
+      if(rv.error) toast('Aviso: no se pudo registrar en Ventas: '+rv.error.message,'e');
+      else toast('₲ Registrado en Libro de Ventas ✓','s');
+
+      // 2. Borrar otros registros pendientes del mismo cliente+monto para no duplicar
+      var duplicados = cobrosData.filter(function(x){
+        return x.id !== editingCobro &&
+               x.cliente === cliente &&
+               x.monto === monto &&
+               x.estado === 'Pendiente';
+      });
+      for(var i=0;i<duplicados.length;i++){
+        await sb.from('cobros_pendientes').delete().eq('id', duplicados[i].id);
+      }
+      if(duplicados.length > 0) toast(duplicados.length+' duplicado'+(duplicados.length>1?'s':'')+' eliminado'+(duplicados.length>1?'s':'')+' ✓','s');
+    }
   } else {
     var r = await sb.from('cobros_pendientes').insert(payload);
     error = r.error;
-  }
-  btn.disabled=false; btn.textContent=editingCobro?'Actualizar':'Guardar';
 
+    // Si se crea directamente como Cobrado, registrar en Ventas
+    if(!error && nuevoEstado==='Cobrado'){
+      var ventaPayload2 = {
+        fecha: fecha,
+        presupuesto: payload.presupuesto_num||null,
+        factura: payload.factura||null,
+        cliente: cliente,
+        tipo: 'Servicio',
+        descripcion: payload.descripcion||null,
+        monto: monto,
+        iva: true
+      };
+      var rv2 = await sb.from('ventas').insert(ventaPayload2);
+      if(rv2.error) toast('Aviso: no se pudo registrar en Ventas','e');
+      else toast('₲ Registrado en Libro de Ventas ✓','s');
+    }
+  }
+
+  btn.disabled=false; btn.textContent=editingCobro?'Actualizar':'Guardar';
   if(error){ toast('Error: '+error.message,'e'); return; }
   toast((editingCobro?'Cobro actualizado':'Cobro guardado')+' ✓','s');
   cm('modalCobro');
   editingCobro=null;
-  await lCobros();
+  await Promise.all([lCobros(), lV()]);
   rCobros();
+  usV();
+}
+
+
+async function marcarCobrado(id){
+  var cobro = cobrosData.find(function(x){return x.id===id;});
+  if(!cobro) return;
+  if(!confirm('¿Marcar como cobrado y registrar en Libro de Ventas?
+
+Cliente: '+cobro.cliente+'
+Monto: ₲ '+fmt(cobro.monto))) return;
+
+  // 1. Actualizar estado
+  var r1 = await sb.from('cobros_pendientes').update({estado:'Cobrado'}).eq('id',id);
+  if(r1.error){ toast('Error: '+r1.error.message,'e'); return; }
+
+  // 2. Registrar en Ventas
+  var ventaPayload = {
+    fecha: cobro.fecha,
+    presupuesto: cobro.presupuesto_num||null,
+    factura: cobro.factura||null,
+    cliente: cobro.cliente,
+    tipo: 'Servicio',
+    descripcion: cobro.descripcion||null,
+    monto: cobro.monto,
+    iva: true
+  };
+  var r2 = await sb.from('ventas').insert(ventaPayload);
+  if(r2.error) toast('Aviso: error al registrar en Ventas: '+r2.error.message,'e');
+
+  // 3. Borrar duplicados pendientes del mismo cliente+monto
+  var duplicados = cobrosData.filter(function(x){
+    return x.id !== id &&
+           x.cliente === cobro.cliente &&
+           x.monto === cobro.monto &&
+           x.estado === 'Pendiente';
+  });
+  for(var i=0;i<duplicados.length;i++){
+    await sb.from('cobros_pendientes').delete().eq('id', duplicados[i].id);
+  }
+
+  toast('✔ Cobro registrado en Ventas'+(duplicados.length>0?' y '+duplicados.length+' duplicado'+(duplicados.length>1?'s':'')+' eliminado'+(duplicados.length>1?'s':''):'')+' ✓','s');
+  await Promise.all([lCobros(), lV()]);
+  rCobros();
+  usV();
 }
 
 async function deleteCobro(id){
@@ -3054,6 +3264,7 @@ async function confirmarAprobar(id){
 
   // Reload all data
   await loadAll();
+  rPendientes();
 }
 
 function toggleSidebar(){
@@ -3065,11 +3276,11 @@ function closeSidebar(){
   s.classList.remove('open');b.classList.remove('open');o.classList.remove('open');
 }
 (function init(){
-  if(!localStorage.getItem('bi_url')) localStorage.setItem('bi_url','https://vnzdrvlzdvutwhzzapfy.supabase.co');
-  if(!localStorage.getItem('bi_key')) localStorage.setItem('bi_key','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuemRydmx6ZHZ1dHdoenphcGZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NjY1NDUsImV4cCI6MjA5ODE0MjU0NX0.z0vVZA5nzqwwBlJl0trr6K4XPh5U_SwggKdyKOv8s2c');
-  initCotiz();
-  var SUPABASE_URL=localStorage.getItem('bi_url');
-  var SUPABASE_KEY=localStorage.getItem('bi_key');
+  var SUPABASE_URL='https://vnzdrvlzdvutwhzzapfy.supabase.co';
+  var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuemRydmx6ZHZ1dHdoenphcGZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NjY1NDUsImV4cCI6MjA5ODE0MjU0NX0.z0vVZA5nzqwwBlJl0trr6K4XPh5U_SwggKdyKOv8s2c';
+  localStorage.setItem('bi_url',SUPABASE_URL);initCotiz();
+  localStorage.setItem('bi_key',SUPABASE_KEY);
+  // Wait for supabase library to load
   function tryInit(attempts){
     if(typeof supabase !== 'undefined' && supabase.createClient){
       initSB(SUPABASE_URL,SUPABASE_KEY);
