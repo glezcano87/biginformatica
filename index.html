@@ -3048,10 +3048,7 @@ async function guardarCobro(){
 async function marcarCobrado(id){
   var cobro = cobrosData.find(function(x){return x.id===id;});
   if(!cobro) return;
-  if(!confirm('¿Marcar como cobrado y registrar en Libro de Ventas?
-
-Cliente: '+cobro.cliente+'
-Monto: ₲ '+fmt(cobro.monto))) return;
+  if(!confirm('¿Marcar como cobrado y registrar en Libro de Ventas?\nCliente: '+cobro.cliente+'\nMonto: ₲ '+fmt(cobro.monto))) return;
 
   // 1. Actualizar estado
   var r1 = await sb.from('cobros_pendientes').update({estado:'Cobrado'}).eq('id',id);
