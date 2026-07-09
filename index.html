@@ -2880,8 +2880,7 @@ function rCobros(){
       '<td><span class="bx '+(eb[r.estado]||'bm')+'">'+r.estado+'</span></td>'+
       '<td><span style="font-size:12px;font-weight:600;color:'+diasColor+'">'+dias+' d</span></td>'+
       '<td><div class="acts">'+
-        (r.estado==='Pendiente'?'<button class="btn btn-p btn-sm" data-id="'+r.id+'" onclick="marcarCobrado(this.dataset.id)" style="font-size:11px;padding:4px 10px;background:var(--green);border:none;cursor:pointer">✔ Marcar Cobrado</button>':'')+
-        (r.estado==='Cobrado'?'<button class="btn btn-g btn-sm" data-id="'+r.id+'" onclick="registrarVentaManual(this.dataset.id)" style="font-size:11px;padding:4px 8px" title="Registrar en Libro de Ventas">₲ Reg. Venta</button>':'')+
+        (r.estado==='Pendiente'?'<button class="btn btn-p btn-sm" data-id="'+r.id+'" onclick="marcarCobrado(this.dataset.id)" style="font-size:11px;padding:4px 10px;background:var(--green);border:none;cursor:pointer">✔ Cobrado</button>':'')+
         '<button class="ib" onclick="editCobro(this.dataset.id)" data-id="'+r.id+'" title="Editar">'+ie()+'</button>'+
         '<button class="ib d" onclick="deleteCobro(this.dataset.id)" data-id="'+r.id+'" title="Eliminar">'+it()+'</button>'+
       '</div></td>'+
@@ -2944,24 +2943,21 @@ function editCobro(id){
   gi('cb-monto').value = r.monto||'';
   gi('cb-vencimiento').value = r.vencimiento||'';
   gi('cb-notas').value = r.notas||'';
-  // Always reset moneda to GS when editing to avoid double conversion
-  initMon('cb');
-  // Store original estado to detect change
   gi('btnSaveCobro').dataset.originalEstado = r.estado||'Pendiente';
+  initMon('cb');
 }
 
 async function guardarCobro(){
   var fecha = gi('cb-fecha').value;
   var cliente = gi('cb-cliente').value.trim();
   var montoRaw = parseFloat(gi('cb-monto').value);
-  if(!fecha||!cliente||isNaN(montoRaw)||montoRaw<=0){
-    toast('Completá fecha, cliente y monto','e'); return;
-  }
+  if(!fecha||!cliente||isNaN(montoRaw)||montoRaw<=0){ toast('Completa fecha, cliente y monto','e'); return; }
   var monto = monToGs('cb', montoRaw);
   var nuevoEstado = gi('cb-estado').value;
+
   var sel = gi('cb-presupuesto');
   var presId = sel.value||null;
-  var presNum = presId ? (PD.find(function(p){return p.id===presId;})||{}) : {};
+  var presNum = presId ? PD.find(function(p){return p.id===presId;})||{} : {};
 
   var payload = {
     fecha: fecha,
@@ -2979,73 +2975,325 @@ async function guardarCobro(){
   var btn = gi('btnSaveCobro');
   btn.disabled=true; btn.textContent='Guardando…';
 
-  // ── EDITAR (UPDATE) ──
+  var error;
+
   if(editingCobro){
-    var estadoOriginal = btn.dataset.originalEstado||'Pendiente';
-    var eraCobrado = estadoOriginal==='Cobrado';
+    // Check if changing to Cobrado
+    var cobroActual = cobrosData.find(function(x){return x.id===editingCobro;});
+    var eraCobrado = cobroActual && cobroActual.estado==='Cobrado';
 
-    // UPDATE — nunca INSERT
-    var r = await sb.from('cobros_pendientes').update(payload).eq('id', editingCobro);
-    if(r.error){
-      btn.disabled=false; btn.textContent='Actualizar';
-      toast('Error: '+r.error.message,'e'); return;
-    }
+    var r = await sb.from('cobros_pendientes').update(payload).eq('id',editingCobro);
+    error = r.error;
 
-    // Si recien ahora se marca como Cobrado → registrar en Ventas con fecha HOY
-    if(nuevoEstado==='Cobrado' && !eraCobrado){
-      var hoy = new Date().toISOString().slice(0,10);
+    // Si se marca como Cobrado y no estaba cobrado antes
+    if(!error && nuevoEstado==='Cobrado' && !eraCobrado){
+      // 1. Registrar en Libro de Ventas
+      var fechaVenta = new Date().toISOString().slice(0,10);
       var ventaPayload = {
-        fecha: hoy,  // fecha de cobro efectivo, no de la factura original
+        fecha: fechaVenta,
         presupuesto: payload.presupuesto_num||null,
         factura: payload.factura||null,
         cliente: cliente,
         tipo: 'Servicio',
-        descripcion: payload.descripcion||'Cobro: '+(payload.factura||cliente),
+        descripcion: payload.descripcion||null,
         monto: monto,
         iva: true
       };
       var rv = await sb.from('ventas').insert(ventaPayload);
-      if(rv.error) toast('Aviso: no se registró en Ventas: '+rv.error.message,'e');
-      else { toast('✔ Registrado en Libro de Ventas ('+'hoy'+')✓','s'); await lV(); usV(); }
+      if(rv.error) toast('Aviso: no se pudo registrar en Ventas: '+rv.error.message,'e');
+      else toast('₲ Registrado en Libro de Ventas ✓','s');
+
+      // 2. Borrar otros registros pendientes del mismo cliente+monto para no duplicar
+      var duplicados = cobrosData.filter(function(x){
+        return x.id !== editingCobro &&
+               x.cliente === cliente &&
+               x.monto === monto &&
+               x.estado === 'Pendiente';
+      });
+      for(var i=0;i<duplicados.length;i++){
+        await sb.from('cobros_pendientes').delete().eq('id', duplicados[i].id);
+      }
+      if(duplicados.length > 0) toast(duplicados.length+' duplicado'+(duplicados.length>1?'s':'')+' eliminado'+(duplicados.length>1?'s':'')+' ✓','s');
     }
+  } else {
+    var r = await sb.from('cobros_pendientes').insert(payload);
+    error = r.error;
 
-    btn.disabled=false; btn.textContent='Actualizar';
-    toast('Cobro actualizado ✓','s');
-    cm('modalCobro');
-    editingCobro=null;
-    await lCobros();
-    rCobros();
-    return;
+    // Si se crea directamente como Cobrado, registrar en Ventas
+    if(!error && nuevoEstado==='Cobrado'){
+      var ventaPayload2 = {
+        fecha: fecha,
+        presupuesto: payload.presupuesto_num||null,
+        factura: payload.factura||null,
+        cliente: cliente,
+        tipo: 'Servicio',
+        descripcion: payload.descripcion||null,
+        monto: monto,
+        iva: true
+      };
+      var rv2 = await sb.from('ventas').insert(ventaPayload2);
+      if(rv2.error) toast('Aviso: no se pudo registrar en Ventas','e');
+      else toast('₲ Registrado en Libro de Ventas ✓','s');
+    }
   }
 
-  // ── NUEVO (INSERT) ──
-  var r2 = await sb.from('cobros_pendientes').insert(payload);
-  btn.disabled=false; btn.textContent='Guardar';
-  if(r2.error){ toast('Error: '+r2.error.message,'e'); return; }
-
-  // Si se crea directamente como Cobrado → registrar en Ventas con fecha HOY
-  if(nuevoEstado==='Cobrado'){
-    var hoy2 = new Date().toISOString().slice(0,10);
-    var vp2 = {
-      fecha: hoy2,
-      presupuesto: payload.presupuesto_num||null,
-      factura: payload.factura||null,
-      cliente: cliente,
-      tipo: 'Servicio',
-      descripcion: payload.descripcion||null,
-      monto: monto,
-      iva: true
-    };
-    var rv2 = await sb.from('ventas').insert(vp2);
-    if(rv2.error) toast('Aviso: no se registró en Ventas','e');
-    else { await lV(); usV(); }
-  }
-
-  toast('Cobro guardado ✓','s');
+  btn.disabled=false; btn.textContent=editingCobro?'Actualizar':'Guardar';
+  if(error){ toast('Error: '+error.message,'e'); return; }
+  toast((editingCobro?'Cobro actualizado':'Cobro guardado')+' ✓','s');
   cm('modalCobro');
   editingCobro=null;
+  await Promise.all([lCobros(), lV()]);
+  rCobros();
+  usV();
+}
+
+
+async function marcarCobrado(id){
+  var cobro = cobrosData.find(function(x){return x.id===id;});
+  if(!cobro) return;
+  if(!confirm('¿Marcar como cobrado y registrar en Libro de Ventas?\nCliente: '+cobro.cliente+'\nMonto: ₲ '+fmt(cobro.monto))) return;
+
+  // 1. Actualizar estado
+  var r1 = await sb.from('cobros_pendientes').update({estado:'Cobrado'}).eq('id',id);
+  if(r1.error){ toast('Error: '+r1.error.message,'e'); return; }
+
+  // 2. Registrar en Ventas
+  var hoyMC = new Date().toISOString().slice(0,10);
+  var ventaPayload = {
+    fecha: hoyMC,
+    presupuesto: cobro.presupuesto_num||null,
+    factura: cobro.factura||null,
+    cliente: cobro.cliente,
+    tipo: 'Servicio',
+    descripcion: cobro.descripcion||null,
+    monto: cobro.monto,
+    iva: true
+  };
+  var r2 = await sb.from('ventas').insert(ventaPayload);
+  if(r2.error) toast('Aviso: error al registrar en Ventas: '+r2.error.message,'e');
+
+  // 3. Borrar duplicados pendientes del mismo cliente+monto
+  var duplicados = cobrosData.filter(function(x){
+    return x.id !== id &&
+           x.cliente === cobro.cliente &&
+           x.monto === cobro.monto &&
+           x.estado === 'Pendiente';
+  });
+  for(var i=0;i<duplicados.length;i++){
+    await sb.from('cobros_pendientes').delete().eq('id', duplicados[i].id);
+  }
+
+  toast('✔ Cobro registrado en Ventas'+(duplicados.length>0?' y '+duplicados.length+' duplicado'+(duplicados.length>1?'s':'')+' eliminado'+(duplicados.length>1?'s':''):'')+' ✓','s');
+  await Promise.all([lCobros(), lV()]);
+  rCobros();
+  usV();
+}
+
+async function deleteCobro(id){
+  if(!confirm('¿Eliminar este cobro?')) return;
+  var r = await sb.from('cobros_pendientes').delete().eq('id',id);
+  if(r.error){ toast('Error: '+r.error.message,'e'); return; }
+  toast('Eliminado ✓','s');
   await lCobros();
   rCobros();
 }
 
->
+// ══════════════════════════════════════════════════════════
+// COTIZACION Y MONEDA
+// ══════════════════════════════════════════════════════════
+var cotizacion = parseFloat(localStorage.getItem('bi_cotiz'))||7800;
+var cotizFechaStr = localStorage.getItem('bi_cotiz_fecha')||'';
+var modalMonedas = {};
+
+function initCotiz(){
+  gi('cotizValor').textContent = cotizacion.toLocaleString('es-PY');
+  if(cotizFechaStr) gi('cotizFecha').textContent = 'Actualizado: '+cotizFechaStr;
+}
+
+function editCotiz(){
+  var nueva = prompt('Cotizaci\u00f3n del d\u00eda (Gs. por 1 USD):', cotizacion);
+  if(!nueva||isNaN(parseFloat(nueva))) return;
+  cotizacion = parseFloat(nueva);
+  var ahora = new Date().toLocaleDateString('es-PY')+' '+new Date().toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'});
+  cotizFechaStr = ahora;
+  localStorage.setItem('bi_cotiz', cotizacion);
+  localStorage.setItem('bi_cotiz_fecha', ahora);
+  gi('cotizValor').textContent = cotizacion.toLocaleString('es-PY');
+  gi('cotizFecha').textContent = 'Actualizado: '+ahora;
+  toast('Cotizaci\u00f3n: \u20b2 '+cotizacion.toLocaleString('es-PY')+' / USD \u2713','s');
+}
+
+function setMon(prefix, moneda, btn){
+  modalMonedas[prefix] = moneda;
+  var gsId = prefix==='cb'?'cbMonedaGS':prefix+'MonedaGS';
+  var usdId = prefix==='cb'?'cbMonedaUSD':prefix+'MonedaUSD';
+  var cotizId = prefix==='cb'?'cbCotiz':prefix+'Cotiz';
+  gi(gsId).classList.toggle('active', moneda==='GS');
+  gi(usdId).classList.toggle('active', moneda==='USD');
+  var cotizEl = gi(cotizId);
+  if(cotizEl){
+    cotizEl.style.display = moneda==='USD'?'block':'none';
+    if(moneda==='USD' && !cotizEl.value) cotizEl.value = cotizacion;
+  }
+}
+
+function initMon(prefix){
+  modalMonedas[prefix] = 'GS';
+  var gsId = prefix==='cb'?'cbMonedaGS':prefix+'MonedaGS';
+  var usdId = prefix==='cb'?'cbMonedaUSD':prefix+'MonedaUSD';
+  var cotizId = prefix==='cb'?'cbCotiz':prefix+'Cotiz';
+  var g=gi(gsId),u=gi(usdId),co=gi(cotizId);
+  if(g) g.classList.add('active');
+  if(u) u.classList.remove('active');
+  if(co){ co.style.display='none'; co.value=''; }
+}
+
+function monToGs(prefix, raw){
+  var n = parseFloat(raw)||0;
+  if((modalMonedas[prefix]||'GS')==='USD'){
+    var cotizId = prefix==='cb'?'cbCotiz':prefix+'Cotiz';
+    var cotizEl = gi(cotizId);
+    var tc = parseFloat(cotizEl?cotizEl.value:0)||cotizacion;
+    return Math.round(n*tc);
+  }
+  return n;
+}
+
+function monLabel(prefix){ return (modalMonedas[prefix]||'GS')==='USD'?'USD':'GS'; }
+
+// ══════════════════════════════════════════════════════════
+// APROBAR PRESUPUESTO → Registrar en Ventas/Compras
+// ══════════════════════════════════════════════════════════
+async function aprobarPres(id){
+  var pres = PD.find(function(x){return x.id===id;});
+  if(!pres) return;
+
+  // Modal de aprobacion
+  var modal = document.createElement('div');
+  modal.className = 'ov open';
+  modal.id = 'modalAprobar';
+  modal.innerHTML = '<div class="modal" style="max-width:620px">'+
+    '<div class="mh"><h2>&#10003; Aprobar Presupuesto</h2><button class="ib" onclick="gi(\'modalAprobar\').remove()"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg></button></div>'+
+    '<div class="mb">'+
+      '<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px">'+
+        '<strong style="color:var(--green)">Presupuesto: '+(pres.numero||'Sin número')+'</strong><br>'+
+        '<span style="color:var(--muted)">Cliente: '+(pres.cliente||'—')+' · Monto: ₲ '+fmt(pres.monto||0)+'</span>'+
+      '</div>'+
+      '<p style="font-size:13px;color:var(--muted);margin-bottom:16px">Al aprobar se registrará automáticamente una <strong style="color:var(--green)">venta</strong>. Podés agregar los datos de factura y los costos asociados:</p>'+
+      '<div class="fg" style="margin-bottom:14px">'+
+        '<div class="fgg"><label>Fecha de la venta</label><input type="date" id="apr-fecha" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+        '<div class="fgg"><label>Número de factura</label><input type="text" id="apr-factura" placeholder="001-001-0000001"></div>'+
+        '<div class="fgg"><label>Tipo</label><select id="apr-tipo"><option>Servicio</option><option>Producto</option></select></div>'+
+        '<div class="fgg"><label>IVA</label><select id="apr-iva"><option value="true">Gravado con IVA</option><option value="false">Exento de IVA</option></select></div>'+
+      '</div>'+
+      '<hr style="border:none;border-top:1px solid var(--border);margin:14px 0">'+
+      '<p style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--muted)">&#128228; Costos asociados (opcional)</p>'+
+      '<div class="fg" style="margin-bottom:8px">'+
+        '<div class="fgg"><label>Proveedor</label><input type="text" id="apr-prov" placeholder="Nombre del proveedor"></div>'+
+        '<div class="fgg"><label>Monto costo (&#8370;)</label><input type="number" id="apr-costo" placeholder="0" min="0"></div>'+
+        '<div class="fgg"><label>Tipo costo</label><select id="apr-ctipo"><option>Servicio</option><option>Producto</option></select></div>'+
+        '<div class="fgg"><label>IVA costo</label><select id="apr-civa"><option value="true">Gravado con IVA</option><option value="false">Exento de IVA</option></select></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="mf">'+
+      '<button class="btn btn-g" onclick="gi(\'modalAprobar\').remove()">Cancelar</button>'+
+      '<button class="btn btn-p" style="background:var(--green)" onclick="confirmarAprobar(\''+id+'\')">&#10003; Confirmar Aprobación</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+}
+
+async function confirmarAprobar(id){
+  var pres = PD.find(function(x){return x.id===id;});
+  if(!pres){ toast('Presupuesto no encontrado','e'); return; }
+
+  var fecha = gi('apr-fecha').value;
+  var factura = gi('apr-factura').value.trim()||null;
+  var tipo = gi('apr-tipo').value;
+  var iva = gi('apr-iva').value==='true';
+  var proveedor = gi('apr-prov').value.trim()||null;
+  var costo = parseFloat(gi('apr-costo').value)||0;
+  var ctipo = gi('apr-ctipo').value;
+  var civa = gi('apr-civa').value==='true';
+
+  if(!fecha){ toast('Ingresá la fecha','e'); return; }
+
+  var errors = [];
+
+  // 1. Actualizar estado del presupuesto a Aprobado
+  var r1 = await sb.from('presupuestos').update({estado:'Aprobado'}).eq('id',id);
+  if(r1.error) errors.push('Error actualizando presupuesto: '+r1.error.message);
+
+  // 2. Registrar en Ventas
+  var ventaPayload = {
+    fecha: fecha,
+    presupuesto: pres.numero||null,
+    factura: factura,
+    cliente: pres.cliente||null,
+    tipo: tipo,
+    descripcion: pres.descripcion||null,
+    monto: pres.monto||0,
+    iva: iva
+  };
+  var r2 = await sb.from('ventas').insert(ventaPayload);
+  if(r2.error) errors.push('Error en venta: '+r2.error.message);
+
+  // 3. Registrar en Compras (si hay costo)
+  if(costo > 0 && proveedor){
+    var compraPayload = {
+      fecha: fecha,
+      presupuesto: pres.numero||null,
+      factura: null,
+      proveedor: proveedor,
+      tipo: ctipo,
+      descripcion: pres.descripcion||null,
+      monto: costo,
+      iva: civa
+    };
+    var r3 = await sb.from('compras').insert(compraPayload);
+    if(r3.error) errors.push('Error en compra: '+r3.error.message);
+  }
+
+  if(errors.length){
+    toast('Errores: '+errors.join(' | '),'e');
+    return;
+  }
+
+  gi('modalAprobar').remove();
+  toast('✓ Presupuesto aprobado y registrado en Ventas'+(costo>0?' y Compras':''),'s');
+
+  // Reload all data
+  await loadAll();
+  rPendientes();
+}
+
+function toggleSidebar(){
+  var s=gi('sidebar'),b=gi('hbgBtn'),o=gi('sbOverlay');
+  s.classList.toggle('open');b.classList.toggle('open');o.classList.toggle('open');
+}
+function closeSidebar(){
+  var s=gi('sidebar'),b=gi('hbgBtn'),o=gi('sbOverlay');
+  s.classList.remove('open');b.classList.remove('open');o.classList.remove('open');
+}
+(function init(){
+  var SUPABASE_URL='https://vnzdrvlzdvutwhzzapfy.supabase.co';
+  var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuemRydmx6ZHZ1dHdoenphcGZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NjY1NDUsImV4cCI6MjA5ODE0MjU0NX0.z0vVZA5nzqwwBlJl0trr6K4XPh5U_SwggKdyKOv8s2c';
+  localStorage.setItem('bi_url',SUPABASE_URL);initCotiz();
+  localStorage.setItem('bi_key',SUPABASE_KEY);
+  // Wait for supabase library to load
+  function tryInit(attempts){
+    if(typeof supabase !== 'undefined' && supabase.createClient){
+      initSB(SUPABASE_URL,SUPABASE_KEY);
+    } else if(attempts>0){
+      setTimeout(function(){tryInit(attempts-1)},300);
+    } else {
+      gi('cSt').textContent='Error: libreria no cargo';
+      gi('cDot').style.background='var(--red)';
+    }
+  }
+  tryInit(20);
+})();
+</script>
+</body>
+</html>
