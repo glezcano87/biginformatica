@@ -1034,6 +1034,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
   fecha date NOT NULL, presupuesto text, factura text, cliente text,
   tipo text CHECK (tipo IN ('Servicio','Producto')),
   descripcion text, monto numeric NOT NULL, iva boolean DEFAULT true,
+  moneda text DEFAULT 'GS',
   created_at timestamptz DEFAULT now()
 );
 CREATE TABLE compras (
@@ -1041,6 +1042,7 @@ CREATE TABLE compras (
   fecha date NOT NULL, presupuesto text, factura text, proveedor text,
   tipo text CHECK (tipo IN ('Servicio','Producto')),
   descripcion text, monto numeric NOT NULL, iva boolean DEFAULT true,
+  moneda text DEFAULT 'GS',
   created_at timestamptz DEFAULT now()
 );
 CREATE TABLE presupuestos (
@@ -1478,8 +1480,8 @@ function edV(id){var r=VD.find(x=>x.id===id);if(!r)return;eV=id;gi('mVt').textCo
 function edC(id){var r=CD.find(x=>x.id===id);if(!r)return;eC=id;gi('mCt').textContent='Editar Compra';gi('bsC').textContent='Actualizar Compra';gi('cf').value=r.fecha;gi('cp').value=r.presupuesto||'';gi('cfa').value=r.factura||'';gi('cpv').value=r.proveedor||'';gi('ct').value=r.tipo||'Servicio';gi('cd').value=r.descripcion||'';gi('cm_').value=r.monto;gi('ci').value=String(r.iva);gi('mC').classList.add('open')}
 function edP(id){var r=PD.find(x=>x.id===id);if(!r)return;eP=id;gi('mPt').textContent='Editar Presupuesto';gi('bsP').textContent='Actualizar';gi('pf').value=r.fecha;gi('pn').value=r.numero||'';gi('pcl').value=r.cliente||'';gi('pd').value=r.descripcion||'';gi('pm').value=r.monto||'';gi('pe').value=r.estado||'Pendiente';gi('pno').value=r.notas||'';gi('mP').classList.add('open')}
 function edG(id){var r=GD.find(x=>x.id===id);if(!r)return;eG=id;gi('mGt').textContent='Editar Gasto Fijo';gi('bsG').textContent='Actualizar';gi('gc').value=r.concepto;gi('gcat').value=r.categoria||'Personal';gi('gfr').value=r.frecuencia||'Mensual';gi('gm').value=r.monto_mensual;gi('ga').value=String(r.activo);gi('mG').classList.add('open')}
-async function sV(){var f=gi('vf').value,mRaw=parseFloat(gi('vm').value);if(!f||isNaN(mRaw)||mRaw<=0){toast('Completa fecha y monto','e');return}var m=monToGs('v',mRaw);var pay={fecha:f,presupuesto:gi('vp').value.trim()||null,factura:gi('vfa').value.trim()||null,cliente:gi('vcl').value.trim()||null,tipo:gi('vt').value,descripcion:gi('vd').value.trim()||null,monto:m,iva:gi('vi').value==='true',moneda:monLabel('v')};await sv2('ventas','bsV',eV,pay,'mV','Venta');eV=null;await lV();usV()}
-async function sC(){var f=gi('cf').value,mRaw=parseFloat(gi('cm_').value);if(!f||isNaN(mRaw)||mRaw<=0){toast('Completa fecha y monto','e');return}var m=monToGs('c',mRaw);var pay={fecha:f,presupuesto:gi('cp').value.trim()||null,factura:gi('cfa').value.trim()||null,proveedor:gi('cpv').value.trim()||null,tipo:gi('ct').value,descripcion:gi('cd').value.trim()||null,monto:m,iva:gi('ci').value==='true',moneda:monLabel('c')};await sv2('compras','bsC',eC,pay,'mC','Compra');eC=null;await lC();usC()}
+async function sV(){var f=gi('vf').value,mRaw=parseFloat(gi('vm').value);if(!f||isNaN(mRaw)||mRaw<=0){toast('Completa fecha y monto','e');return}var m=monToGs('v',mRaw);var pay={fecha:f,presupuesto:gi('vp').value.trim()||null,factura:gi('vfa').value.trim()||null,cliente:gi('vcl').value.trim()||null,tipo:gi('vt').value,descripcion:gi('vd').value.trim()||null,monto:m,iva:gi('vi').value==='true'};await sv2('ventas','bsV',eV,pay,'mV','Venta');eV=null;await lV();usV()}
+async function sC(){var f=gi('cf').value,mRaw=parseFloat(gi('cm_').value);if(!f||isNaN(mRaw)||mRaw<=0){toast('Completa fecha y monto','e');return}var m=monToGs('c',mRaw);var pay={fecha:f,presupuesto:gi('cp').value.trim()||null,factura:gi('cfa').value.trim()||null,proveedor:gi('cpv').value.trim()||null,tipo:gi('ct').value,descripcion:gi('cd').value.trim()||null,monto:m,iva:gi('ci').value==='true'};await sv2('compras','bsC',eC,pay,'mC','Compra');eC=null;await lC();usC()}
 async function sP(){var f=gi('pf').value;if(!f){toast('Completa la fecha','e');return}var m=parseFloat(gi('pm').value)||null;var pay={fecha:f,numero:gi('pn').value.trim()||null,cliente:gi('pcl').value.trim()||null,descripcion:gi('pd').value.trim()||null,monto:m,estado:gi('pe').value,notas:gi('pno').value.trim()||null};await sv2('presupuestos','bsP',eP,pay,'mP','Presupuesto');eP=null;await lP();usPS()}
 async function sG(){var c=gi('gc').value.trim(),m=parseFloat(gi('gm').value);if(!c||isNaN(m)||m<0){toast('Completa concepto y monto','e');return}var pay={concepto:c,categoria:gi('gcat').value,frecuencia:gi('gfr').value,monto_mensual:m,activo:gi('ga').value==='true'};await sv2('gastos_fijos','bsG',eG,pay,'mG','Gasto');eG=null;await lG();usGF()}
 async function sv2(tbl,btnId,editing,pay,modalId,lbl){var btn=gi(btnId);btn.disabled=true;btn.textContent='Guardando\u2026';var err;if(editing){var r=await sb.from(tbl).update(pay).eq('id',editing);err=r.error}else{var r=await sb.from(tbl).insert(pay);err=r.error}btn.disabled=false;btn.textContent=editing?'Actualizar '+lbl:'Guardar '+lbl;if(err){toast('Error: '+err.message,'e');return}toast(lbl+(editing?' actualizado':' guardado')+' \u2713','s');cm(modalId)}
