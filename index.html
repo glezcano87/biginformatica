@@ -276,6 +276,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 .gp-mb.active{background:var(--accent);border-color:var(--accent);color:#fff}
 /* PDF PREVIEW */
 .pdf-preview-wrap{background:#e8ecf0;border-radius:12px;padding:20px;margin-top:16px}
+.pdf-preview-inner{isolation:isolate}
 .pdf-preview-inner{background:#fff;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.15);overflow:hidden}
 @media(max-width:768px){.pend-grid{grid-template-columns:1fr}.gp-items-header{display:none}.gp-item-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto}}
 
@@ -893,7 +894,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
               Imprimir / Guardar PDF
             </button>
             <button class="btn btn-g btn-sm" onclick="guardarPresDesdeGP()">&#128190; Guardar en Sistema</button>
-            <button class="btn btn-g btn-sm" onclick="gi('gpPreviewWrap').style.display='none'">Cerrar</button>
+            <button class="btn btn-g btn-sm" onclick="gi('gpPreviewWrap').style.display='none';gi('gpPreviewBody').innerHTML='';">Cerrar</button>
           </div>
         </div>
         <div class="pdf-preview-wrap">
@@ -1344,9 +1345,9 @@ function verPresPrev(id){
 function imprimirPresPreview(){
   var contenido=gi('presPreviewBody').innerHTML;
   var v=window.open('','_blank','width=900,height=700');
-  v.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Presupuesto</title></head><body>'+contenido+'</body></html>');
+  v.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Presupuesto</title></head><body style="margin:0;padding:0;background:#fff">'+contenido+'</body></html>');
   v.document.close();v.focus();
-  setTimeout(function(){v.print();},500);
+  setTimeout(function(){v.print();v.close();},800);
 }
 
 async function rechazarPres(id){
@@ -2777,7 +2778,7 @@ function verPrevGPres(){
       '</div>'+
     '</div>';
 
-  gi('gpPreviewBody').innerHTML='<div style="background:#fff;border-radius:0 0 12px 12px;overflow:auto;max-height:75vh">'+html+'</div>';
+  gi('gpPreviewBody').innerHTML='<div style="background:#fff;border-radius:0 0 12px 12px;overflow:auto;max-height:75vh;color:#222;font-family:Arial,sans-serif">'+html+'</div>';
   gi('gpPreviewWrap').style.display='block';
   gi('gpPreviewWrap').scrollIntoView({behavior:'smooth'});
 }
@@ -2816,10 +2817,10 @@ async function guardarPresDesdeGP(){
 function imprimirPresupuesto(){
   var contenido = gi('gpPreviewBody').innerHTML;
   var ventana = window.open('','_blank','width=900,height=700');
-  ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Presupuesto</title></head><body>'+contenido+'</body></html>');
+  ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Presupuesto</title></head><body style="margin:0;padding:0;background:#fff">'+contenido+'</body></html>');
   ventana.document.close();
   ventana.focus();
-  setTimeout(function(){ ventana.print(); }, 500);
+  setTimeout(function(){ ventana.print(); ventana.close(); }, 800);
 }
 
 // ══════════════════════════════════════════════════════════
