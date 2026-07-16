@@ -1346,8 +1346,17 @@ function verPresPrev(id){
 
 function imprimirPresPreview(){
   var iframe=gi('presPreviewBody');
-  iframe.contentWindow.focus();
-  iframe.contentWindow.print();
+  var doc=iframe.contentDocument||iframe.contentWindow.document;
+  var html=doc.documentElement.outerHTML;
+  var blob=new Blob([html],{type:'text/html'});
+  var url=URL.createObjectURL(blob);
+  var v=window.open(url,'_blank');
+  if(v){
+    v.onload=function(){ setTimeout(function(){ v.print(); URL.revokeObjectURL(url); },300); };
+  } else {
+    var a=document.createElement('a'); a.href=url; a.target='_blank'; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+  }
 }
 
 async function rechazarPres(id){
@@ -2820,8 +2829,23 @@ async function guardarPresDesdeGP(){
 
 function imprimirPresupuesto(){
   var iframe = gi('gpPreviewBody');
-  iframe.contentWindow.focus();
-  iframe.contentWindow.print();
+  var doc = iframe.contentDocument || iframe.contentWindow.document;
+  var html = doc.documentElement.outerHTML;
+  var blob = new Blob([html], {type:'text/html'});
+  var url = URL.createObjectURL(blob);
+  var v = window.open(url, '_blank');
+  if(v){
+    v.onload = function(){ 
+      setTimeout(function(){ v.print(); URL.revokeObjectURL(url); }, 300);
+    };
+  } else {
+    // Fallback si el navegador bloquea popups
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
 }
 
 // ══════════════════════════════════════════════════════════
