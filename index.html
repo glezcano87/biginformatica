@@ -528,10 +528,14 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         <span class="title" id="presPreviewTitle">Vista Previa del Presupuesto</span>
         <div style="display:flex;gap:8px">
           <button class="btn btn-p btn-sm" onclick="imprimirPresPreview()">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 002 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
             Imprimir / PDF
           </button>
-          <button class="btn btn-g btn-sm" onclick="gi('presPreviewPanel').style.display='none'">Cerrar</button>
+          <button class="btn btn-g btn-sm" onclick="compartirPres()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+            Compartir
+          </button>
+          <button class="btn btn-g btn-sm" onclick="gi('presPreviewPanel').style.display='none';var f=gi('presPreviewBody');var d=f.contentDocument||f.contentWindow.document;d.open();d.write('');d.close();">Cerrar</button>
         </div>
       </div>
       <iframe id="presPreviewBody" style="width:100%;height:70vh;border:none;border-radius:0 0 12px 12px"></iframe>
@@ -1293,13 +1297,71 @@ function verPresPrev(id){
   if(!r) return;
   gi('presPreviewTitle').textContent='Vista Previa: '+(r.numero||r.cliente||'Presupuesto');
 
-  var svg_logo='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20320%20230%22%3E%3Cpath%20d%3D%22M160%2012%20L305%20115%20L160%20218%20L15%20115%20Z%22%20fill%3D%22white%22%20stroke%3D%22%231B6B8A%22%20stroke-width%3D%2212%22%20stroke-linejoin%3D%22round%22%2F%3E%3Ctext%20x%3D%22160%22%20y%3D%22130%22%20font-family%3D%22Arial%20Black%2CArial%22%20font-weight%3D%22900%22%20font-size%3D%2290%22%20fill%3D%22%238DC63F%22%20text-anchor%3D%22middle%22%3EBIG%3C%2Ftext%3E%3Ctext%20x%3D%22160%22%20y%3D%22178%22%20font-family%3D%22Arial%22%20font-weight%3D%22700%22%20font-size%3D%2222%22%20fill%3D%22%238DC63F%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%223%22%3EINFORM%C3%81TICA%3C%2Ftext%3E%3C%2Fsvg%3E';
   var logo_url='https://raw.githubusercontent.com/glezcano87/biginformatica/main/logo.png';
+  var eb={Aprobado:'#16a34a',Pendiente:'#d97706',Rechazado:'#dc2626'};
+  var estadoColor=eb[r.estado]||'#666';
 
-  var st='<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}.wrap{max-width:780px;margin:0 auto}.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:4px solid #8DC63F;background:#fff}.logo{height:68px;width:auto}.hdr-r{text-align:right}.badge{display:inline-block;background:#1B6B8A;color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}.hdr-info{font-size:12px;color:#555;line-height:1.6}.hdr-info b{color:#1B6B8A;font-size:13px;display:block}.strip{height:5px;background:linear-gradient(90deg,#1B6B8A,#8DC63F)}.body{padding:22px 28px 28px}.cli{background:#f4fbf0;border-left:5px solid #8DC63F;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px}.cli-l{font-size:10px;color:#5a8a20;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}.cli-n{font-size:16px;font-weight:800;color:#111}.info-box{background:#f0f7ff;border:1px solid #d0e4f7;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#444}.estado-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-left:8px}.pendiente{background:#fef3c7;color:#92400e}.aprobado{background:#d1fae5;color:#065f46}.rechazado{background:#fee2e2;color:#991b1b}table{width:100%;border-collapse:collapse;margin-bottom:16px}thead th{background:#1B6B8A;color:#fff;padding:9px 13px;font-size:12px;font-weight:700;text-align:left}thead th:last-child{text-align:right}thead th:first-child{text-align:center;width:70px}tbody td{padding:9px 13px;border-bottom:1px solid #e4f2e4;font-size:13px}tbody td:first-child{text-align:center;font-weight:700;color:#1B6B8A}tbody td:last-child{text-align:right;font-weight:700;color:#1B6B8A}tbody tr:nth-child(even){background:#f6fbf2}.tot{background:linear-gradient(90deg,#1B6B8A,#8DC63F);border-radius:8px;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.tot-l{color:rgba(255,255,255,.88);font-size:12px;font-weight:600;text-transform:uppercase}.tot-v{color:#fff;font-size:22px;font-weight:900}.notas{font-size:12px;color:#555;line-height:1.7;background:#f4fbf0;border:1px solid #c8e8a8;border-radius:8px;padding:12px 16px;margin-bottom:16px}.firma{padding-top:14px;border-top:3px solid #8DC63F;display:flex;justify-content:space-between;align-items:flex-end}.f-attn{font-size:11px;color:#888;margin-bottom:5px}.f-name{font-size:14px;font-weight:800;color:#111}.f-cargo{font-size:12px;color:#1B6B8A;font-weight:600}.f-emp{font-size:13px;color:#5a8a20;font-weight:800}</style>';
+  // Parse items from notas field if available
+  var itemsHtml='';
+  var totalMonto=r.monto||0;
+  
+  if(r.notas && r.notas.includes('Items:')){
+    // Notas guardadas desde Crear Presupuesto: "Items: 1x Desc = Gs. X.- | ..."
+    var itemsPart = r.notas.replace('Items:','').split('|')[0].trim();
+    var itemsList = itemsPart.split(',').map(function(s){return s.trim();}).filter(Boolean);
+    itemsHtml = itemsList.map(function(item){
+      var match = item.match(/^(\d+)x\s+(.+?)\s+=\s+(.+?)$/);
+      if(match){
+        return '<tr><td style="text-align:center;font-weight:700;color:#1B6B8A;padding:9px 13px">'+match[1]+'</td>'+
+               '<td style="padding:9px 13px">'+match[2]+'</td>'+
+               '<td style="text-align:right;font-weight:700;color:#1B6B8A;padding:9px 13px">'+match[3]+'</td></tr>';
+      }
+      return '<tr><td colspan="3" style="padding:9px 13px">'+item+'</td></tr>';
+    }).join('');
+  }
+  
+  if(!itemsHtml){
+    // Fallback: mostrar descripcion y monto total como un item
+    itemsHtml = '<tr>'+
+      '<td style="text-align:center;font-weight:700;color:#1B6B8A;padding:9px 13px">1</td>'+
+      '<td style="padding:9px 13px">'+(r.descripcion||'Servicio/Producto')+'</td>'+
+      '<td style="text-align:right;font-weight:700;color:#1B6B8A;padding:9px 13px">₲ '+fmt(totalMonto)+'.-</td>'+
+    '</tr>';
+  }
 
-  var estadoClass=r.estado==='Aprobado'?'aprobado':r.estado==='Rechazado'?'rechazado':'pendiente';
-  var monto=r.monto?'₲ '+fmt(r.monto)+'.-':'—';
+  var st='<style>@page{margin:0;size:A4}@media print{body{margin:1cm}}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}'+
+    '.wrap{max-width:780px;margin:0 auto}'+
+    '.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:4px solid #8DC63F}'+
+    '.logo{height:68px;width:auto}'+
+    '.hdr-r{text-align:right}'+
+    '.badge{display:inline-block;background:#1B6B8A;color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}'+
+    '.hdr-num{color:#1B6B8A;font-size:14px;font-weight:700}'+
+    '.hdr-fecha{font-size:12px;color:#555}'+
+    '.strip{height:5px;background:linear-gradient(90deg,#1B6B8A,#8DC63F)}'+
+    '.body{padding:22px 28px 28px}'+
+    '.cli{background:#f4fbf0;border-left:5px solid #8DC63F;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px}'+
+    '.cli-l{font-size:10px;color:#5a8a20;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}'+
+    '.cli-n{font-size:16px;font-weight:800;color:#111}'+
+    '.estado-bar{background:#f8f8f8;border:1px solid #eee;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;display:flex;gap:16px;align-items:center}'+
+    '.est-badge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#fff}'+
+    '.intro{font-size:13px;color:#444;line-height:1.7;margin-bottom:16px}'+
+    '.stl{font-size:11px;font-weight:800;color:#1B6B8A;text-transform:uppercase;letter-spacing:.6px;border-bottom:2px solid #8DC63F;padding-bottom:5px;margin-bottom:10px}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:16px}'+
+    'thead th{background:#1B6B8A;color:#fff;padding:9px 13px;font-size:12px;font-weight:700;text-align:left}'+
+    'thead th:last-child{text-align:right}'+
+    'thead th:first-child{text-align:center;width:70px}'+
+    'tbody td{border-bottom:1px solid #e4f2e4;font-size:13px}'+
+    'tbody tr:nth-child(even){background:#f6fbf2}'+
+    '.tot{background:linear-gradient(90deg,#1B6B8A,#8DC63F);border-radius:8px;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}'+
+    '.tot-l{color:rgba(255,255,255,.88);font-size:12px;font-weight:600;text-transform:uppercase}'+
+    '.tot-v{color:#fff;font-size:22px;font-weight:900}'+
+    '.ftr{font-size:12px;color:#555;line-height:1.7;margin-bottom:20px;background:#f4fbf0;border:1px solid #c8e8a8;border-radius:8px;padding:12px 16px}'+
+    '.firma{padding-top:14px;border-top:3px solid #8DC63F}'+
+    '.f-attn{font-size:11px;color:#888;margin-bottom:5px}'+
+    '.f-name{font-size:14px;font-weight:800;color:#111}'+
+    '.f-cargo{font-size:12px;color:#1B6B8A;font-weight:600}'+
+    '.f-emp{font-size:13px;color:#5a8a20;font-weight:800}'+
+    '</style>';
 
   var html=st+
     '<div class="wrap">'+
@@ -1307,41 +1369,71 @@ function verPresPrev(id){
         '<img class="logo" src="'+logo_url+'" alt="Big Informatica" style="height:68px;width:auto">'+
         '<div class="hdr-r">'+
           '<div class="badge">Soluciones IT</div>'+
-          '<div class="hdr-info"><b>'+(r.numero||'Sin número')+'</b>Fecha: '+formatDateLong(r.fecha)+'</div>'+
+          '<div class="hdr-num">'+(r.numero||'Sin número')+'</div>'+
+          '<div class="hdr-fecha">Fecha: '+formatDateLong(r.fecha)+'</div>'+
         '</div>'+
       '</div>'+
       '<div class="strip"></div>'+
       '<div class="body">'+
         '<div class="cli"><div class="cli-l">Dirigido a</div><div class="cli-n">'+(r.cliente||'Sin cliente')+'</div></div>'+
-        '<div class="info-box">'+
-          'Estado: <span class="estado-badge '+estadoClass+'">'+r.estado+'</span>'+
-          (r.monto?'&nbsp;&nbsp;|&nbsp;&nbsp;Monto: <strong>'+monto+'</strong>':'')+
+        '<div class="estado-bar">'+
+          'Estado: <span class="est-badge" style="background:'+estadoColor+'">'+r.estado+'</span>'+
+          (r.monto?' &nbsp;|&nbsp; Monto total: <strong>₲ '+fmt(r.monto)+'.-</strong>':'')+
         '</div>'+
-        (r.descripcion?'<p style="font-size:13px;color:#444;line-height:1.7;margin-bottom:16px">'+r.descripcion+'</p>':'')+
+        (r.descripcion?'<p class="intro">'+r.descripcion+'</p>':'')+
         '<table>'+
-          '<thead><tr><th>Item</th><th>Detalle</th><th>Monto</th></tr></thead>'+
-          '<tbody>'+
-            '<tr><td>1</td><td>'+(r.descripcion||'Ver descripción')+'</td><td>'+monto+'</td></tr>'+
-          '</tbody>'+
+          '<thead><tr><th>Cant.</th><th>Detalle</th><th>Monto</th></tr></thead>'+
+          '<tbody>'+itemsHtml+'</tbody>'+
         '</table>'+
-        '<div class="tot"><div class="tot-l">Total del Presupuesto</div><div class="tot-v">'+monto+'</div></div>'+
-        (r.notas?'<div class="notas"><strong>Notas:</strong> '+r.notas+'</div>':'')+
+        '<div class="tot"><div class="tot-l">Total del Presupuesto</div><div class="tot-v">₲ '+fmt(totalMonto)+'.-</div></div>'+
+        '<p class="ftr">Esperamos que este presupuesto sea de su satisfacción. Quedamos atentos a cualquier consulta o requerimiento adicional que puedan tener.<br><br>Agradecemos su confianza en nuestros servicios.</p>'+
         '<div class="firma">'+
-          '<div>'+
-            '<div class="f-attn">Atentamente,</div>'+
-            '<div class="f-name">Gustavo Lezcano</div>'+
-            '<div class="f-cargo">Gerente de Servicios Informáticos</div>'+
-            '<div class="f-emp">Big Informática</div>'+
-          '</div>'+
+          '<div class="f-attn">Atentamente,</div>'+
+          '<div class="f-name">Gustavo Lezcano</div>'+
+          '<div class="f-cargo">Gerente de Servicios Informáticos</div>'+
+          '<div class="f-emp">Big Informática</div>'+
         '</div>'+
       '</div>'+
     '</div>';
 
   var iframePP=gi('presPreviewBody');
   var docPP=iframePP.contentDocument||iframePP.contentWindow.document;
-  docPP.open();docPP.write('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0">'+html+'</body></html>');docPP.close();
+  docPP.open();
+  docPP.write('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0">'+html+'</body></html>');
+  docPP.close();
   gi('presPreviewPanel').style.display='block';
   gi('presPreviewPanel').scrollIntoView({behavior:'smooth'});
+}
+
+async function compartirPres(){
+  var iframe=gi('presPreviewBody');
+  var doc=iframe.contentDocument||iframe.contentWindow.document;
+  var html=doc.documentElement.outerHTML;
+  
+  // Try Web Share API (works on mobile)
+  if(navigator.share){
+    try{
+      var blob=new Blob([html],{type:'text/html'});
+      var file=new File([blob],'presupuesto.html',{type:'text/html'});
+      await navigator.share({
+        title:'Presupuesto Big Informática',
+        files:[file]
+      });
+      return;
+    }catch(e){
+      // Fallback si no soporta files
+    }
+  }
+  
+  // Fallback: abrir en nueva pestaña para compartir manualmente
+  var blobUrl=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  var v=window.open(blobUrl,'_blank');
+  if(!v){
+    // Si bloquea popups, copiar link
+    toast('Activá popups o usá Imprimir / PDF para guardar','e');
+  } else {
+    setTimeout(function(){URL.revokeObjectURL(blobUrl);},5000);
+  }
 }
 
 function imprimirPresPreview(){
@@ -2714,7 +2806,7 @@ function verPrevGPres(){
   var totalVenta=items.reduce(function(s,it){return s+gpPrecioVenta(it);},0);
 
   var st='<style>'+
-    '*{box-sizing:border-box;margin:0;padding:0}'+
+    '@page{margin:0;size:A4}'+'@media print{body{margin:1cm}}'+    '*{box-sizing:border-box;margin:0;padding:0}'+
     'body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}'+
     '.wrap{max-width:780px;margin:0 auto}'+
     '.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:4px solid #8DC63F;background:#fff}'+
