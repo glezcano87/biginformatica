@@ -3772,9 +3772,57 @@ function imprimirReciboPreview(){
   imprimirHTML(doc.body.innerHTML);
 }
 
+function _naL_unidades(n){
+  var u=['','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve'];
+  return u[n]||'';
+}
+function _naL_decenas(n){
+  if(n<10) return _naL_unidades(n);
+  var especiales={10:'diez',11:'once',12:'doce',13:'trece',14:'catorce',15:'quince',
+    16:'dieciséis',17:'diecisiete',18:'dieciocho',19:'diecinueve',20:'veinte'};
+  if(especiales[n]) return especiales[n];
+  var decena=Math.floor(n/10), unidad=n%10;
+  if(decena===2){
+    var veinti={2:'veintidós',3:'veintitrés',6:'veintiséis'};
+    if(unidad===0) return 'veinte';
+    return veinti[unidad]||'veinti'+_naL_unidades(unidad);
+  }
+  var nombres={3:'treinta',4:'cuarenta',5:'cincuenta',6:'sesenta',7:'setenta',8:'ochenta',9:'noventa'};
+  var base=nombres[decena]||'';
+  return unidad>0?base+' y '+_naL_unidades(unidad):base;
+}
+function _naL_centenas(n){
+  if(n===0) return '';
+  if(n<100) return _naL_decenas(n);
+  var centena=Math.floor(n/100), resto=n%100;
+  if(centena===1) return resto===0?'cien':'ciento '+_naL_decenas(resto);
+  var nombres={2:'doscientos',3:'trescientos',4:'cuatrocientos',5:'quinientos',
+    6:'seiscientos',7:'setecientos',8:'ochocientos',9:'novecientos'};
+  var base=nombres[centena]||'';
+  return resto>0?base+' '+_naL_decenas(resto):base;
+}
+function _naL_seccion(n,divisor,singular,plural){
+  var cant=Math.floor(n/divisor);
+  if(cant<=0) return '';
+  if(cant===1) return singular;
+  return _naL_centenas(cant)+' '+plural;
+}
+function _naL_miles(n){
+  var strMiles=_naL_seccion(n,1000,'mil','mil');
+  var strCentenas=_naL_centenas(n%1000);
+  return [strMiles,strCentenas].filter(Boolean).join(' ');
+}
+function _naL_millones(n){
+  var strMillones=_naL_seccion(n,1000000,'un millón','millones');
+  var strMiles=_naL_miles(n%1000000);
+  return [strMillones,strMiles].filter(Boolean).join(' ');
+}
 function numeroALetrasGs(n){
   n=Math.round(Math.abs(n||0));
-  return n.toLocaleString('es-PY')+' guaraníes';
+  if(n===0) return 'cero guaraníes';
+  if(n>999999999999){ return n.toLocaleString('es-PY')+' guaraníes'; }
+  var texto=_naL_millones(n).trim();
+  return texto+' guaraní'+(n===1?'':'es');
 }
 
 // ══════════════════════════════════════════════════════════
