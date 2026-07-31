@@ -390,7 +390,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 <!-- DASHBOARD -->
 <div class="page active" id="page-dash">
   <div class="topbar"><div><h1>Dashboard</h1><div class="meta" id="dbMeta">&#8212;</div></div>
-  <div style="display:flex;align-items:center;gap:10px"><span class="mes-badge" id="dbBadge">&#8212;</span><span style="font-size:12px;color:var(--muted)">&#128100; <strong id="topbarUser" style="color:var(--text)"></strong></span></div></div>
+  <div style="display:flex;align-items:center;gap:10px"><span class="mes-badge" id="dbBadge">&#8212;</span><span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px">&#128100; <strong id="topbarUser" style="color:var(--text)"></strong><button onclick="doLogout()" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s" onmouseover="this.style.background='rgba(239,68,68,.25)'" onmouseout="this.style.background='rgba(239,68,68,.12)'">Salir</button></span></div></div>
   <div class="content">
     <!-- HERO -->
     <div class="db-hero">
