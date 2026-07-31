@@ -1678,17 +1678,17 @@ function rDbPieChart(comprasMes){
 }
 var td=()=>new Date().toISOString().slice(0,10);
 function sf(obj,px){Object.entries(obj).forEach(([k,v])=>{var el=gi(px+k);if(el)el.value=v})}
-function oV(){if(!sb){toast('Conecta Supabase primero','e');return}eV=null;initMon('v');gi('mVt').textContent='Nueva Venta';gi('bsV').textContent='Guardar Venta';sf({f:td(),p:'',fa:'',cl:'',t:'Servicio',d:'',m:'',i:'true'},'v');gi('mV').classList.add('open')}
-function oC(){if(!sb){toast('Conecta Supabase primero','e');return}eC=null;initMon('c');gi('mCt').textContent='Nueva Compra';gi('bsC').textContent='Guardar Compra';sf({f:td(),p:'',fa:'',pv:'',t:'Servicio',d:'',m_:'',i:'true'},'c');gi('mC').classList.add('open')}
-function oP(){if(!sb){toast('Conecta Supabase primero','e');return}eP=null;initMon('p');gi('mPt').textContent='Nuevo Presupuesto';gi('bsP').textContent='Guardar';sf({f:td(),n:'',cl:'',d:'',m:'',e:'Pendiente',no:''},'p');gi('mP').classList.add('open')}
+function oV(){if(!sb){toast('Conecta Supabase primero','e');return}eV=null;setTimeout(function(){initMontoInputs();},50);initMon('v');gi('mVt').textContent='Nueva Venta';gi('bsV').textContent='Guardar Venta';sf({f:td(),p:'',fa:'',cl:'',t:'Servicio',d:'',m:'',i:'true'},'v');gi('mV').classList.add('open')}
+function oC(){if(!sb){toast('Conecta Supabase primero','e');return}eC=null;setTimeout(function(){initMontoInputs();},50);initMon('c');gi('mCt').textContent='Nueva Compra';gi('bsC').textContent='Guardar Compra';sf({f:td(),p:'',fa:'',pv:'',t:'Servicio',d:'',m_:'',i:'true'},'c');gi('mC').classList.add('open')}
+function oP(){if(!sb){toast('Conecta Supabase primero','e');return}eP=null;setTimeout(function(){initMontoInputs();},50);initMon('p');gi('mPt').textContent='Nuevo Presupuesto';gi('bsP').textContent='Guardar';sf({f:td(),n:'',cl:'',d:'',m:'',e:'Pendiente',no:''},'p');gi('mP').classList.add('open')}
 function oG(){if(!sb){toast('Conecta Supabase primero','e');return}eG=null;gi('mGt').textContent='Nuevo Gasto Fijo';gi('bsG').textContent='Guardar';sf({c:'',cat:'Personal',fr:'Mensual',m:'',a:'true'},'g');gi('mG').classList.add('open')}
 function cm(id){gi(id).classList.remove('open')}
 function edV(id){var r=VD.find(x=>x.id===id);if(!r)return;eV=id;gi('mVt').textContent='Editar Venta';gi('bsV').textContent='Actualizar Venta';gi('vf').value=r.fecha;gi('vp').value=r.presupuesto||'';gi('vfa').value=r.factura||'';gi('vcl').value=r.cliente||'';gi('vt').value=r.tipo||'Servicio';gi('vd').value=r.descripcion||'';gi('vm').value=r.monto;gi('vi').value=String(r.iva);gi('mV').classList.add('open')}
 function edC(id){var r=CD.find(x=>x.id===id);if(!r)return;eC=id;gi('mCt').textContent='Editar Compra';gi('bsC').textContent='Actualizar Compra';gi('cf').value=r.fecha;gi('cp').value=r.presupuesto||'';gi('cfa').value=r.factura||'';gi('cpv').value=r.proveedor||'';gi('ct').value=r.tipo||'Servicio';gi('cd').value=r.descripcion||'';gi('cm_').value=r.monto;gi('ci').value=String(r.iva);gi('mC').classList.add('open')}
 function edP(id){var r=PD.find(x=>x.id===id);if(!r)return;eP=id;gi('mPt').textContent='Editar Presupuesto';gi('bsP').textContent='Actualizar';gi('pf').value=r.fecha;gi('pn').value=r.numero||'';gi('pcl').value=r.cliente||'';gi('pd').value=r.descripcion||'';gi('pm').value=r.monto||'';gi('pe').value=r.estado||'Pendiente';gi('pno').value=r.notas||'';gi('mP').classList.add('open')}
 function edG(id){var r=GD.find(x=>x.id===id);if(!r)return;eG=id;gi('mGt').textContent='Editar Gasto Fijo';gi('bsG').textContent='Actualizar';gi('gc').value=r.concepto;gi('gcat').value=r.categoria||'Personal';gi('gfr').value=r.frecuencia||'Mensual';gi('gm').value=r.monto_mensual;gi('ga').value=String(r.activo);gi('mG').classList.add('open')}
-async function sV(){var f=gi('vf').value,mRaw=parseFloat(gi('vm').value);if(!f||isNaN(mRaw)||mRaw<=0){toast('Completa fecha y monto','e');return}var m=monToGs('v',mRaw);var pay={fecha:f,presupuesto:gi('vp').value.trim()||null,factura:gi('vfa').value.trim()||null,cliente:gi('vcl').value.trim()||null,tipo:gi('vt').value,descripcion:gi('vd').value.trim()||null,monto:m,iva:gi('vi').value==='true'};await sv2('ventas','bsV',eV,pay,'mV','Venta');eV=null;await lV();usV()}
-async function sC(){var f=gi('cf').value,mRaw=parseFloat(gi('cm_').value);if(!f||isNaN(mRaw)||mRaw<=0){toast('Completa fecha y monto','e');return}var m=monToGs('c',mRaw);var pay={fecha:f,presupuesto:gi('cp').value.trim()||null,factura:gi('cfa').value.trim()||null,proveedor:gi('cpv').value.trim()||null,tipo:gi('ct').value,descripcion:gi('cd').value.trim()||null,monto:m,iva:gi('ci').value==='true'};await sv2('compras','bsC',eC,pay,'mC','Compra');eC=null;await lC();usC()}
+async function sV(){var f=gi('vf').value,mRaw=parseMonto(gi('vm'));if(!f||isNaN(mRaw)||mRaw<=0){toast('Completa fecha y monto','e');return}var m=monToGs('v',mRaw);var pay={fecha:f,presupuesto:gi('vp').value.trim()||null,factura:gi('vfa').value.trim()||null,cliente:gi('vcl').value.trim()||null,tipo:gi('vt').value,descripcion:gi('vd').value.trim()||null,monto:m,iva:gi('vi').value==='true'};await sv2('ventas','bsV',eV,pay,'mV','Venta');eV=null;await lV();usV()}
+async function sC(){var f=gi('cf').value,mRaw=parseMonto(gi('cm_'));if(!f||isNaN(mRaw)||mRaw<=0){toast('Completa fecha y monto','e');return}var m=monToGs('c',mRaw);var pay={fecha:f,presupuesto:gi('cp').value.trim()||null,factura:gi('cfa').value.trim()||null,proveedor:gi('cpv').value.trim()||null,tipo:gi('ct').value,descripcion:gi('cd').value.trim()||null,monto:m,iva:gi('ci').value==='true'};await sv2('compras','bsC',eC,pay,'mC','Compra');eC=null;await lC();usC()}
 async function sP(){var f=gi('pf').value;if(!f){toast('Completa la fecha','e');return}var m=parseFloat(gi('pm').value)||null;var pay={fecha:f,numero:gi('pn').value.trim()||null,cliente:gi('pcl').value.trim()||null,descripcion:gi('pd').value.trim()||null,monto:m,estado:gi('pe').value,notas:gi('pno').value.trim()||null};await sv2('presupuestos','bsP',eP,pay,'mP','Presupuesto');eP=null;await lP();usPS()}
 async function sG(){var c=gi('gc').value.trim(),m=parseFloat(gi('gm').value);if(!c||isNaN(m)||m<0){toast('Completa concepto y monto','e');return}var pay={concepto:c,categoria:gi('gcat').value,frecuencia:gi('gfr').value,monto_mensual:m,activo:gi('ga').value==='true'};await sv2('gastos_fijos','bsG',eG,pay,'mG','Gasto');eG=null;await lG();usGF()}
 async function sv2(tbl,btnId,editing,pay,modalId,lbl){var btn=gi(btnId);btn.disabled=true;btn.textContent='Guardando\u2026';var err;if(editing){var r=await sb.from(tbl).update(pay).eq('id',editing);err=r.error}else{var r=await sb.from(tbl).insert(pay);err=r.error}btn.disabled=false;btn.textContent=editing?'Actualizar '+lbl:'Guardar '+lbl;if(err){toast('Error: '+err.message,'e');return}toast(lbl+(editing?' actualizado':' guardado')+' \u2713','s');cm(modalId)}
@@ -3165,7 +3165,7 @@ function editCobro(id){
   gi('cb-estado').value = r.estado||'Pendiente';
   gi('cb-cliente').value = r.cliente||'';
   gi('cb-desc').value = r.descripcion||'';
-  gi('cb-monto').value = r.monto||'';
+  gi('cb-monto').value = r.monto?parseInt(r.monto).toLocaleString('es-PY'):'';
   gi('cb-vencimiento').value = r.vencimiento||'';
   gi('cb-notas').value = r.notas||'';
   gi('btnSaveCobro').dataset.originalEstado = r.estado||'Pendiente';
@@ -3175,7 +3175,7 @@ function editCobro(id){
 async function guardarCobro(){
   var fecha = gi('cb-fecha').value;
   var cliente = gi('cb-cliente').value.trim();
-  var montoRaw = parseFloat(gi('cb-monto').value);
+  var montoRaw = parseMonto(gi('cb-monto'));
   if(!fecha||!cliente||isNaN(montoRaw)||montoRaw<=0){ toast('Completa fecha, cliente y monto','e'); return; }
   var monto = monToGs('cb', montoRaw);
   var nuevoEstado = gi('cb-estado').value;
@@ -3427,6 +3427,7 @@ async function aprobarPres(id){
   '</div>';
   document.body.appendChild(modal);
   modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  setTimeout(function(){bindMontoInput('apr-costo');},100);
 }
 
 async function confirmarAprobar(id){
@@ -3645,6 +3646,42 @@ async function cambiarPass(){
   if(error){ toast('Error: '+error.message,'e'); return; }
   gi('newPass1').value=''; gi('newPass2').value='';
   toast('Contraseña actualizada ✓','s');
+}
+
+// ══════════════════════════════════════════════════════════
+// FORMATO DE MONTOS CON PUNTOS
+// ══════════════════════════════════════════════════════════
+function fmtMontoInput(input){
+  var raw = input.value.replace(/\./g,'').replace(/[^0-9]/g,'');
+  if(!raw){ input.value=''; return 0; }
+  var num = parseInt(raw,10);
+  input.value = num.toLocaleString('es-PY');
+  return num;
+}
+
+function parseMonto(input){
+  return parseInt((input.value||'0').replace(/\./g,'').replace(/[^0-9]/g,''),10)||0;
+}
+
+function bindMontoInput(id){
+  var el = gi(id);
+  if(!el) return;
+  el.type = 'text';
+  el.setAttribute('inputmode','numeric');
+  el.addEventListener('input', function(){
+    var pos = this.selectionStart;
+    var oldLen = this.value.length;
+    fmtMontoInput(this);
+    var newLen = this.value.length;
+    var diff = newLen - oldLen;
+    try{ this.setSelectionRange(pos+diff, pos+diff); }catch(e){}
+  });
+  el.addEventListener('blur', function(){ fmtMontoInput(this); });
+}
+
+function initMontoInputs(){
+  // Bind all monto inputs in modals
+  ['vm','cm_','pm','cb-monto','apr-costo'].forEach(function(id){ bindMontoInput(id); });
 }
 
 function toggleSidebar(){
