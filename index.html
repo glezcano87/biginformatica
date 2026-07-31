@@ -390,7 +390,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 <!-- DASHBOARD -->
 <div class="page active" id="page-dash">
   <div class="topbar"><div><h1>Dashboard</h1><div class="meta" id="dbMeta">&#8212;</div></div>
-  <span class="mes-badge" id="dbBadge">&#8212;</span></div>
+  <div style="display:flex;align-items:center;gap:10px"><span class="mes-badge" id="dbBadge">&#8212;</span><span style="font-size:12px;color:var(--muted)">&#128100; <strong id="topbarUser" style="color:var(--text)"></strong></span></div></div>
   <div class="content">
     <!-- HERO -->
     <div class="db-hero">
@@ -1106,7 +1106,8 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         <div class="fgg full"><label>Nombre de usuario *</label><input type="text" id="nuEmail" placeholder="Ej: maria, juan, gustavo"><div style="font-size:11px;color:var(--muted);margin-top:4px">Sin espacios ni caracteres especiales.</div></div>
         <div class="fgg"><label>Contrase&#241;a *</label><input type="password" id="nuPass" placeholder="M&#237;nimo 6 caracteres"></div>
         <div class="fgg"><label>Confirmar contrase&#241;a *</label><input type="password" id="nuPass2" placeholder="Repetir"></div>
-        <div class="fgg full"><label>Nombre (opcional)</label><input type="text" id="nuNombre" placeholder="Nombre del usuario"></div>
+        <div class="fgg full"><label>Nombre completo</label><input type="text" id="nuNombre" placeholder="Ej: Francisco Ortiz"></div>
+        <div class="fgg"><label>Rol</label><select id="nuRol"><option value="usuario">Usuario normal</option><option value="admin">Administrador</option></select></div>
       </div>
       <div style="margin-top:14px;font-size:12px;color:var(--muted);background:rgba(37,99,235,.06);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
         &#8505;&#65039; El usuario podr&#225; iniciar sesión inmediatamente. Desactivá "Email confirmations" en Supabase → Auth → Settings.
@@ -3516,9 +3517,11 @@ async function doLogin(){
     var {data, error} = await sb.auth.signInWithPassword({email:email, password:pass});
     if(error){ throw error; }
     currentUser = data.user;
+    var unameL = currentUser.email.replace('@biginformatica.local','');
     showAuthScreen(false);
-    gi('uCurrentEmail').textContent = currentUser.email.replace('@biginformatica.local','');
+    gi('uCurrentEmail').textContent = unameL;
     gi('uLastAccess').textContent = new Date().toLocaleString('es-PY');
+    var tu2 = gi('topbarUser'); if(tu2) tu2.textContent = unameL;
     btn.disabled=false; btn.textContent='Iniciar Sesión';
     await loadAll();
   } catch(e){
@@ -3542,8 +3545,10 @@ async function checkSession(){
   var {data} = await sb.auth.getSession();
   if(data && data.session && data.session.user){
     currentUser = data.session.user;
-    gi('uCurrentEmail').textContent = currentUser.email.replace('@biginformatica.local','');
+    var uname = currentUser.email.replace('@biginformatica.local','');
+    gi('uCurrentEmail').textContent = uname;
     gi('uLastAccess').textContent = new Date().toLocaleString('es-PY');
+    var tu = gi('topbarUser'); if(tu) tu.textContent = uname;
     showAuthScreen(false);
     await loadAll();
   } else {
@@ -3561,15 +3566,21 @@ async function loadUsuarios(){
   if(!sb||!currentUser) return;
   var list = gi('usuariosList');
   list.innerHTML='<div class="es" style="padding:20px"><p>Cargando...</p></div>';
+  // Check if current user is admin
+  var myRole = (currentUser.user_metadata&&currentUser.user_metadata.rol)||'admin';
+  var btnNuevo = document.querySelector('button[onclick="openModalNuevoUsuario()"]');
+  if(btnNuevo) btnNuevo.style.display = myRole==='admin'?'':'none';
 
   try{
     // Use admin API via edge function or show current user only
     // Supabase free tier: list users via admin key (not available client-side)
     // Show current user + info
+    var myRole = (currentUser.user_metadata&&currentUser.user_metadata.rol)||'admin';
+    var myName = (currentUser.user_metadata&&currentUser.user_metadata.nombre)||currentUser.email.replace('@biginformatica.local','');
     list.innerHTML='<div class="user-row">'+
       '<div>'+
-        '<div class="ue">'+currentUser.email.replace('@biginformatica.local','')+'</div>'+
-        '<div class="ur">ID: '+currentUser.id.slice(0,8)+'... &middot; Tu cuenta actual</div>'+
+        '<div class="ue">'+currentUser.email.replace('@biginformatica.local','')+(myName&&myName!==currentUser.email.replace('@biginformatica.local','')?'  <span style="font-size:11px;color:var(--muted)">'+myName+'</span>':'')+'</div>'+
+        '<div class="ur">Rol: '+(myRole==='admin'?'<span style="color:var(--accent2)">Administrador</span>':'Usuario normal')+' &middot; Tu cuenta actual</div>'+
       '</div>'+
       '<span class="bx bg">Activo</span>'+
     '</div>'+
@@ -3599,21 +3610,28 @@ async function crearUsuario(){
   btn.disabled=true; btn.textContent='Creando...';
 
   try{
-    var {data, error} = await sb.auth.signUp({
+    // Use separate client to avoid auto-login of new user
+    var SURL='https://vnzdrvlzdvutwhzzapfy.supabase.co';
+    var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuemRydmx6ZHZ1dHdoenphcGZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NjY1NDUsImV4cCI6MjA5ODE0MjU0NX0.z0vVZA5nzqwwBlJl0trr6K4XPh5U_SwggKdyKOv8s2c';
+    var sbTmp = supabase.createClient(SURL, SKEY);
+    var res = await sbTmp.auth.signUp({
       email: email,
       password: pass,
-      options: { data: { nombre: gi('nuNombre').value.trim()||null } }
+      options: { data: { nombre: gi('nuNombre').value.trim()||uname2, username: uname2, rol: gi('nuRol')?gi('nuRol').value:'usuario' } }
     });
-    if(error) throw error;
+    if(res.error) throw res.error;
+    // Sign out from temp client to not affect current session
+    await sbTmp.auth.signOut();
     btn.disabled=false; btn.textContent='Crear Usuario';
     cm('modalNuevoUsuario');
-    toast('Usuario creado ✓ Ya puede iniciar sesión.','s');
+    toast('Usuario "'+uname2+'" creado \u2713 Ya puede iniciar sesi\u00f3n.','s');
     loadUsuarios();
   } catch(e){
     btn.disabled=false; btn.textContent='Crear Usuario';
     toast('Error: '+e.message,'e');
   }
 }
+
 
 async function cambiarPass(){
   var p1=gi('newPass1').value, p2=gi('newPass2').value;
