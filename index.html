@@ -2507,12 +2507,15 @@ function getMesesPeriodo(per, mes){
 function generarPDF(tipo){
   var html;
   if(tipo==='flujo'){
-    var mes=gi('rpFlujoMes').value;
-    if(!mes){toast('Seleccioná un mes','e');return;}
-    html=genReporteFlujo(mes);
+    var per=gi('rpFlujoPer')?gi('rpFlujoPer').value:'mes';
+    var mes=gi('rpFlujoMes')?gi('rpFlujoMes').value:'';
+    var meses=getMesesPeriodo(per,mes);
+    if(!meses.length){toast('Seleccion\u00e1 un per\u00edodo','e');return;}
+    html=genReporteFlujo(meses[0],meses);
   } else if(tipo==='margenes'){
-    var mes=gi('rpMargenMes').value;
-    html=genReporteMargenes(mes);
+    var per3=gi('rpMargenPer')?gi('rpMargenPer').value:'todos';
+    var mes3=gi('rpMargenMes')?gi('rpMargenMes').value:'';
+    html=genReporteMargenes(per3==='mes'?mes3:'');
   } else if(tipo==='diario'){
     var per=gi('rpDiarioPer').value;
     var mes=gi('rpDiarioMes').value;
@@ -2520,9 +2523,11 @@ function generarPDF(tipo){
     var meses=getMesesPeriodo(per,mes);
     html=genReporteDiario(meses,tipo2);
   } else if(tipo==='balance'){
-    var mes=gi('rpBalanceMes').value;
-    if(!mes){toast('Seleccioná un mes','e');return;}
-    html=genReporteBalance(mes);
+    var per2=gi('rpBalancePer')?gi('rpBalancePer').value:'mes';
+    var mes2=gi('rpBalanceMes')?gi('rpBalanceMes').value:'';
+    var meses2=getMesesPeriodo(per2,mes2);
+    if(!meses2.length){toast('Seleccion\u00e1 un per\u00edodo','e');return;}
+    html=genReporteBalance(meses2[0]);
   }
   if(!html) return;
 
@@ -2537,7 +2542,7 @@ function generarPDF(tipo){
   var bar=document.createElement('div');
   bar.style.cssText='display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap';
   bar.innerHTML='<span style="color:#fff;font-size:14px;font-weight:600">Reporte</span>'+
-    '<button onclick="imprimirReporte()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">\uD83D\uDDA8 Imprimir / PDF</button>'+
+    '<button onclick="imprimirReporte()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">&#128424; Imprimir / PDF</button>'+
     '<button onclick="document.getElementById(\'rpOverlay\').remove()" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-family:inherit">Cerrar</button>';
 
   var ifr=document.createElement('iframe');
