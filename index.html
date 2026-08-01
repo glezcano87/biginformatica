@@ -734,23 +734,14 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
     <div><h1>Reportes PDF</h1><div class="meta">Generá reportes listos para imprimir o compartir</div></div>
   </div>
   <div class="content">
-    <div class="db-grid-3" style="margin-bottom:24px">
 
+    <div class="db-grid-3" style="margin-bottom:24px">
+      <!-- REPORTE FLUJO -->
       <div class="db-panel">
         <div class="db-panel-h"><span class="title">&#128200; Flujo de Caja</span></div>
         <div class="db-panel-body">
-          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Ingresos, costos, gastos fijos y utilidad neta del período.</p>
-          <div class="fgg" style="margin-bottom:10px">
-            <label>Período</label>
-            <select class="fs" id="rpFlujoPer" style="width:100%" onchange="popRpFlujo()">
-              <option value="mes">Mes</option>
-              <option value="bimestre">Bimestre</option>
-              <option value="trimestre">Trimestre</option>
-              <option value="semestre">Semestre</option>
-              <option value="anual">Anual</option>
-            </select>
-          </div>
-          <div id="rpFlujoMesWrap" class="fgg" style="margin-bottom:12px">
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Ingresos, costos, gastos fijos y utilidad neta del mes seleccionado.</p>
+          <div class="fgg" style="margin-bottom:14px">
             <label>Mes</label>
             <select class="fs" id="rpFlujoMes" style="width:100%"></select>
           </div>
@@ -761,23 +752,16 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         </div>
       </div>
 
+      <!-- REPORTE MARGENES -->
       <div class="db-panel">
         <div class="db-panel-h"><span class="title">&#127919; An&#225;lisis de M&#225;rgenes</span></div>
         <div class="db-panel-body">
-          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Rentabilidad por presupuesto con margen bruto y utilidad.</p>
-          <div class="fgg" style="margin-bottom:10px">
-            <label>Período</label>
-            <select class="fs" id="rpMargenPer" style="width:100%" onchange="popRpMargen()">
-              <option value="todos">Todos</option>
-              <option value="mes">Mes</option>
-              <option value="trimestre">Trimestre</option>
-              <option value="semestre">Semestre</option>
-              <option value="anual">Anual</option>
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Rentabilidad por presupuesto con margen bruto y utilidad de cada trabajo.</p>
+          <div class="fgg" style="margin-bottom:14px">
+            <label>Mes (opcional)</label>
+            <select class="fs" id="rpMargenMes" style="width:100%">
+              <option value="">Todos los meses</option>
             </select>
-          </div>
-          <div id="rpMargenMesWrap" class="fgg" style="display:none;margin-bottom:12px">
-            <label>Mes</label>
-            <select class="fs" id="rpMargenMes" style="width:100%"><option value="">Todos</option></select>
           </div>
           <button class="btn btn-p" style="width:100%;justify-content:center" onclick="generarPDF('margenes')">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -786,20 +770,12 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         </div>
       </div>
 
+      <!-- REPORTE BALANCE -->
       <div class="db-panel">
-        <div class="db-panel-h"><span class="title">&#9878; Balance General</span></div>
+        <div class="db-panel-h"><span class="title">&#9878;&#65039; Balance General</span></div>
         <div class="db-panel-body">
-          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Activos, pasivos, patrimonio y posición IVA del período.</p>
-          <div class="fgg" style="margin-bottom:10px">
-            <label>Período</label>
-            <select class="fs" id="rpBalancePer" style="width:100%" onchange="popRpBalance()">
-              <option value="mes">Mes</option>
-              <option value="trimestre">Trimestre</option>
-              <option value="semestre">Semestre</option>
-              <option value="anual">Anual</option>
-            </select>
-          </div>
-          <div id="rpBalanceMesWrap" class="fgg" style="margin-bottom:12px">
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Activos, pasivos, patrimonio y posici&#243;n IVA del mes seleccionado.</p>
+          <div class="fgg" style="margin-bottom:14px">
             <label>Mes</label>
             <select class="fs" id="rpBalanceMes" style="width:100%"></select>
           </div>
@@ -809,29 +785,190 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
           </button>
         </div>
       </div>
+    </div>
 
-      <!-- LIBRO DIARIO - full width -->
+    <!-- PREVIEW AREA -->
+    <div class="db-panel" id="rpPreviewPanel" style="display:none">
+      <div class="db-panel-h">
+        <span class="title" id="rpPreviewTitle">Vista previa</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-g btn-sm" onclick="imprimirReporteNuevoTab()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Imprimir / Guardar PDF
+          </button>
+          <button class="btn btn-g btn-sm" onclick="gi('rpPreviewPanel').style.display='none'">Cerrar</button>
+        </div>
+      </div>
+      <div class="db-panel-body" id="rpPreviewBody" style="padding:0"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PRINT STYLES -->
+<style>
+@media print {
+  .sidebar,.topbar,.hbg,.sb-overlay,.tc,.db-panel-h button,.nav-a,.btn { display:none !important; }
+  .main { margin-left:0 !important; }
+  body { background:#fff !important; color:#000 !important; font-size:12px; }
+  .page { display:block !important; }
+  .page:not(#page-reportes) { display:none !important; }
+  #rpPreviewPanel { display:block !important; box-shadow:none; border:none; }
+  #rpPreviewPanel .db-panel-h { display:none !important; }
+  .rp-print-area { padding:0 !important; }
+}
+</style>
+
+<!-- COBROS PENDIENTES -->
+<div class="page" id="page-cobros">
+  <div class="topbar">
+    <div><h1>Cobros Pendientes</h1><div class="meta" id="cobrosMeta">&#8212;</div></div>
+    <button class="btn btn-p" onclick="openModalCobro()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4v16m8-8H4"/></svg>
+      Nuevo Cobro
+    </button>
+  </div>
+  <div class="content">
+    <div class="srow">
+      <div class="sc"><div class="lbl">Total Pendiente</div><div class="val r" id="cb-total">&#8370; 0</div></div>
+      <div class="sc"><div class="lbl">Cobros Vencidos</div><div class="val r" id="cb-vencidos">0</div><div style="font-size:11px;color:var(--muted);margin-top:3px">M&#225;s de 30 d&#237;as</div></div>
+      <div class="sc"><div class="lbl">Cobros al D&#237;a</div><div class="val g" id="cb-aldia">0</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Menos de 30 d&#237;as</div></div>
+      <div class="sc"><div class="lbl">Cobrados</div><div class="val g" id="cb-cobrados">&#8370; 0</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Total cobrado</div></div>
+    </div>
+    <div class="tw">
+      <div class="ttb">
+        <div class="sb"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="qCobros" placeholder="Buscar cliente, presupuesto&#8230;" oninput="rCobros()"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select class="fs" id="fEstCobros" onchange="rCobros()">
+            <option value="">Todos los estados</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Cobrado">Cobrado</option>
+            <option value="Vencido">Vencido</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr>
+          <th>Fecha Factura</th><th>N&#176; Presupuesto</th><th>N&#176; Factura</th>
+          <th>Cliente</th><th>Descripci&#243;n</th>
+          <th class="tr">Monto</th><th>Estado</th><th>D&#237;as</th><th></th>
+        </tr></thead>
+        <tbody id="tblCobros"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<!-- GENERADOR PRESUPUESTO -->
+<div class="page" id="page-gpres">
+  <div class="topbar">
+    <div><h1>Crear Presupuesto</h1><div class="meta">Calculador con margen de ganancia y generador de PDF</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-g" onclick="limpiarGPres()">Limpiar</button>
+      <button class="btn btn-p" onclick="verPrevGPres()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        Vista Previa / PDF
+      </button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="gp-wrap">
+
+      <!-- DATOS DEL PRESUPUESTO -->
+      <div class="gp-form">
+        <h3>Datos del Presupuesto</h3>
+        <div class="fg" style="margin-bottom:0">
+          <div class="fgg"><label>Cliente / Empresa *</label><input type="text" id="gp-cliente" placeholder="Ej: Genetyx S.A." oninput="calcGPres()"></div>
+          <div class="fgg"><label>Fecha</label><input type="date" id="gp-fecha"></div>
+          <div class="fgg"><label>N&#176; Presupuesto</label><input type="text" id="gp-numero" placeholder="Ej: Presupuesto 08-06-26"></div>
+          <div class="fgg"><label>Descripci&#243;n general</label><input type="text" id="gp-descripcion" placeholder="Ej: Equipos inform&#225;ticos, Servicio de soporte&#8230;"></div>
+          <div class="fgg full"><label>Introducci&#243;n (opcional)</label><textarea id="gp-intro" placeholder="Ej: Nos complace presentarle el presupuesto de impresoras Epson EcoTank." style="min-height:52px" oninput="calcGPres()"></textarea></div>
+          <div class="fgg"><label>Moneda del Presupuesto</label>
+            <div class="moneda-btns">
+              <button class="moneda-btn active" id="gpMonedaGS" onclick="setGPMoneda('GS',this)">&#8370; Guaran&#237;es</button>
+              <button class="moneda-btn" id="gpMonedaUSD" onclick="setGPMoneda('USD',this)">&#36; D&#243;lares</button>
+            </div>
+          </div>
+          <div class="fgg" id="gpCotizWrap" style="display:none">
+            <label>Cotizaci&#243;n USD (&#8370; por 1 USD)</label>
+            <input type="number" id="gpCotiz" placeholder="7800" min="0" oninput="calcGPres()">
+          </div>
+        </div>
+      </div>
+
+      <!-- MARGEN GLOBAL -->
+      <div class="gp-form">
+        <h3>Margen de Ganancia Global</h3>
+        <div class="gp-margen-btns" id="gpMargenBtns">
+          <button class="gp-mb" onclick="setMargenGlobal(0,this)">0%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(10,this)">10%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(15,this)">15%</button>
+          <button class="gp-mb active" onclick="setMargenGlobal(20,this)">20%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(25,this)">25%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(30,this)">30%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(35,this)">35%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(40,this)">40%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(45,this)">45%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(50,this)">50%</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted)">El margen global se aplica a todos los &#237;tems. Pod&#233;s ajustar cada &#237;tem individualmente.</div>
+      </div>
+
+      <!-- ITEMS -->
+      <div class="gp-form">
+        <h3>&#205;tems del Presupuesto</h3>
+        <div class="gp-items-header">
+          <span>Descripci&#243;n</span><span>Cant.</span><span>Costo Prov.</span><span>Margen</span><span>Precio Venta</span><span></span>
+        </div>
+        <div id="gpItems"></div>
+        <button class="btn btn-g" onclick="addGPItem()" style="margin-top:4px;font-size:12px">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+          Agregar &#237;tem
+        </button>
+        <div class="gp-total-bar">
+          <div class="gp-total-item"><div class="gtl">Costo Total Proveedor</div><div class="gtv r" id="gp-costo-total">&#8370; 0</div></div>
+          <div style="font-size:20px;color:var(--muted)">&#8594;</div>
+          <div class="gp-total-item"><div class="gtl">Ganancia Estimada</div><div class="gtv g" id="gp-ganancia-total">&#8370; 0</div></div>
+          <div style="font-size:20px;color:var(--muted)">+</div>
+          <div class="gp-total-item"><div class="gtl">PRECIO FINAL AL CLIENTE</div><div class="gtv b" id="gp-venta-total">&#8370; 0</div></div>
+        </div>
+      </div>
+
+      <!-- PREVIEW PDF -->
+      <div id="gpPreviewWrap" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:600">Vista previa del presupuesto</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-p btn-sm" onclick="imprimirPresupuesto()">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              Imprimir / Guardar PDF
+            </button>
+            <button class="btn btn-g btn-sm" onclick="guardarPresDesdeGP()">&#128190; Guardar en Sistema</button>
+            <button class="btn btn-g btn-sm" onclick="gi('gpPreviewWrap').style.display='none';var f=gi('gpPreviewBody');var d=f.contentDocument||f.contentWindow.document;d.open();d.write('');d.close();">Cerrar</button>
+          </div>
+        </div>
+        <div class="pdf-preview-wrap">
+          <iframe id="gpPreviewBody" style="width:100%;height:70vh;border:none;border-radius:0 0 8px 8px;background:#fff"></iframe>
+        </div>
+      </div>
+
+          <!-- LIBRO DIARIO -->
       <div class="db-panel" style="margin-top:16px">
         <div class="db-panel-h"><span class="title">&#128218; Libro Diario — Ventas y Compras</span></div>
         <div class="db-panel-body">
-          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Registro completo de todas las ventas y compras. Ideal para contabilidad y declaraciones fiscales.</p>
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Registro completo de ventas y compras. Ideal para declaraciones fiscales.</p>
           <div class="fg" style="margin-bottom:12px">
-            <div class="fgg">
-              <label>Período</label>
+            <div class="fgg"><label>Período</label>
               <select class="fs" id="rpDiarioPer" onchange="popRpDiario()">
-                <option value="mes">Mes</option>
-                <option value="bimestre">Bimestre</option>
-                <option value="trimestre">Trimestre</option>
-                <option value="semestre">Semestre</option>
+                <option value="mes">Mes</option><option value="bimestre">Bimestre</option>
+                <option value="trimestre">Trimestre</option><option value="semestre">Semestre</option>
                 <option value="anual">Anual</option>
               </select>
             </div>
-            <div class="fgg" id="rpDiarioMesWrap">
-              <label>Mes</label>
+            <div class="fgg" id="rpDiarioMesWrap"><label>Mes</label>
               <select class="fs" id="rpDiarioMes"></select>
             </div>
-            <div class="fgg">
-              <label>Incluir</label>
+            <div class="fgg"><label>Incluir</label>
               <select class="fs" id="rpDiarioTipo">
                 <option value="ambos">Ventas y Compras</option>
                 <option value="ventas">Solo Ventas</option>
@@ -841,26 +978,13 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
           </div>
           <button class="btn btn-p" onclick="generarPDF('diario')">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Generar Libro Diario PDF
+            Generar Libro Diario
           </button>
         </div>
       </div>
-
-    <!-- REPORT PREVIEW -->
-    <div class="db-panel" id="rpPreviewPanel" style="display:none;margin-top:16px">
-      <div class="db-panel-h">
-        <span class="title" id="rpPreviewTitle">Vista Previa del Reporte</span>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-p btn-sm" onclick="imprimirReporte()">Imprimir / PDF</button>
-          <button class="btn btn-g btn-sm" onclick="gi('rpPreviewPanel').style.display='none';gi('rpPreviewBody').innerHTML=''">Cerrar</button>
-        </div>
-      </div>
-      <div id="rpPreviewBody" style="overflow:auto;max-height:70vh;background:#fff;border-radius:0 0 12px 12px"></div>
-    </div>
-    </div>
+</div>
   </div>
 </div>
-
 
 <!-- IMPORTAR -->
 <div class="page" id="page-importar">
@@ -2328,109 +2452,122 @@ function popReportesSel(){
 
 function fmtGs(n){ return '\u20b2 '+(Math.abs(n||0)).toLocaleString('es-PY'); }
 
+function getMesesPeriodo(per, mes){
+  var hoy=new Date(); var y=hoy.getFullYear(); var m=hoy.getMonth()+1;
+  if(mes){ y=parseInt(mes.split('-')[0]); m=parseInt(mes.split('-')[1]); }
+  var arr=[];
+  if(!per||per==='mes'){ return mes?[mes]:[y+'-'+String(m).padStart(2,'0')]; }
+  if(per==='bimestre'){
+    var s=m%2===0?m-1:m;
+    return [y+'-'+String(s).padStart(2,'0'),y+'-'+String(Math.min(s+1,12)).padStart(2,'0')];
+  }
+  if(per==='trimestre'){
+    var q=Math.ceil(m/3); var qs=(q-1)*3+1;
+    for(var i=0;i<3;i++) arr.push(y+'-'+String(qs+i).padStart(2,'0'));
+    return arr;
+  }
+  if(per==='semestre'){
+    var h=m<=6?1:7;
+    for(var i=0;i<6;i++) arr.push(y+'-'+String(h+i).padStart(2,'0'));
+    return arr;
+  }
+  if(per==='anual'){
+    for(var i=1;i<=12;i++) arr.push(y+'-'+String(i).padStart(2,'0'));
+    return arr;
+  }
+  return mes?[mes]:[];
+}
+function popRpDiario(){
+  var p=gi('rpDiarioPer')?gi('rpDiarioPer').value:'mes';
+  var w=gi('rpDiarioMesWrap');
+  if(w) w.style.display=(p==='mes')?'':'none';
+}
+
+function imprimirReporteNuevoTab(){
+  var body = gi('rpPreviewBody');
+  if(!body) return;
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>@page{margin:1.5cm}</style></head><body>'+body.innerHTML+'</body></html>';
+  var blob = new Blob([html], {type:'text/html'});
+  var url = URL.createObjectURL(blob);
+  var v = window.open(url, '_blank');
+  if(v){ v.onload=function(){ setTimeout(function(){ v.print(); URL.revokeObjectURL(url); }, 400); }; }
+  else { toast('Activá popups para imprimir','e'); }
+}
+
 function genReporteDiario(meses, tipo){
   var AZUL='#1B6B8A'; var VERDE='#8DC63F';
-  var label = meses.length===1 ? meses[0] : meses[0]+' al '+meses[meses.length-1];
+  var label = meses.length===1 ? meses[0] : (meses[0]+' al '+meses[meses.length-1]);
+  function enMeses(f){ return meses.some(function(m){ return (f||'').startsWith(m); }); }
+  var ventas=(tipo==='ambos'||tipo==='ventas')?VD.filter(function(r){return enMeses(r.fecha);}) : [];
+  var compras=(tipo==='ambos'||tipo==='compras')?CD.filter(function(r){return enMeses(r.fecha);}) : [];
+  ventas.sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'');});
+  compras.sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'');});
+  var totV=ventas.reduce(function(s,r){return s+(r.monto||0);},0);
+  var totC=compras.reduce(function(s,r){return s+(r.monto||0);},0);
+  var util=totV-totC;
 
-  // Filter data by months
-  function enMeses(fecha){ return meses.some(function(m){ return (fecha||'').startsWith(m); }); }
-
-  var ventas = (tipo==='ambos'||tipo==='ventas') ? VD.filter(function(r){ return enMeses(r.fecha); }) : [];
-  var compras = (tipo==='ambos'||tipo==='compras') ? CD.filter(function(r){ return enMeses(r.fecha); }) : [];
-
-  // Sort by date
-  ventas.sort(function(a,b){ return (a.fecha||'').localeCompare(b.fecha||''); });
-  compras.sort(function(a,b){ return (a.fecha||'').localeCompare(b.fecha||''); });
-
-  var totalV = ventas.reduce(function(s,r){ return s+(r.monto||0); }, 0);
-  var totalC = compras.reduce(function(s,r){ return s+(r.monto||0); }, 0);
-  var utilidad = totalV - totalC;
-
-  var st = '<style>@page{margin:0;size:A4}@media print{body{margin:1.5cm}}'+
-    '* {box-sizing:border-box;margin:0;padding:0}'+
+  var css='<style>'+
+    '*{box-sizing:border-box;margin:0;padding:0}'+
     'body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a2e;background:#fff}'+
     '.wrap{max-width:900px;margin:0 auto;padding:20px}'+
-    '.logo{height:55px;width:auto}'+
-    '.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:4px solid '+VERDE+'}'+
-    '.hdr-r{text-align:right}'+
-    '.badge{display:inline-block;background:'+AZUL+';color:#fff;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}'+
-    '.strip{height:5px;background:linear-gradient(90deg,'+AZUL+','+VERDE+')}'+
-    '.body{padding:20px 28px 28px}'+
-    '.res{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}'+
-    '.rc{background:#f8f8f8;border-radius:8px;padding:12px 14px;text-align:center}'+
-    '.rc .rl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}'+
-    '.rc .rv{font-size:18px;font-weight:800}'+
-    '.sec-title{font-size:12px;font-weight:800;color:'+AZUL+';text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid '+VERDE+';padding-bottom:5px;margin:18px 0 10px}'+
-    'table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:12px}'+
-    'thead th{background:'+AZUL+';color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:700}'+
-    'thead th.tr{text-align:right}'+
-    'tbody td{padding:7px 10px;border-bottom:1px solid #eee}'+
-    'tbody td.tr{text-align:right;font-variant-numeric:tabular-nums}'+
+    '.hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 0 12px;border-bottom:3px solid '+VERDE+'}'+
+    '.logo{height:52px;width:auto}'+
+    '.badge{background:'+AZUL+';color:#fff;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase}'+
+    '.period{font-size:13px;font-weight:700;color:'+AZUL+';margin-top:4px}'+
+    '.fecha{font-size:11px;color:#666}'+
+    '.res{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}'+
+    '.rc{background:#f8f8f8;border-radius:8px;padding:12px;text-align:center}'+
+    '.rl{font-size:10px;color:#666;text-transform:uppercase;margin-bottom:4px}'+
+    '.rv{font-size:18px;font-weight:800}'+
+    '.sec{font-size:11px;font-weight:800;color:'+AZUL+';text-transform:uppercase;border-bottom:2px solid '+VERDE+';padding-bottom:4px;margin:16px 0 8px}'+
+    'table{width:100%;border-collapse:collapse;font-size:11px}'+
+    'thead th{background:'+AZUL+';color:#fff;padding:7px 8px;text-align:left;font-weight:700}'+
+    'thead th:last-child{text-align:right}'+
+    'tbody td{padding:6px 8px;border-bottom:1px solid #eee}'+
+    'tbody td:last-child{text-align:right;font-weight:600}'+
     'tbody tr:nth-child(even){background:#f8fbff}'+
-    '.tot-row td{font-weight:800;background:#f0f7ff !important;color:'+AZUL+'}'+
+    '.tot td{font-weight:800;background:#e8f4ff !important;color:'+AZUL+'}'+
+    '.ivab{padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700}'+
     '</style>';
 
-  var ventasRows = ventas.length ? ventas.map(function(r){
-    return '<tr>'+
-      '<td>'+fd(r.fecha)+'</td>'+
-      '<td>'+(r.factura||'—')+'</td>'+
-      '<td>'+(r.cliente||'—')+'</td>'+
-      '<td>'+(r.descripcion||'—').slice(0,40)+'</td>'+
-      '<td>'+(r.tipo||'')+'</td>'+
-      '<td><span style="background:'+(r.iva?'#d1fae5':'#fee2e2')+';color:'+(r.iva?'#065f46':'#991b1b')+';padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">'+(r.iva?'IVA':'Exento')+'</span></td>'+
-      '<td class="tr" style="font-weight:600;color:'+AZUL+'">₲ '+fmt(r.monto)+'</td>'+
-    '</tr>';
-  }).join('') : '<tr><td colspan="7" style="text-align:center;color:#999;padding:16px">Sin ventas en el período</td></tr>';
+  var vRows=ventas.length?ventas.map(function(r){
+    return '<tr><td>'+fd(r.fecha)+'</td><td>'+(r.factura||'—')+'</td><td>'+(r.cliente||'—')+'</td>'+
+      '<td>'+(r.descripcion||'—').slice(0,35)+'</td><td>'+(r.tipo||'')+'</td>'+
+      '<td><span class="ivab" style="background:'+(r.iva?'#d1fae5':'#fee2e2')+';color:'+(r.iva?'#065f46':'#991b1b')+'">'+(r.iva?'IVA':'Exento')+'</span></td>'+
+      '<td>₲ '+fmt(r.monto)+'</td></tr>';
+  }).join(''):'<tr><td colspan="7" style="text-align:center;color:#999;padding:12px">Sin ventas en el período</td></tr>';
 
-  var comprasRows = compras.length ? compras.map(function(r){
-    return '<tr>'+
-      '<td>'+fd(r.fecha)+'</td>'+
-      '<td>'+(r.factura||'—')+'</td>'+
-      '<td>'+(r.proveedor||'—')+'</td>'+
-      '<td>'+(r.descripcion||'—').slice(0,40)+'</td>'+
-      '<td>'+(r.tipo||'')+'</td>'+
-      '<td><span style="background:'+(r.iva?'#d1fae5':'#fee2e2')+';color:'+(r.iva?'#065f46':'#991b1b')+';padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">'+(r.iva?'IVA':'Exento')+'</span></td>'+
-      '<td class="tr" style="font-weight:600;color:#dc2626">₲ '+fmt(r.monto)+'</td>'+
-    '</tr>';
-  }).join('') : '<tr><td colspan="7" style="text-align:center;color:#999;padding:16px">Sin compras en el período</td></tr>';
+  var cRows=compras.length?compras.map(function(r){
+    return '<tr><td>'+fd(r.fecha)+'</td><td>'+(r.factura||'—')+'</td><td>'+(r.proveedor||'—')+'</td>'+
+      '<td>'+(r.descripcion||'—').slice(0,35)+'</td><td>'+(r.tipo||'')+'</td>'+
+      '<td><span class="ivab" style="background:'+(r.iva?'#d1fae5':'#fee2e2')+';color:'+(r.iva?'#065f46':'#991b1b')+'">'+(r.iva?'IVA':'Exento')+'</span></td>'+
+      '<td>₲ '+fmt(r.monto)+'</td></tr>';
+  }).join(''):'<tr><td colspan="7" style="text-align:center;color:#999;padding:12px">Sin compras en el período</td></tr>';
 
-  var html = st+
+  return css+
     '<div class="wrap">'+
       '<div class="hdr">'+
-        '<img class="logo" src="https://raw.githubusercontent.com/glezcano87/biginformatica/main/logo.png" alt="Big Informatica">'+
-        '<div class="hdr-r">'+
+        '<img class="logo" src="https://raw.githubusercontent.com/glezcano87/biginformatica/main/logo.png" alt="BIG">'+
+        '<div style="text-align:right">'+
           '<div class="badge">Libro Diario</div>'+
-          '<div style="font-size:13px;font-weight:700;color:'+AZUL+'">'+label+'</div>'+
-          '<div style="font-size:11px;color:#666">Generado: '+new Date().toLocaleDateString('es-PY')+'</div>'+
+          '<div class="period">'+label+'</div>'+
+          '<div class="fecha">Generado: '+new Date().toLocaleDateString('es-PY')+'</div>'+
         '</div>'+
       '</div>'+
-      '<div class="strip"></div>'+
-      '<div class="body">'+
-        '<div class="res">'+
-          '<div class="rc"><div class="rl">Total Ventas</div><div class="rv" style="color:'+AZUL+'">₲ '+fmt(totalV)+'</div></div>'+
-          '<div class="rc"><div class="rl">Total Compras</div><div class="rv" style="color:#dc2626">₲ '+fmt(totalC)+'</div></div>'+
-          '<div class="rc"><div class="rl">Utilidad Neta</div><div class="rv" style="color:'+(utilidad>=0?VERDE:'#dc2626')+'">₲ '+fmt(utilidad)+'</div></div>'+
-        '</div>'+
-        (tipo!=='compras'?
-          '<div class="sec-title">&#128200; Libro de Ventas ('+ventas.length+' registros)</div>'+
-          '<table><thead><tr>'+
-            '<th>Fecha</th><th>Factura</th><th>Cliente</th><th>Descripción</th><th>Tipo</th><th>IVA</th><th class="tr">Monto</th>'+
-          '</tr></thead><tbody>'+
-          ventasRows+
-          '<tr class="tot-row"><td colspan="6" style="text-align:right;padding-right:12px"><strong>TOTAL VENTAS</strong></td><td class="tr">₲ '+fmt(totalV)+'</td></tr>'+
-          '</tbody></table>':'')+
-        (tipo!=='ventas'?
-          '<div class="sec-title">&#128228; Libro de Compras ('+compras.length+' registros)</div>'+
-          '<table><thead><tr>'+
-            '<th>Fecha</th><th>Factura</th><th>Proveedor</th><th>Descripción</th><th>Tipo</th><th>IVA</th><th class="tr">Monto</th>'+
-          '</tr></thead><tbody>'+
-          comprasRows+
-          '<tr class="tot-row"><td colspan="6" style="text-align:right;padding-right:12px"><strong>TOTAL COMPRAS</strong></td><td class="tr">₲ '+fmt(totalC)+'</td></tr>'+
-          '</tbody></table>':'')+
+      '<div class="res">'+
+        '<div class="rc"><div class="rl">Total Ventas</div><div class="rv" style="color:'+AZUL+'">₲ '+fmt(totV)+'</div></div>'+
+        '<div class="rc"><div class="rl">Total Compras</div><div class="rv" style="color:#dc2626">₲ '+fmt(totC)+'</div></div>'+
+        '<div class="rc"><div class="rl">Utilidad Neta</div><div class="rv" style="color:'+(util>=0?VERDE:'#dc2626')+'">₲ '+fmt(util)+'</div></div>'+
       '</div>'+
+      (tipo!=='compras'?
+        '<div class="sec">Libro de Ventas ('+ventas.length+' registros)</div>'+
+        '<table><thead><tr><th>Fecha</th><th>Factura</th><th>Cliente</th><th>Descripción</th><th>Tipo</th><th>IVA</th><th>Monto</th></tr></thead>'+
+        '<tbody>'+vRows+'<tr class="tot"><td colspan="6" style="text-align:right">TOTAL VENTAS</td><td>₲ '+fmt(totV)+'</td></tr></tbody></table>':'')+
+      (tipo!=='ventas'?
+        '<div class="sec">Libro de Compras ('+compras.length+' registros)</div>'+
+        '<table><thead><tr><th>Fecha</th><th>Factura</th><th>Proveedor</th><th>Descripción</th><th>Tipo</th><th>IVA</th><th>Monto</th></tr></thead>'+
+        '<tbody>'+cRows+'<tr class="tot"><td colspan="6" style="text-align:right">TOTAL COMPRAS</td><td>₲ '+fmt(totC)+'</td></tr></tbody></table>':'')+
     '</div>';
-
-  return html;
 }
 
 function rpStyles(){
@@ -2473,48 +2610,6 @@ function rpStyles(){
     '.saldo-box{background:#f0fdf4;border:2px solid #16a34a;border-radius:8px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}'+
     '.saldo-box.neg{background:#fff5f5;border-color:#dc2626}'+
     '</style>';
-}
-
-function popRpFlujo(){
-  var p=gi('rpFlujoPer').value;
-  gi('rpFlujoMesWrap').style.display=(p==='mes'||p==='bimestre')?'':'none';
-}
-function popRpMargen(){
-  var p=gi('rpMargenPer').value;
-  gi('rpMargenMesWrap').style.display=(p==='mes')?'':'none';
-}
-function popRpDiario(){
-  var p=gi('rpDiarioPer').value;
-  gi('rpDiarioMesWrap').style.display=(p==='mes')?'':'none';
-}
-function popRpBalance(){
-  var p=gi('rpBalancePer').value;
-  gi('rpBalanceMesWrap').style.display=(p==='mes')?'':'none';
-}
-function getMesesPeriodo(per, mes){
-  var hoy=new Date(); var y=hoy.getFullYear(); var m=hoy.getMonth()+1;
-  if(mes){ y=parseInt(mes.split('-')[0]); m=parseInt(mes.split('-')[1]); }
-  var arr=[];
-  if(per==='mes'||per==='todos'){ return mes?[mes]:[y+'-'+String(m).padStart(2,'0')]; }
-  if(per==='bimestre'){
-    var s=m%2===0?m-1:m;
-    return [y+'-'+String(s).padStart(2,'0'),y+'-'+String(s+1).padStart(2,'0')];
-  }
-  if(per==='trimestre'){
-    var q=Math.ceil(m/3); var qs=(q-1)*3+1;
-    for(var i=0;i<3;i++) arr.push(y+'-'+String(qs+i).padStart(2,'0'));
-    return arr;
-  }
-  if(per==='semestre'){
-    var h=m<=6?1:7;
-    for(var i=0;i<6;i++) arr.push(y+'-'+String(h+i).padStart(2,'0'));
-    return arr;
-  }
-  if(per==='anual'){
-    for(var i=1;i<=12;i++) arr.push(y+'-'+String(i).padStart(2,'0'));
-    return arr;
-  }
-  return mes?[mes]:[];
 }
 
 function generarPDF(tipo){
@@ -2703,38 +2798,14 @@ function generarPDF(tipo){
     var mes=gi('rpDiarioMes')?gi('rpDiarioMes').value:'';
     var tipo2=gi('rpDiarioTipo')?gi('rpDiarioTipo').value:'ambos';
     var meses=getMesesPeriodo(per,mes);
-    var dhtml=genReporteDiario(meses,tipo2);
-    // Use iframe to properly render CSS
-    var dpanel=gi('rpPreviewPanel');
-    var dbody=gi('rpPreviewBody');
-    if(dpanel&&dbody){
-      var t=gi('rpPreviewTitle'); if(t) t.textContent='Libro Diario';
-      // Replace body with iframe
-      dbody.innerHTML='<iframe id="rpDiarioFrame" style="width:100%;height:70vh;border:none"></iframe>';
-      var ifr=document.getElementById('rpDiarioFrame');
-      var doc=ifr.contentDocument||ifr.contentWindow.document;
-      doc.open(); doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0">'+dhtml+'</body></html>'); doc.close();
-      dpanel.style.display='block';
-      dpanel.scrollIntoView({behavior:'smooth'});
-    }
-    return;
+    html=genReporteDiario(meses,tipo2);
+    if(html) gi('rpPreviewTitle').textContent='Libro Diario — '+meses[0]+(meses.length>1?' al '+meses[meses.length-1]:'');
   }
   if(html){
     gi('rpPreviewBody').innerHTML='<div class="rp-print-area" style="background:#fff;border-radius:0 0 12px 12px;overflow:auto;max-height:70vh">'+html+'</div>';
     gi('rpPreviewPanel').style.display='block';
     gi('rpPreviewPanel').scrollIntoView({behavior:'smooth'});
   }
-}
-
-function imprimirReporte(){
-  var ifr=gi('rpIframe');
-  if(!ifr) return;
-  var doc=ifr.contentDocument||ifr.contentWindow.document;
-  var html=doc.documentElement.outerHTML;
-  var blob=new Blob([html],{type:'text/html'});
-  var url=URL.createObjectURL(blob);
-  var v=window.open(url,'_blank');
-  if(v){ v.onload=function(){setTimeout(function(){v.print();URL.revokeObjectURL(url);},300);}; }
 }
 
 // ══════════════════════════════════════════════════════════
