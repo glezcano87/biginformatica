@@ -2482,27 +2482,41 @@ function getMesesPeriodo(per, mes){
   var hoy=new Date(); var y=hoy.getFullYear(); var m=hoy.getMonth()+1;
   if(mes){ y=parseInt(mes.split('-')[0]); m=parseInt(mes.split('-')[1]); }
   var arr=[];
+  var mesActual=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+
   if(!per||per==='mes'){ return mes?[mes]:[y+'-'+String(m).padStart(2,'0')]; }
+  
   if(per==='bimestre'){
     var s=m%2===0?m-1:m;
     return [y+'-'+String(s).padStart(2,'0'),y+'-'+String(Math.min(s+1,12)).padStart(2,'0')];
   }
   if(per==='trimestre'){
     var q=Math.ceil(m/3); var qs=(q-1)*3+1;
-    for(var i=0;i<3;i++) arr.push(y+'-'+String(qs+i).padStart(2,'0'));
+    for(var i=0;i<3;i++){
+      var mm=y+'-'+String(qs+i).padStart(2,'0');
+      if(mm<=mesActual) arr.push(mm);
+    }
     return arr;
   }
   if(per==='semestre'){
+    // Primer semestre: ene-jun, Segundo: jul-dic
     var h=m<=6?1:7;
-    for(var i=0;i<6;i++) arr.push(y+'-'+String(h+i).padStart(2,'0'));
+    for(var i=0;i<6;i++){
+      var mm=y+'-'+String(h+i).padStart(2,'0');
+      if(mm<=mesActual) arr.push(mm);
+    }
     return arr;
   }
   if(per==='anual'){
-    for(var i=1;i<=12;i++) arr.push(y+'-'+String(i).padStart(2,'0'));
+    for(var i=1;i<=12;i++){
+      var mm=y+'-'+String(i).padStart(2,'0');
+      if(mm<=mesActual) arr.push(mm);
+    }
     return arr;
   }
   return mes?[mes]:[];
 }
+
 function popRpDiario(){
   var p=gi('rpDiarioPer')?gi('rpDiarioPer').value:'mes';
   var w=gi('rpDiarioMesWrap');
@@ -2626,7 +2640,7 @@ function genPDFPeriodo(tipo){
 
     if(tipo==='flujo'){
       var ga=GD.filter(function(r){return r.activo;});
-      var totGA=ga.reduce(function(s,r){return s+(r.monto_mensual||0)*meses.length;},0);
+      var totGA=ga.reduce(function(s,r){return s+(r.monto_mensual||0)*Math.max(meses.length,1);},0);
       var util=totV-totC-totGA;
       html=rpStyles()+'<div class="rp">'+
         '<div class="rp-header"><div><span class="rp-logo">⚡</span><div class="rp-brand">Big Informática</div></div>'+
