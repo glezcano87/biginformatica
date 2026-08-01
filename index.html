@@ -742,10 +742,19 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         <div class="db-panel-body">
           <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Ingresos, costos, gastos fijos y utilidad neta del mes seleccionado.</p>
           <div class="fgg" style="margin-bottom:14px">
+            <label>Período</label>
+            <select class="fs" id="rpFlujoPer" onchange="gi('rpFlujoMesWrap').style.display=this.value==='mes'?'':'none'">
+              <option value="mes">Mes específico</option>
+              <option value="trimestre">Trimestre actual</option>
+              <option value="semestre">Semestre actual</option>
+              <option value="anual">Anual</option>
+            </select>
+          </div>
+          <div class="fgg" id="rpFlujoMesWrap" style="margin-bottom:4px">
             <label>Mes</label>
             <select class="fs" id="rpFlujoMes" style="width:100%"></select>
           </div>
-          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="generarPDF('flujo')">
+          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="genPDFPeriodo('flujo')">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Generar PDF
           </button>
@@ -758,12 +767,20 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         <div class="db-panel-body">
           <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Rentabilidad por presupuesto con margen bruto y utilidad de cada trabajo.</p>
           <div class="fgg" style="margin-bottom:14px">
-            <label>Mes (opcional)</label>
-            <select class="fs" id="rpMargenMes" style="width:100%">
-              <option value="">Todos los meses</option>
+            <label>Período</label>
+            <select class="fs" id="rpMargenPer" onchange="gi('rpMargenMesWrap').style.display=this.value==='mes'?'':'none'">
+              <option value="todos">Todos los meses</option>
+              <option value="mes">Mes específico</option>
+              <option value="trimestre">Trimestre actual</option>
+              <option value="semestre">Semestre actual</option>
+              <option value="anual">Anual</option>
             </select>
           </div>
-          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="generarPDF('margenes')">
+          <div class="fgg" id="rpMargenMesWrap" style="display:none;margin-bottom:4px">
+            <label>Mes</label>
+            <select class="fs" id="rpMargenMes" style="width:100%"><option value="">Todos</option></select>
+          </div>
+          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="genPDFPeriodo('margenes')">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Generar PDF
           </button>
@@ -776,10 +793,19 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         <div class="db-panel-body">
           <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Activos, pasivos, patrimonio y posici&#243;n IVA del mes seleccionado.</p>
           <div class="fgg" style="margin-bottom:14px">
+            <label>Período</label>
+            <select class="fs" id="rpBalancePer" onchange="gi('rpBalanceMesWrap').style.display=this.value==='mes'?'':'none'">
+              <option value="mes">Mes específico</option>
+              <option value="trimestre">Trimestre actual</option>
+              <option value="semestre">Semestre actual</option>
+              <option value="anual">Anual</option>
+            </select>
+          </div>
+          <div class="fgg" id="rpBalanceMesWrap" style="margin-bottom:4px">
             <label>Mes</label>
             <select class="fs" id="rpBalanceMes" style="width:100%"></select>
           </div>
-          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="generarPDF('balance')">
+          <button class="btn btn-p" style="width:100%;justify-content:center" onclick="genPDFPeriodo('balance')">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Generar PDF
           </button>
@@ -2575,6 +2601,69 @@ function genReporteDiario(meses, tipo){
         '<table><thead><tr><th>Fecha</th><th>Factura</th><th>Proveedor</th><th>Descripción</th><th>Tipo</th><th>IVA</th><th>Monto</th></tr></thead>'+
         '<tbody>'+cRows+'<tr class="tot"><td colspan="6" style="text-align:right">TOTAL COMPRAS</td><td>₲ '+fmt(totC)+'</td></tr></tbody></table>':'')+
     '</div>';
+}
+
+function genPDFPeriodo(tipo){
+  var per='mes', mesSel='';
+  if(tipo==='flujo'){ per=(gi('rpFlujoPer')||{value:'mes'}).value; mesSel=(gi('rpFlujoMes')||{value:''}).value; }
+  else if(tipo==='margenes'){ per=(gi('rpMargenPer')||{value:'todos'}).value; mesSel=(gi('rpMargenMes')||{value:''}).value; }
+  else if(tipo==='balance'){ per=(gi('rpBalancePer')||{value:'mes'}).value; mesSel=(gi('rpBalanceMes')||{value:''}).value; }
+
+  if(per==='mes'||per==='todos'){ generarPDF(tipo); return; }
+
+  var meses=getMesesPeriodo(per,mesSel);
+  if(!meses.length){ toast('No se pudo calcular el período','e'); return; }
+  var label=meses[0]+' al '+meses[meses.length-1];
+
+  var html='';
+  if(tipo==='flujo'||tipo==='balance'){
+    var vv=VD.filter(function(r){return meses.some(function(m){return (r.fecha||'').startsWith(m);});});
+    var cc=CD.filter(function(r){return meses.some(function(m){return (r.fecha||'').startsWith(m);});});
+    var totV=vv.reduce(function(s,r){return s+(r.monto||0);},0);
+    var totC=cc.reduce(function(s,r){return s+(r.monto||0);},0);
+    var ivaC=vv.filter(function(r){return r.iva;}).reduce(function(s,r){return s+(r.monto||0)/11;},0);
+    var ivaP=cc.filter(function(r){return r.iva;}).reduce(function(s,r){return s+(r.monto||0)/11;},0);
+
+    if(tipo==='flujo'){
+      var ga=GD.filter(function(r){return r.activo;});
+      var totGA=ga.reduce(function(s,r){return s+(r.monto_mensual||0)*meses.length;},0);
+      var util=totV-totC-totGA;
+      html=rpStyles()+'<div class="rp">'+
+        '<div class="rp-header"><div><span class="rp-logo">⚡</span><div class="rp-brand">Big Informática</div></div>'+
+        '<div class="rp-title-block"><div class="rp-title">Flujo de Caja</div><div class="rp-sub">'+label+'</div></div></div>'+
+        '<div class="rp-kpis">'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">INGRESOS</div><div class="rp-kpi-v" style="color:var(--rp-blue)">₲ '+fmt(totV)+'</div></div>'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">COSTOS</div><div class="rp-kpi-v" style="color:var(--rp-red)">₲ '+fmt(totC)+'</div></div>'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">GASTOS FIJOS</div><div class="rp-kpi-v" style="color:var(--rp-orange)">₲ '+fmt(totGA)+'</div></div>'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">UTILIDAD NETA</div><div class="rp-kpi-v" style="color:'+(util>=0?'var(--rp-green)':'var(--rp-red)')+'">₲ '+fmt(util)+'</div></div>'+
+        '</div>'+
+        '<div class="rp-section">Ingresos del Período ('+vv.length+' reg.)</div>'+
+        '<table><thead><tr><th>Fecha</th><th>Cliente</th><th>Tipo</th><th class="tr">Monto</th></tr></thead><tbody>'+
+        vv.map(function(r){return '<tr><td>'+fd(r.fecha)+'</td><td>'+(r.cliente||'—')+'</td><td>'+(r.tipo||'')+'</td><td class="tr">₲ '+fmt(r.monto)+'</td></tr>';}).join('')+
+        '</tbody></table>'+
+        '<div class="rp-footer"><span>⚡ Big Informática</span><span>'+label+'</span></div></div>';
+    } else {
+      html=rpStyles()+'<div class="rp">'+
+        '<div class="rp-header"><div><span class="rp-logo">⚡</span><div class="rp-brand">Big Informática</div></div>'+
+        '<div class="rp-title-block"><div class="rp-title">Balance General</div><div class="rp-sub">'+label+'</div></div></div>'+
+        '<div class="rp-kpis">'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">INGRESOS</div><div class="rp-kpi-v" style="color:var(--rp-blue)">₲ '+fmt(totV)+'</div></div>'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">COSTOS</div><div class="rp-kpi-v" style="color:var(--rp-red)">₲ '+fmt(totC)+'</div></div>'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">IVA COBRADO</div><div class="rp-kpi-v">₲ '+fmt(ivaC)+'</div></div>'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">SALDO IVA</div><div class="rp-kpi-v" style="color:'+(ivaC-ivaP>=0?'var(--rp-green)':'var(--rp-red)')+'">₲ '+fmt(ivaC-ivaP)+'</div></div>'+
+        '</div>'+
+        '<div class="rp-footer"><span>⚡ Big Informática</span><span>'+label+'</span></div></div>';
+    }
+  } else if(tipo==='margenes'){
+    generarPDF('margenes'); return;
+  }
+
+  if(html){
+    gi('rpPreviewTitle').textContent=(tipo==='flujo'?'Flujo de Caja':'Balance General')+' — '+label;
+    gi('rpPreviewBody').innerHTML='<div class="rp-print-area" style="background:#fff;border-radius:0 0 12px 12px;overflow-y:auto;max-height:65vh">'+html+'</div>';
+    gi('rpPreviewPanel').style.display='block';
+    gi('rpPreviewPanel').scrollIntoView({behavior:'smooth'});
+  }
 }
 
 function rpStyles(){
