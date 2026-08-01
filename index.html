@@ -810,6 +810,42 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         </div>
       </div>
 
+      <!-- LIBRO DIARIO - full width -->
+      <div class="db-panel" style="margin-top:16px">
+        <div class="db-panel-h"><span class="title">&#128218; Libro Diario — Ventas y Compras</span></div>
+        <div class="db-panel-body">
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Registro completo de todas las ventas y compras. Ideal para contabilidad y declaraciones fiscales.</p>
+          <div class="fg" style="margin-bottom:12px">
+            <div class="fgg">
+              <label>Período</label>
+              <select class="fs" id="rpDiarioPer" onchange="popRpDiario()">
+                <option value="mes">Mes</option>
+                <option value="bimestre">Bimestre</option>
+                <option value="trimestre">Trimestre</option>
+                <option value="semestre">Semestre</option>
+                <option value="anual">Anual</option>
+              </select>
+            </div>
+            <div class="fgg" id="rpDiarioMesWrap">
+              <label>Mes</label>
+              <select class="fs" id="rpDiarioMes"></select>
+            </div>
+            <div class="fgg">
+              <label>Incluir</label>
+              <select class="fs" id="rpDiarioTipo">
+                <option value="ambos">Ventas y Compras</option>
+                <option value="ventas">Solo Ventas</option>
+                <option value="compras">Solo Compras</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-p" onclick="generarPDF('diario')">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Generar Libro Diario PDF
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -2281,6 +2317,109 @@ function popReportesSel(){
 
 function fmtGs(n){ return '\u20b2 '+(Math.abs(n||0)).toLocaleString('es-PY'); }
 
+function genReporteDiario(meses, tipo){
+  var AZUL='#1B6B8A'; var VERDE='#8DC63F';
+  var label = meses.length===1 ? meses[0] : meses[0]+' al '+meses[meses.length-1];
+
+  // Filter data by months
+  function enMeses(fecha){ return meses.some(function(m){ return (fecha||'').startsWith(m); }); }
+
+  var ventas = (tipo==='ambos'||tipo==='ventas') ? VD.filter(function(r){ return enMeses(r.fecha); }) : [];
+  var compras = (tipo==='ambos'||tipo==='compras') ? CD.filter(function(r){ return enMeses(r.fecha); }) : [];
+
+  // Sort by date
+  ventas.sort(function(a,b){ return (a.fecha||'').localeCompare(b.fecha||''); });
+  compras.sort(function(a,b){ return (a.fecha||'').localeCompare(b.fecha||''); });
+
+  var totalV = ventas.reduce(function(s,r){ return s+(r.monto||0); }, 0);
+  var totalC = compras.reduce(function(s,r){ return s+(r.monto||0); }, 0);
+  var utilidad = totalV - totalC;
+
+  var st = rpStyles() +
+    '@page{margin:0;size:A4}@media print{body{margin:1.5cm}}'+
+    '.logo{height:55px;width:auto}'+
+    '.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:4px solid '+VERDE+'}'+
+    '.hdr-r{text-align:right}'+
+    '.badge{display:inline-block;background:'+AZUL+';color:#fff;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}'+
+    '.strip{height:5px;background:linear-gradient(90deg,'+AZUL+','+VERDE+')}'+
+    '.body{padding:20px 28px 28px}'+
+    '.res{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}'+
+    '.rc{background:#f8f8f8;border-radius:8px;padding:12px 14px;text-align:center}'+
+    '.rc .rl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}'+
+    '.rc .rv{font-size:18px;font-weight:800}'+
+    '.sec-title{font-size:12px;font-weight:800;color:'+AZUL+';text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid '+VERDE+';padding-bottom:5px;margin:18px 0 10px}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:12px}'+
+    'thead th{background:'+AZUL+';color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:700}'+
+    'thead th.tr{text-align:right}'+
+    'tbody td{padding:7px 10px;border-bottom:1px solid #eee}'+
+    'tbody td.tr{text-align:right;font-variant-numeric:tabular-nums}'+
+    'tbody tr:nth-child(even){background:#f8fbff}'+
+    '.tot-row td{font-weight:800;background:#f0f7ff !important;color:'+AZUL+'}'+
+    '</style>';
+
+  var ventasRows = ventas.length ? ventas.map(function(r){
+    return '<tr>'+
+      '<td>'+fd(r.fecha)+'</td>'+
+      '<td>'+(r.factura||'—')+'</td>'+
+      '<td>'+(r.cliente||'—')+'</td>'+
+      '<td>'+(r.descripcion||'—').slice(0,40)+'</td>'+
+      '<td>'+(r.tipo||'')+'</td>'+
+      '<td><span style="background:'+(r.iva?'#d1fae5':'#fee2e2')+';color:'+(r.iva?'#065f46':'#991b1b')+';padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">'+(r.iva?'IVA':'Exento')+'</span></td>'+
+      '<td class="tr" style="font-weight:600;color:'+AZUL+'">₲ '+fmt(r.monto)+'</td>'+
+    '</tr>';
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:#999;padding:16px">Sin ventas en el período</td></tr>';
+
+  var comprasRows = compras.length ? compras.map(function(r){
+    return '<tr>'+
+      '<td>'+fd(r.fecha)+'</td>'+
+      '<td>'+(r.factura||'—')+'</td>'+
+      '<td>'+(r.proveedor||'—')+'</td>'+
+      '<td>'+(r.descripcion||'—').slice(0,40)+'</td>'+
+      '<td>'+(r.tipo||'')+'</td>'+
+      '<td><span style="background:'+(r.iva?'#d1fae5':'#fee2e2')+';color:'+(r.iva?'#065f46':'#991b1b')+';padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700">'+(r.iva?'IVA':'Exento')+'</span></td>'+
+      '<td class="tr" style="font-weight:600;color:#dc2626">₲ '+fmt(r.monto)+'</td>'+
+    '</tr>';
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:#999;padding:16px">Sin compras en el período</td></tr>';
+
+  var html = st+
+    '<div class="wrap">'+
+      '<div class="hdr">'+
+        '<img class="logo" src="https://raw.githubusercontent.com/glezcano87/biginformatica/main/logo.png" alt="Big Informatica">'+
+        '<div class="hdr-r">'+
+          '<div class="badge">Libro Diario</div>'+
+          '<div style="font-size:13px;font-weight:700;color:'+AZUL+'">'+label+'</div>'+
+          '<div style="font-size:11px;color:#666">Generado: '+new Date().toLocaleDateString('es-PY')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="strip"></div>'+
+      '<div class="body">'+
+        '<div class="res">'+
+          '<div class="rc"><div class="rl">Total Ventas</div><div class="rv" style="color:'+AZUL+'">₲ '+fmt(totalV)+'</div></div>'+
+          '<div class="rc"><div class="rl">Total Compras</div><div class="rv" style="color:#dc2626">₲ '+fmt(totalC)+'</div></div>'+
+          '<div class="rc"><div class="rl">Utilidad Neta</div><div class="rv" style="color:'+(utilidad>=0?VERDE:'#dc2626')+'">₲ '+fmt(utilidad)+'</div></div>'+
+        '</div>'+
+        (tipo!=='compras'?
+          '<div class="sec-title">&#128200; Libro de Ventas ('+ventas.length+' registros)</div>'+
+          '<table><thead><tr>'+
+            '<th>Fecha</th><th>Factura</th><th>Cliente</th><th>Descripción</th><th>Tipo</th><th>IVA</th><th class="tr">Monto</th>'+
+          '</tr></thead><tbody>'+
+          ventasRows+
+          '<tr class="tot-row"><td colspan="6" style="text-align:right;padding-right:12px"><strong>TOTAL VENTAS</strong></td><td class="tr">₲ '+fmt(totalV)+'</td></tr>'+
+          '</tbody></table>':'')+
+        (tipo!=='ventas'?
+          '<div class="sec-title">&#128228; Libro de Compras ('+compras.length+' registros)</div>'+
+          '<table><thead><tr>'+
+            '<th>Fecha</th><th>Factura</th><th>Proveedor</th><th>Descripción</th><th>Tipo</th><th>IVA</th><th class="tr">Monto</th>'+
+          '</tr></thead><tbody>'+
+          comprasRows+
+          '<tr class="tot-row"><td colspan="6" style="text-align:right;padding-right:12px"><strong>TOTAL COMPRAS</strong></td><td class="tr">₲ '+fmt(totalC)+'</td></tr>'+
+          '</tbody></table>':'')+
+      '</div>'+
+    '</div>';
+
+  return html;
+}
+
 function rpStyles(){
   return '<style>'+
     '*{box-sizing:border-box;margin:0;padding:0}'+
@@ -2331,6 +2470,10 @@ function popRpMargen(){
   var p=gi('rpMargenPer').value;
   gi('rpMargenMesWrap').style.display=(p==='mes')?'':'none';
 }
+function popRpDiario(){
+  var p=gi('rpDiarioPer').value;
+  gi('rpDiarioMesWrap').style.display=(p==='mes')?'':'none';
+}
 function popRpBalance(){
   var p=gi('rpBalancePer').value;
   gi('rpBalanceMesWrap').style.display=(p==='mes')?'':'none';
@@ -2370,6 +2513,12 @@ function generarPDF(tipo){
   } else if(tipo==='margenes'){
     var mes=gi('rpMargenMes').value;
     html=genReporteMargenes(mes);
+  } else if(tipo==='diario'){
+    var per=gi('rpDiarioPer').value;
+    var mes=gi('rpDiarioMes').value;
+    var tipo2=gi('rpDiarioTipo').value;
+    var meses=getMesesPeriodo(per,mes);
+    html=genReporteDiario(meses,tipo2);
   } else if(tipo==='balance'){
     var mes=gi('rpBalanceMes').value;
     if(!mes){toast('Seleccioná un mes','e');return;}
