@@ -2632,27 +2632,27 @@ function genPDFPeriodo(tipo){
         '<div class="rp-header"><div><span class="rp-logo">⚡</span><div class="rp-brand">Big Informática</div></div>'+
         '<div class="rp-title-block"><div class="rp-title">Flujo de Caja</div><div class="rp-sub">'+label+'</div></div></div>'+
         '<div class="rp-kpis">'+
-          '<div class="rp-kpi"><div class="rp-kpi-l">INGRESOS</div><div class="rp-kpi-v" style="color:var(--rp-blue)">₲ '+fmt(totV)+'</div></div>'+
-          '<div class="rp-kpi"><div class="rp-kpi-l">COSTOS</div><div class="rp-kpi-v" style="color:var(--rp-red)">₲ '+fmt(totC)+'</div></div>'+
-          '<div class="rp-kpi"><div class="rp-kpi-l">GASTOS FIJOS</div><div class="rp-kpi-v" style="color:var(--rp-orange)">₲ '+fmt(totGA)+'</div></div>'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">INGRESOS</div><div class="rp-kpi-v c-blue">₲ '+fmt(totV)+'</div></div>'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">COSTOS</div><div class="rp-kpi-v c-red">₲ '+fmt(totC)+'</div></div>'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">GASTOS FIJOS</div><div class="rp-kpi-v c-orange">₲ '+fmt(totGA)+'</div></div>'+
           '<div class="rp-kpi"><div class="rp-kpi-l">UTILIDAD NETA</div><div class="rp-kpi-v" style="color:'+(util>=0?'var(--rp-green)':'var(--rp-red)')+'">₲ '+fmt(util)+'</div></div>'+
         '</div>'+
-        '<div class="rp-section">Ingresos del Período ('+vv.length+' reg.)</div>'+
+        '<div class="rp-body"><div class="rp-section">Ingresos del Período ('+vv.length+' reg.)</div>'+
         '<table><thead><tr><th>Fecha</th><th>Cliente</th><th>Tipo</th><th class="tr">Monto</th></tr></thead><tbody>'+
         vv.map(function(r){return '<tr><td>'+fd(r.fecha)+'</td><td>'+(r.cliente||'—')+'</td><td>'+(r.tipo||'')+'</td><td class="tr">₲ '+fmt(r.monto)+'</td></tr>';}).join('')+
         '</tbody></table>'+
-        '<div class="rp-footer"><span>⚡ Big Informática</span><span>'+label+'</span></div></div>';
+        '<div class="rp-footer"><span>Big Informática — Sistema de Gestión</span><span>'+label+'</span></div></div></div>';
     } else {
       html=rpStyles()+'<div class="rp">'+
         '<div class="rp-header"><div><span class="rp-logo">⚡</span><div class="rp-brand">Big Informática</div></div>'+
         '<div class="rp-title-block"><div class="rp-title">Balance General</div><div class="rp-sub">'+label+'</div></div></div>'+
         '<div class="rp-kpis">'+
-          '<div class="rp-kpi"><div class="rp-kpi-l">INGRESOS</div><div class="rp-kpi-v" style="color:var(--rp-blue)">₲ '+fmt(totV)+'</div></div>'+
-          '<div class="rp-kpi"><div class="rp-kpi-l">COSTOS</div><div class="rp-kpi-v" style="color:var(--rp-red)">₲ '+fmt(totC)+'</div></div>'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">INGRESOS</div><div class="rp-kpi-v c-blue">₲ '+fmt(totV)+'</div></div>'+
+          '<div class="rp-kpi"><div class="rp-kpi-l">COSTOS</div><div class="rp-kpi-v c-red">₲ '+fmt(totC)+'</div></div>'+
           '<div class="rp-kpi"><div class="rp-kpi-l">IVA COBRADO</div><div class="rp-kpi-v">₲ '+fmt(ivaC)+'</div></div>'+
           '<div class="rp-kpi"><div class="rp-kpi-l">SALDO IVA</div><div class="rp-kpi-v" style="color:'+(ivaC-ivaP>=0?'var(--rp-green)':'var(--rp-red)')+'">₲ '+fmt(ivaC-ivaP)+'</div></div>'+
         '</div>'+
-        '<div class="rp-footer"><span>⚡ Big Informática</span><span>'+label+'</span></div></div>';
+        '<div class="rp-footer"><span>Big Informática — Sistema de Gestión</span><span>'+label+'</span></div></div></div>';
     }
   } else if(tipo==='margenes'){
     generarPDF('margenes'); return;
@@ -2668,44 +2668,56 @@ function genPDFPeriodo(tipo){
 
 function rpStyles(){
   return '<style>'+
+    '@page{margin:0;size:A4}'+
+    '@media print{'+
+      'body{margin:1cm}'+
+      '.no-print{display:none}'+
+      'thead{display:table-header-group}'+
+      'tr{page-break-inside:avoid}'+
+      '.rp-kpis{page-break-inside:avoid}'+
+    '}'+
     '*{box-sizing:border-box;margin:0;padding:0}'+
     'body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a2e;background:#fff}'+
-    '.rp{padding:32px 36px;max-width:900px;margin:0 auto}'+
-    '.rp-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:16px;border-bottom:3px solid #2563EB}'+
-    '.rp-logo{font-size:20px;font-weight:800;color:#2563EB}'+
-    '.rp-logo span{display:block;font-size:11px;font-weight:400;color:#666;margin-top:2px}'+
-    '.rp-meta{text-align:right;font-size:11px;color:#666}'+
-    '.rp-meta strong{display:block;font-size:14px;color:#1a1a2e;font-weight:700;margin-bottom:2px}'+
-    '.rp-title{font-size:18px;font-weight:800;margin-bottom:4px;color:#1a1a2e}'+
-    '.rp-subtitle{font-size:12px;color:#666;margin-bottom:24px}'+
-    '.rp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}'+
-    '.rp-kpi{background:#f8faff;border:1px solid #e2e8f0;border-radius:8px;padding:14px}'+
-    '.rp-kpi .lbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}'+
-    '.rp-kpi .val{font-size:16px;font-weight:800}'+
-    '.rp-kpi .val.g{color:#16a34a}.rp-kpi .val.r{color:#dc2626}.rp-kpi .val.b{color:#2563EB}.rp-kpi .val.y{color:#d97706}'+
-    '.rp-section{margin-bottom:24px}'+
-    '.rp-section-title{font-size:13px;font-weight:700;color:#2563EB;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}'+
-    'table{width:100%;border-collapse:collapse;font-size:11.5px}'+
-    'thead th{background:#f1f5ff;padding:8px 10px;text-align:left;font-weight:700;color:#374151;border-bottom:2px solid #2563EB;white-space:nowrap}'+
+    '.rp{max-width:900px;margin:0 auto}'+
+
+    /* HEADER con logo y colores Big Informática */
+    '.rp-header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;background:#fff;border-bottom:4px solid #8DC63F}'+
+    '.rp-logo-area{display:flex;align-items:center;gap:12px}'+
+    '.rp-logo{height:60px;width:auto}'+
+    '.rp-brand{font-size:16px;font-weight:900;color:#1B6B8A}'+
+    '.rp-brand-sub{font-size:10px;color:#666;margin-top:2px}'+
+    '.rp-title-block{text-align:right}'+
+    '.rp-badge{display:inline-block;background:#1B6B8A;color:#fff;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}'+
+    '.rp-title{font-size:18px;font-weight:800;color:#1B6B8A}'+
+    '.rp-sub{font-size:11px;color:#555;margin-top:2px}'+
+    '.rp-strip{height:5px;background:linear-gradient(90deg,#1B6B8A,#8DC63F)}'+
+
+    /* KPIs */
+    '.rp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 28px;background:#f8f9fa}'+
+    '.rp-kpi{background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #e8ecf0;text-align:center}'+
+    '.rp-kpi-l{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;font-weight:700}'+
+    '.rp-kpi-v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}'+
+
+    /* Sections & Tables */
+    '.rp-body{padding:16px 28px}'+
+    '.rp-section{font-size:11px;font-weight:800;color:#1B6B8A;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #8DC63F;padding-bottom:4px;margin:14px 0 8px}'+
+    'table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px}'+
+    'thead th{background:#1B6B8A;color:#fff;padding:7px 10px;text-align:left;font-size:10px;font-weight:700}'+
     'thead th.tr{text-align:right}'+
-    'tbody td{padding:7px 10px;border-bottom:1px solid #f0f0f0}'+
-    'tbody td.tr{text-align:right;font-variant-numeric:tabular-nums}'+
-    'tbody tr:nth-child(even){background:#f8faff}'+
-    '.tot-row td{font-weight:700;background:#f1f5ff;border-top:2px solid #2563EB}'+
-    '.rp-footer{margin-top:32px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:10px;color:#999;display:flex;justify-content:space-between}'+
-    '.rp-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}'+
-    '.rp-box{background:#f8faff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}'+
-    '.rp-box-h{background:#2563EB;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}'+
-    '.rp-box-row{display:flex;justify-content:space-between;padding:7px 12px;border-bottom:1px solid #e8eef8;font-size:11.5px}'+
-    '.rp-box-row:last-child{border-bottom:none}'+
-    '.rp-box-row .n{color:#555}'+
-    '.rp-box-row .v{font-weight:600}'+
-    '.rp-box-total{display:flex;justify-content:space-between;padding:8px 12px;background:#e8f0ff;font-size:12px;font-weight:700}'+
-    '.bar-wrap{background:#e2e8f0;border-radius:3px;height:5px;overflow:hidden;margin-top:4px;flex:1}'+
-    '.bar-fill{height:100%;border-radius:3px}'+
-    '.saldo-box{background:#f0fdf4;border:2px solid #16a34a;border-radius:8px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}'+
-    '.saldo-box.neg{background:#fff5f5;border-color:#dc2626}'+
-    '@media print{.rp-2col{display:block!important}.rp-col{width:100%!important}.rp-print-area{max-height:none!important;overflow:visible!important}}'+'</style>';
+    'tbody td{padding:6px 10px;border-bottom:1px solid #eef0f8}'+
+    'tbody td.tr{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:#1B6B8A}'+
+    'tbody tr:nth-child(even){background:#f8fbff}'+
+    '.tot-row td{font-weight:800;background:#e8f4ff !important;color:#1B6B8A}'+
+
+    /* Colors */
+    '.c-blue{color:#1B6B8A}'+
+    '.c-green{color:#5a8a20}'+
+    '.c-red{color:#dc2626}'+
+    '.c-orange{color:#d97706}'+
+
+    /* Footer */
+    '.rp-footer{display:flex;justify-content:space-between;font-size:9px;color:#aaa;padding:10px 28px;border-top:1px solid #e8ecf0;margin-top:10px}'+
+    '</style>';
 }
 
 function generarPDF(tipo){
