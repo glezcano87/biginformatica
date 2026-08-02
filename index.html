@@ -3894,11 +3894,11 @@ async function loadUsuarios(){
         '</div>'+
         (isAdmin&&!isMe?
           '<div style="display:flex;gap:6px;align-items:center">'+
-            '<select onchange="cambiarRolUsuario(''+u.username+'',this.value)" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text);font-family:inherit">'+
-              '<option value="usuario"'+(u.rol==='usuario'?' selected':'')+'>Usuario</option>'+
+            '<div style="display:flex;gap:6px;align-items:center">'+
+              '<select data-u="'+u.username+'" onchange="cambiarRolUsuario(this.dataset.u,this.value)" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text);font-family:inherit">'+
               '<option value="admin"'+(u.rol==='admin'?' selected':'')+'>Admin</option>'+
             '</select>'+
-            '<button class="ib d" onclick="eliminarUsuario(''+u.username+'')" title="Eliminar">'+it()+'</button>'+
+              '<button class="ib d" data-u="'+u.username+'" onclick="eliminarUsuario(this.dataset.u)" title="Eliminar">'+it()+'</button>'+
           '</div>'
         :'<span class="bx '+(u.activo?'bg':'br')+'">'+(u.activo?'Activo':'Inactivo')+'</span>')+
       '</div>';
