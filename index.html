@@ -3849,31 +3849,83 @@ async function loadUsuarios(){
   if(!sb||!currentUser) return;
   var list = gi('usuariosList');
   list.innerHTML='<div class="es" style="padding:20px"><p>Cargando...</p></div>';
-  // Check if current user is admin
   var myRole = (currentUser.user_metadata&&currentUser.user_metadata.rol)||'admin';
+  var isAdmin = myRole==='admin';
   var btnNuevo = document.querySelector('button[onclick="openModalNuevoUsuario()"]');
-  if(btnNuevo) btnNuevo.style.display = myRole==='admin'?'':'none';
+  if(btnNuevo) btnNuevo.style.display = isAdmin?'':'none';
 
   try{
-    // Use admin API via edge function or show current user only
-    // Supabase free tier: list users via admin key (not available client-side)
-    // Show current user + info
-    var myRole = (currentUser.user_metadata&&currentUser.user_metadata.rol)||'admin';
-    var myName = (currentUser.user_metadata&&currentUser.user_metadata.nombre)||currentUser.email.replace('@biginformatica.local','');
-    list.innerHTML='<div class="user-row">'+
-      '<div>'+
-        '<div class="ue">'+currentUser.email.replace('@biginformatica.local','')+(myName&&myName!==currentUser.email.replace('@biginformatica.local','')?'  <span style="font-size:11px;color:var(--muted)">'+myName+'</span>':'')+'</div>'+
-        '<div class="ur">Rol: '+(myRole==='admin'?'<span style="color:var(--accent2)">Administrador</span>':'Usuario normal')+' &middot; Tu cuenta actual</div>'+
-      '</div>'+
-      '<span class="bx bg">Activo</span>'+
-    '</div>'+
-    '<div style="padding:14px 18px;font-size:12px;color:var(--muted);border-top:1px solid var(--border)">'+
-      '&#8505;&#65039; Para ver todos los usuarios registrados, ingresá al panel de Supabase → Authentication → Users'+
-    '</div>';
+    // Read from system_users table
+    var r = await sb.from('system_users').select('*').order('created_at',{ascending:true});
+    var users = (r.data||[]);
+
+    // Always ensure current user appears
+    var myUname = currentUser.email.replace('@biginformatica.local','');
+    var myName = (currentUser.user_metadata&&currentUser.user_metadata.nombre)||myUname;
+    var myInTable = users.find(function(u){return u.username===myUname;});
+    if(!myInTable){
+      // Auto-register current user
+      await sb.from('system_users').upsert({
+        username: myUname,
+        nombre: myName,
+        rol: myRole,
+        email: currentUser.email,
+        auth_id: currentUser.id,
+        activo: true
+      },{onConflict:'username'});
+      var r2 = await sb.from('system_users').select('*').order('created_at',{ascending:true});
+      users = r2.data||[];
+    }
+
+    if(!users.length){
+      list.innerHTML='<div class="es" style="padding:24px"><p>No hay usuarios registrados</p></div>';
+      return;
+    }
+
+    var eb={admin:'bg',usuario:'bm'};
+    list.innerHTML = users.map(function(u){
+      var isMe = u.username===myUname;
+      var rolLabel = u.rol==='admin'?'Administrador':'Usuario normal';
+      var rolColor = u.rol==='admin'?'var(--accent2)':'var(--muted)';
+      return '<div class="user-row">'+
+        '<div style="flex:1">'+
+          '<div class="ue">'+u.username+(u.nombre&&u.nombre!==u.username?' <span style="font-size:11px;color:var(--muted)">'+u.nombre+'</span>':'')+(isMe?' <span style="font-size:10px;color:var(--green)">✔ tu cuenta</span>':'')+'</div>'+
+          '<div class="ur" style="margin-top:3px">Rol: <span style="color:'+rolColor+';font-weight:600">'+rolLabel+'</span></div>'+
+        '</div>'+
+        (isAdmin&&!isMe?
+          '<div style="display:flex;gap:6px;align-items:center">'+
+            '<select onchange="cambiarRolUsuario(''+u.username+'',this.value)" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text);font-family:inherit">'+
+              '<option value="usuario"'+(u.rol==='usuario'?' selected':'')+'>Usuario</option>'+
+              '<option value="admin"'+(u.rol==='admin'?' selected':'')+'>Admin</option>'+
+            '</select>'+
+            '<button class="ib d" onclick="eliminarUsuario(''+u.username+'')" title="Eliminar">'+it()+'</button>'+
+          '</div>'
+        :'<span class="bx '+(u.activo?'bg':'br')+'">'+(u.activo?'Activo':'Inactivo')+'</span>')+
+      '</div>';
+    }).join('');
+
   } catch(e){
-    list.innerHTML='<div class="es" style="padding:20px"><p>Error: '+e.message+'</p></div>';
+    // Table might not exist yet
+    list.innerHTML='<div class="es" style="padding:20px"><p style="color:var(--red)">Ejecutá el SQL de configuración para habilitar la gestión de usuarios.</p></div>';
   }
 }
+
+async function cambiarRolUsuario(username, nuevoRol){
+  var r = await sb.from('system_users').update({rol:nuevoRol}).eq('username',username);
+  if(r.error){ toast('Error: '+r.error.message,'e'); return; }
+  toast('Rol actualizado ✓','s');
+  // Also update in Supabase Auth metadata via current user if same user
+  loadUsuarios();
+}
+
+async function eliminarUsuario(username){
+  if(!confirm('¿Eliminar usuario "'+username+'"? Solo se elimina del registro del sistema.')) return;
+  var r = await sb.from('system_users').delete().eq('username',username);
+  if(r.error){ toast('Error: '+r.error.message,'e'); return; }
+  toast('Usuario eliminado ✓','s');
+  loadUsuarios();
+}
+
 
 async function openModalNuevoUsuario(){
   gi('nuEmail').value='';gi('nuPass').value='';gi('nuPass2').value='';gi('nuNombre').value='';
@@ -3907,7 +3959,8 @@ async function crearUsuario(){
     await sbTmp.auth.signOut();
     btn.disabled=false; btn.textContent='Crear Usuario';
     cm('modalNuevoUsuario');
-    toast('Usuario "'+uname2+'" creado \u2713 Ya puede iniciar sesi\u00f3n.','s');
+    await sb.from('system_users').upsert({username:uname2,nombre:gi('nuNombre').value.trim()||uname2,rol:gi('nuRol')?gi('nuRol').value:'usuario',email:email,activo:true},{onConflict:'username'});
+    toast('Usuario "'+uname2+'" creado \u2713','s');
     loadUsuarios();
   } catch(e){
     btn.disabled=false; btn.textContent='Crear Usuario';
