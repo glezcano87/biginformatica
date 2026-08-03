@@ -900,6 +900,9 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
   </div>
   <div class="content">
     <div class="gp-wrap">
+      <!-- EDIT MODE BANNER -->
+      <div id="gpEditBanner" style="display:none;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.3);border-radius:10px;padding:12px 18px;margin-bottom:16px;font-size:13px;align-items:center;gap:8px">
+      </div>
 
       <!-- DATOS DEL PRESUPUESTO -->
       <div class="gp-form">
@@ -1502,20 +1505,63 @@ function rMarg(){var q=gi('qM').value.toLowerCase(),mes=gi('mgSel').value;var vf
 function editPres(id){
   var r = PD.find(function(x){return x.id===id;});
   if(!r){ toast('Presupuesto no encontrado','e'); return; }
-  eP = id;
-  initMon('p');
-  setTimeout(function(){initMontoInputs();},50);
-  gi('mPt').textContent = 'Editar Presupuesto';
-  gi('bsP').textContent = 'Actualizar';
-  // Fill fields
-  gi('pf').value = r.fecha||'';
-  gi('pn').value = r.numero||'';
-  gi('pcl').value = r.cliente||'';
-  gi('pd').value = r.descripcion||'';
-  gi('pm').value = r.monto ? parseInt(r.monto).toLocaleString('es-PY') : '';
-  gi('pe').value = r.estado||'Pendiente';
-  gi('pno').value = r.notas||'';
-  gi('mP').classList.add('open');
+
+  // Navigate to Crear Presupuesto and load data
+  nav('gpres', document.querySelector('[onclick*="gpres"]'));
+  eP = id; // Store ID for update
+
+  setTimeout(function(){
+    // Fill header data
+    gi('gp-fecha').value = r.fecha||new Date().toISOString().slice(0,10);
+    gi('gp-numero').value = r.numero||'';
+    gi('gp-cliente').value = r.cliente||'';
+    gi('gp-descripcion').value = r.descripcion||'';
+    gi('gp-intro').value = '';
+
+    // Parse items from notas
+    gpItems = [];
+    if(r.notas && r.notas.includes('Items:')){
+      var notas = r.notas;
+      var itemsPart = notas.substring(notas.indexOf('Items:')+6);
+      var parts = itemsPart.split('|');
+      parts.forEach(function(part){
+        part = part.trim();
+        if(!part || part.startsWith('Margen')) return;
+        // Format: "1x Desc = Gs. 1.030.000.-"
+        var match = part.match(/^(\d+)x\s+(.+?)\s+=\s+(?:Gs\.|U\$S)\s*([\d.,]+)/);
+        if(match){
+          var qty = parseInt(match[1]);
+          var desc = match[2].trim();
+          var pventa = parseFmt(match[3]);
+          // Estimate costo from pventa and margen
+          var margen = gpMargen||20;
+          var margenMatch = notas.match(/Margen:\s*(\d+)%/);
+          if(margenMatch) margen = parseInt(margenMatch[1]);
+          var costo = Math.round(pventa * (1 - margen/100) / qty);
+          gpItems.push({desc:desc, qty:qty, costo:costo, margen:margen});
+        } else if(part){
+          gpItems.push({desc:part, qty:1, costo:0, margen:gpMargen||20});
+        }
+      });
+    }
+
+    if(!gpItems.length){
+      // No items parsed - add one empty with total
+      gpItems = [{desc:r.descripcion||'', qty:1, costo:0, margen:gpMargen||20}];
+    }
+
+    renderGPItems();
+    calcGPres();
+
+    // Show a banner indicating edit mode
+    var banner = gi('gpEditBanner');
+    if(banner){
+      banner.style.display='flex';
+      banner.innerHTML = '✏️ Editando presupuesto <strong style="margin-left:6px">'+(r.numero||id)+'</strong> &nbsp;&mdash;&nbsp; <span style="color:var(--muted);font-size:12px">Hacé los cambios y usá "Guardar en Sistema" para actualizar</span>';
+    }
+
+    toast('Presupuesto cargado para edición ✓','s');
+  }, 200);
 }
 
 function rPres(){
@@ -3409,9 +3455,17 @@ async function guardarPresDesdeGP(){
     monto:totalGs, estado:'Pendiente',
     notas:'Items: '+itemsTexto+' | Margen: '+gpMargen+'%'
   };
-  var {error}=await sb.from('presupuestos').insert(payload);
-  if(error){toast('Error: '+error.message,'e');return;}
-  toast('Presupuesto guardado en el sistema \u2713','s');
+  var saveError;
+  if(eP){
+    var ru=await sb.from('presupuestos').update(payload).eq('id',eP);
+    saveError=ru.error;
+    if(!saveError){ toast('Presupuesto actualizado \u2713','s'); eP=null; var b=gi('gpEditBanner');if(b)b.style.display='none'; }
+  } else {
+    var ri=await sb.from('presupuestos').insert(payload);
+    saveError=ri.error;
+    if(!saveError) toast('Presupuesto guardado \u2713','s');
+  }
+  if(saveError){toast('Error: '+saveError.message,'e');return;}
   await lP();
 }
 
