@@ -1278,6 +1278,71 @@ CREATE POLICY "all" ON cobros_pendientes FOR ALL USING (true) WITH CHECK (true);
   </div>
 </div>
 
+
+<!-- RECIBO DE DINERO -->
+<div class="page" id="page-recibo">
+  <div class="topbar">
+    <div><h1>Recibo de Dinero</h1><div class="meta">Generador de recibos con formato profesional</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-g" onclick="limpiarRecibo()">Limpiar</button>
+      <button class="btn btn-p" onclick="verPrevRecibo()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        Vista Previa / PDF
+      </button>
+    </div>
+  </div>
+  <div class="content">
+    <div style="max-width:700px;margin:0 auto">
+      <div class="gp-form">
+        <h3>Datos del Recibo</h3>
+        <div class="fg">
+          <div class="fgg"><label>Nº Recibo</label><input type="text" id="rec-num" placeholder="REC-000101"></div>
+          <div class="fgg"><label>Fecha</label><input type="date" id="rec-fecha"></div>
+          <div class="fgg full"><label>Recibí de *</label><input type="text" id="rec-de" placeholder="Nombre del cliente o empresa"></div>
+          <div class="fgg"><label>Método de pago</label>
+            <select id="rec-metodo">
+              <option>Efectivo</option><option>Transferencia</option><option>Cheque</option><option>Tarjeta</option>
+            </select>
+          </div>
+          <div class="fgg"><label>Presupuesto vinculado</label>
+            <select id="rec-presupuesto" onchange="autoFillRecibo()">
+              <option value="">Sin presupuesto vinculado</option>
+            </select>
+          </div>
+          <div class="fgg"><label>Moneda</label>
+            <div class="moneda-btns">
+              <button class="moneda-btn active" id="recMonedaGS" onclick="setMon('rec','GS',this)">&#8370; Gs.</button>
+              <button class="moneda-btn" id="recMonedaUSD" onclick="setMon('rec','USD',this)">$ USD</button>
+            </div>
+          </div>
+          <div class="fgg" id="recCotizWrap" style="display:none"><label>Cotiz. USD</label><input type="number" id="recCotiz" placeholder="7800"></div>
+          <div class="fgg"><label>Monto recibido *</label><input type="text" id="rec-monto" placeholder="0" inputmode="numeric" oninput="fmtMontoInput(this);calcRecibo()"></div>
+          <div class="fgg full"><label>Concepto *</label><input type="text" id="rec-concepto" placeholder="Ej: Anticipo del 50% por pago de sistema informático"></div>
+          <div class="fgg full"><label>Notas (opcional)</label><textarea id="rec-notas" placeholder="Observaciones adicionales..." style="min-height:50px"></textarea></div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Monto del Recibo</div>
+          <div style="font-size:22px;font-weight:800;color:var(--green)" id="rec-monto-display">&#8370; 0</div>
+        </div>
+      </div>
+      <div id="recPreviewWrap" style="display:none;margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:600">Vista previa del recibo</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-p btn-sm" onclick="imprimirRecibo()">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 002 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              Imprimir / PDF
+            </button>
+            <button class="btn btn-g btn-sm" onclick="gi('recPreviewWrap').style.display='none';var f=gi('recPreviewBody');var d=f.contentDocument||f.contentWindow.document;d.open();d.write('');d.close();">Cerrar</button>
+          </div>
+        </div>
+        <div style="background:#e8ecf0;border-radius:12px;padding:20px">
+          <iframe id="recPreviewBody" style="width:100%;height:60vh;border:none;border-radius:8px;background:#fff"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 </main>
 
 <!-- MODAL VENTA -->
