@@ -338,6 +338,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
     <div class="nav-s">
       <span class="nav-lbl">Gesti&#243;n</span>
       <a class="nav-a" onclick="nav('presupuestos',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Presupuestos</a>
+      <a class="nav-a" onclick="nav('taller',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Taller T&#233;cnico</a>
       <a class="nav-a" onclick="nav('gastos',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Gastos Fijos</a>
     </div>
     <div class="nav-s">
@@ -596,6 +597,92 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
     </div>
   </div>
 </div>
+
+
+<!-- TALLER TECNICO -->
+<div class="page" id="page-taller">
+  <div class="topbar">
+    <div><h1>Taller T&#233;cnico</h1><div class="meta" id="tallerMeta">&#8212;</div></div>
+    <button class="btn btn-p" onclick="oT()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4v16m8-8H4"/></svg>
+      Nueva Orden
+    </button>
+  </div>
+  <div class="content">
+    <div class="srow">
+      <div class="sc"><div class="lbl">Total &#211;rdenes</div><div class="val b" id="tl0">0</div></div>
+      <div class="sc"><div class="lbl">Recibido</div><div class="val y" id="tl1">0</div></div>
+      <div class="sc"><div class="lbl">En Reparaci&#243;n</div><div class="val p" id="tl2">0</div></div>
+      <div class="sc"><div class="lbl">Entregado</div><div class="val g" id="tl3">0</div></div>
+    </div>
+    <div class="tw">
+      <div class="ttb">
+        <div class="sb"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="qT" placeholder="Buscar orden, cliente, equipo&#8230;" oninput="rT()">
+        </div>
+        <select class="fs" id="ftEstado" onchange="rT()"><option value="">Todos los estados</option><option>Recibido</option><option>En Reparaci&#243;n</option><option>Entregado</option></select>
+      </div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr>
+          <th>N&#176;</th><th>Fecha</th><th>Cliente</th><th>Equipo</th><th class="tr">Presupuesto</th><th class="tr">Anticipo</th><th>Estado</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="tbT"></tbody>
+      </table></div>
+    </div>
+
+    <div class="db-panel" id="ordenPreviewPanel" style="display:none;margin-top:16px">
+      <div class="db-panel-h">
+        <span class="title" id="ordenPreviewTitle">Vista Previa de la Orden</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-p btn-sm" onclick="imprimirOrdenPreview()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Imprimir / PDF
+          </button>
+          <button class="btn btn-g btn-sm" onclick="gi('ordenPreviewPanel').style.display='none';var f=gi('ordenPreviewBody');var d=f.contentDocument||f.contentWindow.document;d.open();d.write('');d.close();">Cerrar</button>
+        </div>
+      </div>
+      <iframe id="ordenPreviewBody" style="width:100%;height:80vh;min-height:500px;border:none;border-radius:0 0 12px 12px"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ORDEN DE SERVICIO -->
+<div class="ov" id="mTaller"><div class="modal">
+  <div class="mh"><h2 id="mTt">Nueva Orden de Servicio</h2><button class="ib" onclick="cm('mTaller')">&#10005;</button></div>
+  <div class="mb"><div class="fg">
+    <div class="fgg"><label>N&#176; de Orden</label><input type="text" id="t-numero" readonly style="opacity:.7"></div>
+    <div class="fgg"><label>Estado</label><select id="t-estado"><option>Recibido</option><option>En Reparaci&#243;n</option><option>Entregado</option></select></div>
+    <div class="fgg full"><label>Fecha de Recepci&#243;n</label><input type="date" id="t-fecha"></div>
+
+    <div class="stl full" style="margin-top:4px">Cliente</div>
+    <div class="fgg full"><label>Nombre</label><input type="text" id="t-cliente" placeholder="Nombre y apellido"></div>
+    <div class="fgg"><label>Tel&#233;fono</label><input type="text" id="t-telefono"></div>
+    <div class="fgg"><label>Correo</label><input type="text" id="t-correo"></div>
+    <div class="fgg full"><label>N&#176; de Documento / C&#233;dula</label><input type="text" id="t-documento"></div>
+
+    <div class="stl full" style="margin-top:4px">Equipo</div>
+    <div class="fgg"><label>Tipo</label><select id="t-tipo"><option>PC de Escritorio</option><option>Notebook</option><option>Placa Madre</option><option>Impresora</option><option>Otro</option></select></div>
+    <div class="fgg"><label>Marca</label><input type="text" id="t-marca"></div>
+    <div class="fgg"><label>Modelo</label><input type="text" id="t-modelo"></div>
+    <div class="fgg"><label>N&#176; de Serie</label><input type="text" id="t-serie"></div>
+    <div class="fgg full"><label>Contrase&#241;a / PIN del equipo</label><input type="text" id="t-pin" placeholder="Si aplica"></div>
+
+    <div class="stl full" style="margin-top:4px">Informe de Recepci&#243;n</div>
+    <div class="fgg full"><label>Estado al recepcionar</label><textarea id="t-estadorecep" rows="2" placeholder="Golpes, rayones, faltantes, etc."></textarea></div>
+    <div class="fgg full"><label>Falla mencionada por el cliente</label><textarea id="t-falla" rows="2"></textarea></div>
+    <div class="fgg full"><label>Accesorios entregados</label><input type="text" id="t-accesorios" placeholder="Cargador, mouse, funda..."></div>
+    <div class="fgg full"><label>Observaciones</label><textarea id="t-observaciones" rows="2"></textarea></div>
+
+    <div class="stl full" style="margin-top:4px">Trabajo y Pago</div>
+    <div class="fgg full"><label>Trabajos realizados</label><textarea id="t-trabajos" rows="2"></textarea></div>
+    <div class="fgg"><label>Presupuesto vinculado (opcional)</label><select id="t-presupuesto-id"><option value="">Ninguno / monto directo</option></select></div>
+    <div class="fgg"><label>Monto de presupuesto (&#8370;)</label><input type="number" id="t-monto-presupuesto" min="0" placeholder="0"></div>
+    <div class="fgg"><label>Forma de pago</label><select id="t-formapago"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option></select></div>
+    <div class="fgg"><label>Anticipo recibido (&#8370;)</label><input type="number" id="t-anticipo" min="0" placeholder="0"></div>
+    <div class="fgg full"><label>Fecha estimada de entrega</label><input type="date" id="t-fechaentrega"></div>
+  </div></div>
+  <div class="mf"><button class="btn btn-g" onclick="cm('mTaller')">Cancelar</button><button class="btn btn-p" id="bsT" onclick="sT()">Guardar Orden</button></div>
+</div></div>
 
 
 <!-- GASTOS FIJOS -->
@@ -1282,7 +1369,38 @@ CREATE TABLE cobros_pendientes (
   created_at timestamptz DEFAULT now()
 );
 ALTER TABLE cobros_pendientes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "all" ON cobros_pendientes FOR ALL USING (true) WITH CHECK (true);</pre>
+CREATE POLICY "all" ON cobros_pendientes FOR ALL USING (true) WITH CHECK (true);
+
+-- TALLER TECNICO (ORDENES DE SERVICIO)
+CREATE TABLE ordenes_servicio (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  numero text,
+  fecha date NOT NULL,
+  estado text DEFAULT 'Recibido'
+    CHECK (estado IN ('Recibido','En Reparación','Entregado')),
+  cliente_nombre text NOT NULL,
+  cliente_telefono text,
+  cliente_correo text,
+  cliente_documento text,
+  tipo_equipo text,
+  marca text,
+  modelo text,
+  numero_serie text,
+  password_pin text,
+  estado_recepcion text,
+  falla_mencionada text,
+  accesorios text,
+  observaciones text,
+  trabajos_realizados text,
+  presupuesto_id uuid,
+  monto_presupuesto numeric,
+  forma_pago text,
+  anticipo numeric DEFAULT 0,
+  fecha_entrega_estimada date,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE ordenes_servicio ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "all" ON ordenes_servicio FOR ALL USING (true) WITH CHECK (true);</pre>
       </div>
     </div>
   </div>
@@ -1458,7 +1576,7 @@ CREATE POLICY "all" ON cobros_pendientes FOR ALL USING (true) WITH CHECK (true);
 
 <script>
 var sb=null;
-var eP=null,VD=[],CD=[],PD=[],GD=[],eV=null,eC=null,eP=null,eG=null,fjCh=null;
+var eP=null,VD=[],CD=[],PD=[],GD=[],TD=[],eV=null,eC=null,eP=null,eG=null,eT=null,fjCh=null;
 var MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 function gcfg(){return{url:localStorage.getItem('bi_url')||'',key:localStorage.getItem('bi_key')||''}}
 function sCfg(){var u=gi('cfU').value.trim(),k=gi('cfK').value.trim();if(!u||!k){toast('Completa ambos campos','e');return}localStorage.setItem('bi_url',u);localStorage.setItem('bi_key',k);initSB(u,k)}
@@ -1466,8 +1584,8 @@ function clCfg(){localStorage.removeItem('bi_url');localStorage.removeItem('bi_k
 function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Conectado a Supabase','s');gi('cfgSt').textContent='Conectado correctamente';loadAll()}catch(e){setConn(false);toast('Error: '+e.message,'e')}}
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
-function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='usuarios'){loadUsuarios();}if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='recibo'){initRecibo();}if(p==='gpres'){initGPres();}closeSidebar()}
-async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros()]);popFjSel();popMgSel();popCtMesSel();rDash()}
+function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='usuarios'){loadUsuarios();}if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='recibo'){initRecibo();}if(p==='gpres'){initGPres();}if(p==='taller'){rT();}closeSidebar()}
+async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT()]);popFjSel();popMgSel();popCtMesSel();rDash()}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
 async function lP(){if(!sb)return;var r=await sb.from('presupuestos').select('*').order('fecha',{ascending:false});if(r.error){toast('Error presupuestos: '+r.error.message,'e');return}PD=r.data||[];popMF('fmP',PD);usPS();rPres()}
@@ -1934,6 +2052,281 @@ async function sv2(tbl,btnId,editing,pay,modalId,lbl){var btn=gi(btnId);btn.disa
 async function dlV(id){if(!confirm('\u00bfEliminar esta venta?'))return;await dl2('ventas',id);await lV();usV()}
 async function dlC(id){if(!confirm('\u00bfEliminar esta compra?'))return;await dl2('compras',id);await lC();usC()}
 async function dlP(id){if(!confirm('\u00bfEliminar este presupuesto?'))return;await dl2('presupuestos',id);await lP();usPS()}
+
+// ==================== MODULO TALLER TECNICO ====================
+async function lT(){
+  if(!sb)return;
+  var r=await sb.from('ordenes_servicio').select('*').order('fecha',{ascending:false});
+  if(r.error){toast('Error &oacute;rdenes: '+r.error.message,'e');return}
+  TD=r.data||[];
+  rT();
+}
+
+function proximoNumeroOrden(){
+  var max=0;
+  TD.forEach(function(r){
+    var m=(r.numero||'').match(/(\d+)$/);
+    if(m){var n=parseInt(m[1]);if(n>max)max=n}
+  });
+  return 'ORD-'+String(max+1).padStart(4,'0');
+}
+
+function popPresupuestoSelectT(selectedId){
+  var sel=gi('t-presupuesto-id');
+  sel.innerHTML='<option value="">Ninguno / monto directo</option>'+
+    PD.map(function(p){return '<option value="'+p.id+'"'+(String(p.id)===String(selectedId)?' selected':'')+'>'+(p.numero||p.cliente||('Presupuesto #'+p.id))+(p.monto?' &#8212; \u20b2 '+fmt(p.monto):'')+'</option>'}).join('');
+}
+
+function oT(){
+  if(!sb){toast('Conecta Supabase primero','e');return}
+  eT=null;
+  gi('mTt').textContent='Nueva Orden de Servicio';
+  gi('bsT').textContent='Guardar Orden';
+  gi('t-numero').value=proximoNumeroOrden();
+  gi('t-fecha').value=td();
+  gi('t-estado').value='Recibido';
+  gi('t-cliente').value='';gi('t-telefono').value='';gi('t-correo').value='';gi('t-documento').value='';
+  gi('t-tipo').value='PC de Escritorio';gi('t-marca').value='';gi('t-modelo').value='';gi('t-serie').value='';gi('t-pin').value='';
+  gi('t-estadorecep').value='';gi('t-falla').value='';gi('t-accesorios').value='';gi('t-observaciones').value='';
+  gi('t-trabajos').value='';gi('t-monto-presupuesto').value='';gi('t-formapago').value='Efectivo';gi('t-anticipo').value='';gi('t-fechaentrega').value='';
+  popPresupuestoSelectT('');
+  gi('mTaller').classList.add('open');
+}
+
+function edT(id){
+  var r=TD.find(function(x){return String(x.id)===String(id)});
+  if(!r)return;
+  eT=id;
+  gi('mTt').textContent='Editar Orden de Servicio';
+  gi('bsT').textContent='Actualizar Orden';
+  gi('t-numero').value=r.numero||'';
+  gi('t-fecha').value=r.fecha||td();
+  gi('t-estado').value=r.estado||'Recibido';
+  gi('t-cliente').value=r.cliente_nombre||'';
+  gi('t-telefono').value=r.cliente_telefono||'';
+  gi('t-correo').value=r.cliente_correo||'';
+  gi('t-documento').value=r.cliente_documento||'';
+  gi('t-tipo').value=r.tipo_equipo||'PC de Escritorio';
+  gi('t-marca').value=r.marca||'';
+  gi('t-modelo').value=r.modelo||'';
+  gi('t-serie').value=r.numero_serie||'';
+  gi('t-pin').value=r.password_pin||'';
+  gi('t-estadorecep').value=r.estado_recepcion||'';
+  gi('t-falla').value=r.falla_mencionada||'';
+  gi('t-accesorios').value=r.accesorios||'';
+  gi('t-observaciones').value=r.observaciones||'';
+  gi('t-trabajos').value=r.trabajos_realizados||'';
+  gi('t-monto-presupuesto').value=r.monto_presupuesto||'';
+  gi('t-formapago').value=r.forma_pago||'Efectivo';
+  gi('t-anticipo').value=r.anticipo||'';
+  gi('t-fechaentrega').value=r.fecha_entrega_estimada||'';
+  popPresupuestoSelectT(r.presupuesto_id||'');
+  gi('mTaller').classList.add('open');
+}
+
+async function sT(){
+  var cliente=gi('t-cliente').value.trim();
+  if(!cliente){toast('Complet&aacute; el nombre del cliente','e');return}
+  if(!gi('t-fecha').value){toast('Complet&aacute; la fecha de recepci&oacute;n','e');return}
+  var presId=gi('t-presupuesto-id').value||null;
+  var pay={
+    numero:gi('t-numero').value,
+    fecha:gi('t-fecha').value,
+    estado:gi('t-estado').value,
+    cliente_nombre:cliente,
+    cliente_telefono:gi('t-telefono').value.trim()||null,
+    cliente_correo:gi('t-correo').value.trim()||null,
+    cliente_documento:gi('t-documento').value.trim()||null,
+    tipo_equipo:gi('t-tipo').value,
+    marca:gi('t-marca').value.trim()||null,
+    modelo:gi('t-modelo').value.trim()||null,
+    numero_serie:gi('t-serie').value.trim()||null,
+    password_pin:gi('t-pin').value.trim()||null,
+    estado_recepcion:gi('t-estadorecep').value.trim()||null,
+    falla_mencionada:gi('t-falla').value.trim()||null,
+    accesorios:gi('t-accesorios').value.trim()||null,
+    observaciones:gi('t-observaciones').value.trim()||null,
+    trabajos_realizados:gi('t-trabajos').value.trim()||null,
+    presupuesto_id:presId,
+    monto_presupuesto:parseFloat(gi('t-monto-presupuesto').value)||null,
+    forma_pago:gi('t-formapago').value,
+    anticipo:parseFloat(gi('t-anticipo').value)||0,
+    fecha_entrega_estimada:gi('t-fechaentrega').value||null
+  };
+  await sv2('ordenes_servicio','bsT',eT,pay,'mTaller','Orden');
+  eT=null;
+  await lT();
+}
+
+async function dlT(id){
+  if(!confirm('\u00bfEliminar esta orden de servicio?'))return;
+  await dl2('ordenes_servicio',id);
+  await lT();
+}
+
+function rT(){
+  var q=(gi('qT').value||'').toLowerCase(),fe=gi('ftEstado').value;
+  var rows=TD.filter(function(r){
+    var okQ=!q||[r.numero,r.cliente_nombre,r.modelo,r.marca,r.tipo_equipo].filter(Boolean).join(' ').toLowerCase().includes(q);
+    var okE=!fe||r.estado===fe;
+    return okQ&&okE;
+  });
+  gi('tl0').textContent=TD.length;
+  gi('tl1').textContent=TD.filter(function(r){return r.estado==='Recibido'}).length;
+  gi('tl2').textContent=TD.filter(function(r){return r.estado==='En Reparaci\u00f3n'}).length;
+  gi('tl3').textContent=TD.filter(function(r){return r.estado==='Entregado'}).length;
+  gi('tallerMeta').textContent=TD.length+' orden'+(TD.length===1?'':'es')+' registrada'+(TD.length===1?'':'s');
+  var tb=gi('tbT');
+  if(!rows.length){tb.innerHTML=er(8,sb?'No hay &oacute;rdenes en este filtro.':'\u26a0\ufe0f Conecta Supabase desde Configuraci&oacute;n.');return}
+  var eb={'Recibido':'by','En Reparaci\u00f3n':'bp','Entregado':'bg'};
+  tb.innerHTML=rows.map(function(r){
+    var montoRef=r.monto_presupuesto||(PD.find(function(p){return String(p.id)===String(r.presupuesto_id)})||{}).monto||0;
+    var saldo=montoRef-(r.anticipo||0);
+    return '<tr>'+
+      '<td style="font-weight:600;color:var(--accent2)">'+(r.numero||'&#8212;')+'</td>'+
+      '<td class="mn">'+fd(r.fecha)+'</td>'+
+      '<td>'+(r.cliente_nombre||'&#8212;')+'</td>'+
+      '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r.tipo_equipo||'')+' '+(r.marca||'')+' '+(r.modelo||'')+'">'+(r.tipo_equipo||'&#8212;')+(r.modelo?' &#183; '+r.modelo:'')+'</td>'+
+      '<td class="mn tr">'+(montoRef?'\u20b2 '+fmt(montoRef):'&#8212;')+'</td>'+
+      '<td class="mn tr" style="color:'+(saldo>0?'var(--yellow)':'var(--green)')+'">'+(r.anticipo?'\u20b2 '+fmt(r.anticipo):'&#8212;')+'</td>'+
+      '<td><span class="bx '+(eb[r.estado]||'bm')+'">'+r.estado+'</span></td>'+
+      '<td><div class="acts">'+
+        '<button class="ib" data-id="'+r.id+'" onclick="verOrdenPrev(this.dataset.id)" title="Vista previa / PDF"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>'+
+        '<button class="ib" data-id="'+r.id+'" onclick="edT(this.dataset.id)" title="Editar">'+ie()+'</button>'+
+        '<button class="ib d" data-id="'+r.id+'" onclick="dlT(this.dataset.id)" title="Eliminar">'+it()+'</button>'+
+      '</div></td>'+
+    '</tr>';
+  }).join('');
+}
+
+function verOrdenPrev(id){
+  var r=TD.find(function(x){return String(x.id)===String(id)});
+  if(!r)return;
+  gi('ordenPreviewTitle').textContent='Vista Previa: '+(r.numero||'Orden de Servicio');
+
+  var logo_url='https://raw.githubusercontent.com/glezcano87/biginformatica/main/logo.png';
+  var eb={'Recibido':'#d97706','En Reparaci\u00f3n':'#7c3aed','Entregado':'#16a34a'};
+  var estadoColor=eb[r.estado]||'#666';
+  var montoRef=r.monto_presupuesto||(PD.find(function(p){return String(p.id)===String(r.presupuesto_id)})||{}).monto||0;
+  var anticipo=r.anticipo||0;
+  var saldo=montoRef-anticipo;
+
+  var st='<style>@page{margin:0;size:A4}@media print{body{margin:1cm}}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}'+
+    '.wrap{max-width:780px;margin:0 auto}'+
+    '.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:4px solid #8DC63F}'+
+    '.hdr-r{text-align:right}'+
+    '.badge{display:inline-block;background:#1B6B8A;color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}'+
+    '.hdr-num{color:#1B6B8A;font-size:14px;font-weight:700}'+
+    '.hdr-fecha{font-size:12px;color:#555}'+
+    '.strip{height:5px;background:linear-gradient(90deg,#1B6B8A,#8DC63F)}'+
+    '.body{padding:22px 28px 28px}'+
+    '.cli{background:#f4fbf0;border-left:5px solid #8DC63F;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px}'+
+    '.cli-l{font-size:10px;color:#5a8a20;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}'+
+    '.cli-n{font-size:16px;font-weight:800;color:#111}'+
+    '.estado-bar{background:#f8f8f8;border:1px solid #eee;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}'+
+    '.est-badge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#fff}'+
+    '.stl{font-size:11px;font-weight:800;color:#1B6B8A;text-transform:uppercase;letter-spacing:.6px;border-bottom:2px solid #8DC63F;padding-bottom:5px;margin:16px 0 10px}'+
+    '.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;font-size:12.5px;margin-bottom:6px}'+
+    '.grid2 b{color:#1B6B8A}'+
+    '.box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:12.5px;line-height:1.6;margin-bottom:8px}'+
+    '.pin{background:#fff7ed;border:1px dashed #d97706;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;color:#92400e;display:inline-block;margin-bottom:6px}'+
+    '.tot{background:linear-gradient(90deg,#1B6B8A,#8DC63F);border-radius:8px;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;margin:14px 0 18px;flex-wrap:wrap;gap:8px}'+
+    '.tot-i{color:#fff}'+
+    '.tot-i .l{font-size:10px;text-transform:uppercase;opacity:.85}'+
+    '.tot-i .v{font-size:16px;font-weight:900}'+
+    '.garantia{font-size:10.5px;color:#444;line-height:1.6;background:#fff9f0;border:1px solid #f0d9a8;border-radius:8px;padding:12px 16px;margin-bottom:18px}'+
+    '.garantia b{color:#92400e}'+
+    '.firma-row{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:30px}'+
+    '.firma-box{border-top:1px solid #999;padding-top:6px;font-size:11px;color:#555;text-align:center}'+
+    '</style>';
+
+  var html=st+
+    '<div class="wrap">'+
+      '<div class="hdr">'+
+        '<img class="logo" src="'+logo_url+'" alt="Big Informatica" style="height:68px;width:auto">'+
+        '<div class="hdr-r">'+
+          '<div class="badge">Orden de Servicio T&eacute;cnico</div>'+
+          '<div class="hdr-num">'+(r.numero||'Sin n&uacute;mero')+'</div>'+
+          '<div class="hdr-fecha">Fecha de recepci&oacute;n: '+fd(r.fecha)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="strip"></div>'+
+      '<div class="body">'+
+        '<div class="cli"><div class="cli-l">Cliente</div><div class="cli-n">'+(r.cliente_nombre||'Sin nombre')+'</div>'+
+          '<div style="font-size:12px;color:#555;margin-top:4px">'+[r.cliente_telefono,r.cliente_correo,(r.cliente_documento?'C.I./Doc: '+r.cliente_documento:'')].filter(Boolean).join(' &#183; ')+'</div>'+
+        '</div>'+
+        '<div class="estado-bar">Estado actual: <span class="est-badge" style="background:'+estadoColor+'">'+r.estado+'</span>'+
+          (r.fecha_entrega_estimada?' &nbsp;|&nbsp; Entrega estimada: <strong>'+fd(r.fecha_entrega_estimada)+'</strong>':'')+
+        '</div>'+
+
+        '<div class="stl">Equipo Recibido</div>'+
+        '<div class="grid2">'+
+          '<div><b>Tipo:</b> '+(r.tipo_equipo||'&#8212;')+'</div>'+
+          '<div><b>Marca:</b> '+(r.marca||'&#8212;')+'</div>'+
+          '<div><b>Modelo:</b> '+(r.modelo||'&#8212;')+'</div>'+
+          '<div><b>N&#176; de Serie:</b> '+(r.numero_serie||'&#8212;')+'</div>'+
+        '</div>'+
+        (r.password_pin?'<div class="pin">&#128273; Contrase&#241;a / PIN del equipo: '+r.password_pin+'</div>':'')+
+
+        '<div class="stl">Informe de Recepci&oacute;n</div>'+
+        (r.estado_recepcion?'<div class="box"><b>Estado al recepcionar:</b> '+r.estado_recepcion+'</div>':'')+
+        (r.falla_mencionada?'<div class="box"><b>Falla mencionada por el cliente:</b> '+r.falla_mencionada+'</div>':'')+
+        (r.accesorios?'<div class="box"><b>Accesorios entregados:</b> '+r.accesorios+'</div>':'')+
+        (r.observaciones?'<div class="box"><b>Observaciones:</b> '+r.observaciones+'</div>':'')+
+
+        (r.trabajos_realizados?'<div class="stl">Trabajos Realizados</div><div class="box">'+r.trabajos_realizados+'</div>':'')+
+
+        '<div class="stl">Presupuesto y Pago</div>'+
+        '<div class="tot">'+
+          '<div class="tot-i"><div class="l">Presupuesto</div><div class="v">\u20b2 '+fmt(montoRef)+'.-</div></div>'+
+          '<div class="tot-i"><div class="l">Anticipo ('+(r.forma_pago||'&#8212;')+')</div><div class="v">\u20b2 '+fmt(anticipo)+'.-</div></div>'+
+          '<div class="tot-i"><div class="l">Saldo pendiente</div><div class="v">\u20b2 '+fmt(saldo)+'.-</div></div>'+
+        '</div>'+
+
+        '<div class="stl">Condiciones y Garant&iacute;a del Servicio</div>'+
+        '<div class="garantia">'+
+          '<b>&#8226;</b> La empresa no se hace responsable por la p&eacute;rdida o extrav&iacute;o del equipo pasados los 90 d&iacute;as de la fecha de recepci&oacute;n sin haber sido retirado.<br>'+
+          '<b>&#8226;</b> La garant&iacute;a por reparaci&oacute;n de placa madre e insumos espec&iacute;ficos es de 30 a 90 d&iacute;as, seg&uacute;n el trabajo realizado.<br>'+
+          '<b>&#8226;</b> Para retirar el equipo es necesario presentar esta orden de servicio o acreditar la titularidad del equipo.<br>'+
+          '<b>&#8226;</b> Las condiciones del equipo quedan asentadas al momento de la entrega del trabajo.<br>'+
+          '<b>&#8226;</b> La garant&iacute;a queda sin efecto si el sello es removido o el equipo fue intervenido por otro t&eacute;cnico.<br>'+
+          '<b>&#8226;</b> Equipos mojados, golpeados, con descarga el&eacute;ctrica, o pantallas golpeadas/rotas no ser&aacute;n reconocidos como parte de la garant&iacute;a.<br>'+
+          '<b>&#8226;</b> Todo trabajo debe ser revisado por el cliente antes del retiro.<br>'+
+          '<b>&#8226;</b> Bajo ning&uacute;n concepto se reembolsar&aacute; el dinero una vez que el cliente acepta el ingreso del equipo al servicio t&eacute;cnico y las presentes condiciones.'+
+        '</div>'+
+
+        '<div class="firma-row">'+
+          '<div class="firma-box">Firma del Cliente<br><span style="font-size:9.5px">Acepto las condiciones del servicio detalladas arriba</span></div>'+
+          '<div class="firma-box">Firma y Sello &#8212; Big Inform&aacute;tica</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+
+  var iframeOP=gi('ordenPreviewBody');
+  var docOP=iframeOP.contentDocument||iframeOP.contentWindow.document;
+  docOP.open();
+  docOP.write('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0">'+html+'</body></html>');
+  docOP.close();
+  gi('ordenPreviewPanel').style.display='block';
+  gi('ordenPreviewPanel').scrollIntoView({behavior:'smooth'});
+}
+
+function imprimirOrdenPreview(){
+  var iframe=gi('ordenPreviewBody');
+  var doc=iframe.contentDocument||iframe.contentWindow.document;
+  var html=doc.documentElement.outerHTML;
+  var blob=new Blob([html],{type:'text/html'});
+  var url=URL.createObjectURL(blob);
+  var v=window.open(url,'_blank');
+  if(v){
+    v.onload=function(){ setTimeout(function(){ v.print(); URL.revokeObjectURL(url); },300); };
+  } else {
+    var a=document.createElement('a'); a.href=url; a.target='_blank'; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+  }
+}
+// ==================== FIN MODULO TALLER TECNICO ====================
+
 async function dlG(id){if(!confirm('\u00bfEliminar este gasto fijo?'))return;await dl2('gastos_fijos',id);await lG();usGF()}
 async function dl2(tbl,id){var r=await sb.from(tbl).delete().eq('id',id);if(r.error)toast('Error: '+r.error.message,'e');else toast('Eliminado \u2713','s')}
 function fmt(n){return Math.abs(n||0).toLocaleString('es-PY')}
