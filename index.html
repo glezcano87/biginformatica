@@ -442,6 +442,14 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         <div class="db-panel-body" id="dbLastP"><div style="color:var(--muted);font-size:13px;padding:10px 0">Sin datos</div></div>
       </div>
     </div>
+    <div class="db-panel" style="margin-top:20px">
+      <div class="db-panel-h"><span class="title">&#128295; Taller T&#233;cnico &#8212; Estado de &#211;rdenes</span><span class="link" onclick="nav('taller',document.querySelector('[onclick*=taller]'))">Ver todas</span></div>
+      <div class="db-panel-body">
+        <div id="dbTallerBar" style="display:flex;height:22px;border-radius:8px;overflow:hidden;margin-bottom:14px;background:var(--surface)"></div>
+        <div id="dbTallerLegend" style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;font-size:12px"></div>
+        <div id="dbLastT"><div style="color:var(--muted);font-size:13px;padding:10px 0">Sin &#243;rdenes registradas</div></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -662,8 +670,17 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 
     <div class="stl full" style="margin-top:4px">Equipo</div>
     <div class="fgg"><label>Tipo</label><select id="t-tipo"><option>PC de Escritorio</option><option>Notebook</option><option>Placa Madre</option><option>Impresora</option><option>Otro</option></select></div>
-    <div class="fgg"><label>Marca</label><input type="text" id="t-marca"></div>
-    <div class="fgg"><label>Modelo</label><input type="text" id="t-modelo"></div>
+    <div class="fgg"><label>Marca</label><select id="t-marca" onchange="actualizarModelosT()">
+      <option value="">Seleccionar&#8230;</option>
+      <option>HP</option><option>Dell</option><option>Lenovo</option><option>ASUS</option><option>Acer</option>
+      <option>Apple</option><option>MSI</option><option>Samsung</option><option>Toshiba/Dynabook</option>
+      <option>Microsoft</option><option>Huawei</option><option>Gigabyte</option><option>LG</option>
+      <option>Sony (VAIO)</option><option>Positivo</option><option>Exo</option><option>Advance</option><option>BGH</option>
+      <option value="Otra">Otra (especificar)</option>
+    </select></div>
+    <div class="fgg"><label>Modelo</label><input type="text" id="t-modelo" list="dl-modelos-taller" placeholder="Eleg&#237; una sugerencia o escrib&#237;"></div>
+    <datalist id="dl-modelos-taller"></datalist>
+    <div class="fgg full" id="t-marca-otra-wrap" style="display:none"><label>Especificar marca</label><input type="text" id="t-marca-otra" placeholder="Nombre de la marca"></div>
     <div class="fgg"><label>N&#176; de Serie</label><input type="text" id="t-serie"></div>
     <div class="fgg full"><label>Contrase&#241;a / PIN del equipo</label><input type="text" id="t-pin" placeholder="Si aplica"></div>
 
@@ -2004,8 +2021,37 @@ function rDash(){
   var eb={'Pendiente':'by','Aprobado':'bg','Rechazado':'br'};
   gi('dbLastP').innerHTML=lp.length?lp.map(r=>'<div class="db-row"><div><div class="name">'+(r.numero||r.cliente||'Presupuesto')+'</div><div class="tag">'+(r.cliente||'')+' · '+fd(r.fecha)+'</div></div><span class="bx '+(eb[r.estado]||'bm')+'" style="font-size:10px">'+r.estado+'</span></div>').join(''):'<div style="color:var(--muted);font-size:13px;padding:8px 0">Sin presupuestos registrados</div>';
 
+  // Taller Tecnico: barra de estados + últimas órdenes
+  rDbTaller();
+
   rDbBarChart();
   rDbPieChart(cCur);
+}
+function rDbTaller(){
+  var colores={'Recibido':'#d97706','En Reparación':'#7c3aed','Entregado':'#16a34a'};
+  var estados=['Recibido','En Reparación','Entregado'];
+  var counts=estados.map(function(e){return TD.filter(function(r){return r.estado===e}).length});
+  var total=TD.length;
+
+  var bar=gi('dbTallerBar');
+  if(!total){
+    bar.innerHTML='<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Sin órdenes registradas</div>';
+  } else {
+    bar.innerHTML=estados.map(function(e,i){
+      var pct=counts[i]/total*100;
+      return pct>0?'<div style="width:'+pct+'%;background:'+colores[e]+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">'+(pct>=8?counts[i]:'')+'</div>':'';
+    }).join('');
+  }
+
+  gi('dbTallerLegend').innerHTML=estados.map(function(e,i){
+    return '<span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:'+colores[e]+';display:inline-block"></span>'+e+': <strong>'+counts[i]+'</strong></span>';
+  }).join('')+'<span style="color:var(--muted)">Total: <strong>'+total+'</strong> orden'+(total!==1?'es':'')+'</span>';
+
+  var lt=TD.slice(0,5);
+  var ebT={'Recibido':'by','En Reparación':'bp','Entregado':'bg'};
+  gi('dbLastT').innerHTML=lt.length?lt.map(function(r){
+    return '<div class="db-row"><div><div class="name">'+(r.numero||'Orden')+' &#8212; '+(r.cliente_nombre||'')+'</div><div class="tag">'+(r.tipo_equipo||'')+(r.modelo?' · '+r.modelo:'')+' · '+fd(r.fecha)+'</div></div><span class="bx '+(ebT[r.estado]||'bm')+'" style="font-size:10px">'+r.estado+'</span></div>';
+  }).join(''):'<div style="color:var(--muted);font-size:13px;padding:8px 0">Sin &#243;rdenes registradas</div>';
 }
 function rDbBarChart(){
   var all=[...new Set([...VD.map(r=>r.fecha?r.fecha.slice(0,7):null),...CD.map(r=>r.fecha?r.fecha.slice(0,7):null)].filter(Boolean))].sort();
@@ -2054,6 +2100,35 @@ async function dlC(id){if(!confirm('\u00bfEliminar esta compra?'))return;await d
 async function dlP(id){if(!confirm('\u00bfEliminar este presupuesto?'))return;await dl2('presupuestos',id);await lP();usPS()}
 
 // ==================== MODULO TALLER TECNICO ====================
+var MODELOS_POR_MARCA={
+  'HP':['Pavilion','Pavilion x360','EliteBook','ProBook','Spectre x360','Omen','Envy','Chromebook','15 Series','250 G-Series','ZBook'],
+  'Dell':['Inspiron','Latitude','XPS','Vostro','Precision','Alienware','G Series','Chromebook'],
+  'Lenovo':['ThinkPad','ThinkPad X1','IdeaPad','Legion','Yoga','V-Series','ThinkBook','Flex'],
+  'ASUS':['VivoBook','ZenBook','ROG Strix','ROG Zephyrus','TUF Gaming','ExpertBook','Chromebook'],
+  'Acer':['Aspire','Swift','Predator Helios','Nitro','TravelMate','Chromebook','Extensa'],
+  'Apple':['MacBook Air','MacBook Pro 13"','MacBook Pro 14"','MacBook Pro 16"'],
+  'MSI':['Modern','Prestige','Stealth','Katana','Cyborg','Bravo','Sword'],
+  'Samsung':['Galaxy Book','Galaxy Book Pro','Galaxy Book2','Notebook Odyssey'],
+  'Toshiba/Dynabook':['Satellite','Tecra','Portege'],
+  'Microsoft':['Surface Laptop','Surface Laptop Go','Surface Book','Surface Go'],
+  'Huawei':['MateBook D','MateBook X','MateBook 14','MateBook 16'],
+  'Gigabyte':['Aero','Aorus'],
+  'LG':['Gram'],
+  'Sony (VAIO)':['VAIO S','VAIO Pro','VAIO Z'],
+  'Positivo':['Vaio','Duo','Master'],
+  'Exo':['Smart','XR3','Cloud'],
+  'Advance':['Intelbook','Trends'],
+  'BGH':['Positivo BGH']
+};
+function actualizarModelosT(){
+  var marca=gi('t-marca').value;
+  var wrapOtra=gi('t-marca-otra-wrap');
+  wrapOtra.style.display=(marca==='Otra')?'block':'none';
+  var dl=gi('dl-modelos-taller');
+  var modelos=MODELOS_POR_MARCA[marca]||[];
+  dl.innerHTML=modelos.map(function(m){return '<option value="'+m+'">'}).join('');
+}
+
 async function lT(){
   if(!sb)return;
   var r=await sb.from('ordenes_servicio').select('*').order('fecha',{ascending:false});
@@ -2086,10 +2161,11 @@ function oT(){
   gi('t-fecha').value=td();
   gi('t-estado').value='Recibido';
   gi('t-cliente').value='';gi('t-telefono').value='';gi('t-correo').value='';gi('t-documento').value='';
-  gi('t-tipo').value='PC de Escritorio';gi('t-marca').value='';gi('t-modelo').value='';gi('t-serie').value='';gi('t-pin').value='';
+  gi('t-tipo').value='PC de Escritorio';gi('t-marca').value='';gi('t-marca-otra').value='';gi('t-modelo').value='';gi('t-serie').value='';gi('t-pin').value='';
   gi('t-estadorecep').value='';gi('t-falla').value='';gi('t-accesorios').value='';gi('t-observaciones').value='';
   gi('t-trabajos').value='';gi('t-monto-presupuesto').value='';gi('t-formapago').value='Efectivo';gi('t-anticipo').value='';gi('t-fechaentrega').value='';
   popPresupuestoSelectT('');
+  actualizarModelosT();
   gi('mTaller').classList.add('open');
 }
 
@@ -2107,7 +2183,14 @@ function edT(id){
   gi('t-correo').value=r.cliente_correo||'';
   gi('t-documento').value=r.cliente_documento||'';
   gi('t-tipo').value=r.tipo_equipo||'PC de Escritorio';
-  gi('t-marca').value=r.marca||'';
+  var marcaConocida=r.marca&&MODELOS_POR_MARCA.hasOwnProperty(r.marca);
+  if(r.marca&&!marcaConocida){
+    gi('t-marca').value='Otra';
+    gi('t-marca-otra').value=r.marca;
+  } else {
+    gi('t-marca').value=r.marca||'';
+    gi('t-marca-otra').value='';
+  }
   gi('t-modelo').value=r.modelo||'';
   gi('t-serie').value=r.numero_serie||'';
   gi('t-pin').value=r.password_pin||'';
@@ -2121,6 +2204,7 @@ function edT(id){
   gi('t-anticipo').value=r.anticipo||'';
   gi('t-fechaentrega').value=r.fecha_entrega_estimada||'';
   popPresupuestoSelectT(r.presupuesto_id||'');
+  actualizarModelosT();
   gi('mTaller').classList.add('open');
 }
 
@@ -2138,7 +2222,7 @@ async function sT(){
     cliente_correo:gi('t-correo').value.trim()||null,
     cliente_documento:gi('t-documento').value.trim()||null,
     tipo_equipo:gi('t-tipo').value,
-    marca:gi('t-marca').value.trim()||null,
+    marca:(gi('t-marca').value==='Otra'?gi('t-marca-otra').value.trim():gi('t-marca').value)||null,
     modelo:gi('t-modelo').value.trim()||null,
     numero_serie:gi('t-serie').value.trim()||null,
     password_pin:gi('t-pin').value.trim()||null,
