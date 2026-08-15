@@ -207,6 +207,11 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
   table.tbl-cards .acts{flex-wrap:wrap;justify-content:flex-start;gap:6px}
   table.tbl-cards .acts .ib{flex:0 0 auto;width:32px;height:32px;padding:0;justify-content:center}
   table.tbl-cards .acts .btn{flex:0 0 auto;white-space:nowrap;padding:5px 10px!important;font-size:11px!important}
+  .tw>div[style*="overflow-x"]{overflow-x:visible!important}
+  table.tbl-cards{width:100%}
+  table.tbl-cards td{min-width:0;word-break:break-word}
+  table.tbl-cards td>span{min-width:0}
+  body,.content{overflow-x:hidden}
 }
 @media(max-width:960px) and (min-width:769px){
   .srow,.srow5{grid-template-columns:repeat(2,1fr)}
