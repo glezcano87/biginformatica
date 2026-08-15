@@ -197,15 +197,16 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
   .acts{flex-wrap:wrap;gap:8px}
   table.tbl-cards,table.tbl-cards thead,table.tbl-cards tbody,table.tbl-cards th,table.tbl-cards td,table.tbl-cards tr{display:block}
   table.tbl-cards thead{position:absolute;top:-9999px;left:-9999px}
-  table.tbl-cards tbody{display:flex;flex-direction:column;gap:10px}
-  table.tbl-cards tr{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
-  table.tbl-cards td{border:none;padding:6px 0;display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;text-align:right;white-space:normal;max-width:none!important}
+  table.tbl-cards tbody{display:flex;flex-direction:column;gap:8px}
+  table.tbl-cards tr{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+  table.tbl-cards td{border:none;padding:4px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;text-align:right;white-space:normal;max-width:none!important}
   table.tbl-cards td:not(:last-child){border-bottom:1px solid rgba(255,255,255,.05)}
-  table.tbl-cards td::before{content:attr(data-label);font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;text-align:left;flex-shrink:0}
-  table.tbl-cards td:last-child{flex-direction:column;align-items:stretch;padding-top:10px}
+  table.tbl-cards td::before{content:attr(data-label);font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;text-align:left;flex-shrink:0}
+  table.tbl-cards td:last-child{flex-direction:column;align-items:stretch;padding-top:8px}
   table.tbl-cards td:last-child::before{margin-bottom:6px}
-  table.tbl-cards .acts{justify-content:flex-start}
-  table.tbl-cards .acts .btn{flex:1;justify-content:center;min-width:calc(50% - 4px)}
+  table.tbl-cards .acts{flex-wrap:wrap;justify-content:flex-start;gap:6px}
+  table.tbl-cards .acts .ib{flex:0 0 auto;width:32px;height:32px;padding:0;justify-content:center}
+  table.tbl-cards .acts .btn{flex:0 0 auto;white-space:nowrap;padding:5px 10px!important;font-size:11px!important}
 }
 @media(max-width:960px) and (min-width:769px){
   .srow,.srow5{grid-template-columns:repeat(2,1fr)}
