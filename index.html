@@ -1944,9 +1944,21 @@ function verPresPrev(id){
   gi('presPreviewPanel').scrollIntoView({behavior:'smooth'});
 }
 
+// Espera a que las imágenes (ej: logo) terminen de cargar antes de imprimir/compartir,
+// para evitar que el PDF salga con el logo roto por una carrera con la red.
+function esperarImagenes(doc, cb){
+  var imgs = Array.prototype.slice.call(doc.querySelectorAll('img')).filter(function(im){ return !im.complete; });
+  if(!imgs.length){ cb(); return; }
+  var pendientes = imgs.length, hecho = false;
+  function marcar(){ pendientes--; if(pendientes<=0 && !hecho){ hecho=true; cb(); } }
+  imgs.forEach(function(im){ im.addEventListener('load', marcar); im.addEventListener('error', marcar); });
+  setTimeout(function(){ if(!hecho){ hecho=true; cb(); } }, 1500); // resguardo por si la red tarda demasiado
+}
+
 async function compartirPres(){
   var iframe=gi('presPreviewBody');
   var doc=iframe.contentDocument||iframe.contentWindow.document;
+  await new Promise(function(resolve){ esperarImagenes(doc, resolve); });
   var html=doc.documentElement.outerHTML;
   
   // Try Web Share API (works on mobile)
@@ -1975,27 +1987,13 @@ async function compartirPres(){
   }
 }
 
-// Espera a que las imágenes (ej: logo) terminen de cargar antes de imprimir,
-// para evitar que el PDF salga con el logo roto por una carrera con la red.
 function printIframeSafely(iframe, despues){
   var doc = iframe.contentDocument || iframe.contentWindow.document;
-  var imgs = Array.prototype.slice.call(doc.querySelectorAll('img')).filter(function(im){ return !im.complete; });
-  function doPrint(){
+  esperarImagenes(doc, function(){
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
     if(despues) despues();
-  }
-  if(!imgs.length){ doPrint(); return; }
-  var pendientes = imgs.length, hecho = false;
-  function marcar(){
-    pendientes--;
-    if(pendientes<=0 && !hecho){ hecho = true; doPrint(); }
-  }
-  imgs.forEach(function(im){
-    im.addEventListener('load', marcar);
-    im.addEventListener('error', marcar);
   });
-  setTimeout(function(){ if(!hecho){ hecho = true; doPrint(); } }, 1500); // resguardo por si la red tarda demasiado
 }
 
 function imprimirPresPreview(){
