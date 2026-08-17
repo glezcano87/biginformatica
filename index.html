@@ -1868,7 +1868,7 @@ function verPresPrev(id){
     '</tr>';
   }
 
-  var st='<style>@page{margin:0;size:A4}@media print{body{margin:1cm}}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}'+
+  var st='<style>@page{margin:0;size:A4}@media print{body{margin:1cm}}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}'+
     '.wrap{max-width:780px;margin:0 auto}'+
     '.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:4px solid #8DC63F}'+
     '.logo{height:68px;width:auto}'+
@@ -2366,7 +2366,7 @@ function verOrdenPrev(id){
   var anticipo=r.anticipo||0;
   var saldo=montoRef-anticipo;
 
-  var st='<style>@page{margin:0;size:A4}@media print{body{margin:1cm}}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}'+
+  var st='<style>@page{margin:0;size:A4}@media print{body{margin:1cm}}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}'+
     '.wrap{max-width:780px;margin:0 auto}'+
     '.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:4px solid #8DC63F}'+
     '.hdr-r{text-align:right}'+
@@ -3279,7 +3279,7 @@ function genReporteDiario(meses, tipo){
   var util=totV-totC;
 
   var css='<style>'+
-    '*{box-sizing:border-box;margin:0;padding:0}'+
+    '*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}'+
     'body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a2e;background:#fff}'+
     '.wrap{max-width:900px;margin:0 auto;padding:20px}'+
     '.hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 0 12px;border-bottom:3px solid '+VERDE+'}'+
@@ -3415,7 +3415,7 @@ function rpStyles(){
       'tr{page-break-inside:avoid}'+
       '.rp-kpis{page-break-inside:avoid}'+
     '}'+
-    '*{box-sizing:border-box;margin:0;padding:0}'+
+    '*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}'+
     'body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a2e;background:#fff}'+
     '.rp{max-width:900px;margin:0 auto}'+
 
@@ -3923,7 +3923,7 @@ function verPrevGPres(){
   var totalVenta=items.reduce(function(s,it){return s+gpPrecioVenta(it);},0);
 
   var st='<style>'+
-    '@page{margin:0;size:A4}'+'@media print{body{margin:1cm}}'+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    '@page{margin:0;size:A4}'+'@media print{body{margin:1cm}}'+    '*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}'+
     'body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}'+
     '.wrap{max-width:780px;margin:0 auto}'+
     '.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:4px solid #8DC63F;background:#fff}'+
@@ -4897,7 +4897,7 @@ function verPrevRecibo(){
 
   var html='<style>'+
     '@page{margin:0;size:A4}@media print{body{margin:1.5cm}}'+
-    '*{box-sizing:border-box;margin:0;padding:0}'+
+    '*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}'+
     'body{font-family:Arial,sans-serif;font-size:13px;color:#222;background:#fff}'+
     '.wrap{max-width:780px;margin:0 auto;padding:0}'+
     '.hdr{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:3px solid '+VERDE+'}'+
