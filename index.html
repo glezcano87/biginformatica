@@ -1977,17 +1977,8 @@ async function compartirPres(){
 
 function imprimirPresPreview(){
   var iframe=gi('presPreviewBody');
-  var doc=iframe.contentDocument||iframe.contentWindow.document;
-  var html=doc.documentElement.outerHTML;
-  var blob=new Blob([html],{type:'text/html'});
-  var url=URL.createObjectURL(blob);
-  var v=window.open(url,'_blank');
-  if(v){
-    v.onload=function(){ setTimeout(function(){ v.print(); URL.revokeObjectURL(url); },300); };
-  } else {
-    var a=document.createElement('a'); a.href=url; a.target='_blank'; a.click();
-    setTimeout(function(){ URL.revokeObjectURL(url); },1000);
-  }
+  iframe.contentWindow.focus();
+  iframe.contentWindow.print();
 }
 
 async function rechazarPres(id){
@@ -2457,17 +2448,8 @@ function verOrdenPrev(id){
 
 function imprimirOrdenPreview(){
   var iframe=gi('ordenPreviewBody');
-  var doc=iframe.contentDocument||iframe.contentWindow.document;
-  var html=doc.documentElement.outerHTML;
-  var blob=new Blob([html],{type:'text/html'});
-  var url=URL.createObjectURL(blob);
-  var v=window.open(url,'_blank');
-  if(v){
-    v.onload=function(){ setTimeout(function(){ v.print(); URL.revokeObjectURL(url); },300); };
-  } else {
-    var a=document.createElement('a'); a.href=url; a.target='_blank'; a.click();
-    setTimeout(function(){ URL.revokeObjectURL(url); },1000);
-  }
+  iframe.contentWindow.focus();
+  iframe.contentWindow.print();
 }
 // ==================== FIN MODULO TALLER TECNICO ====================
 
@@ -3246,7 +3228,6 @@ function popRpDiario(){
 function imprimirReporteNuevoTab(){
   var body = gi('rpPreviewBody');
   if(!body) return;
-  // Get inner content without scroll wrapper
   var inner = body.querySelector('.rp-print-area');
   var content = inner ? inner.innerHTML : body.innerHTML;
   var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
@@ -3254,11 +3235,16 @@ function imprimirReporteNuevoTab(){
     'table{width:100%;border-collapse:collapse}'+
     '.rp{padding:20px}'+
     '</style></head><body>'+content+'</body></html>';
-  var blob = new Blob([html], {type:'text/html'});
-  var url = URL.createObjectURL(blob);
-  var v = window.open(url, '_blank');
-  if(v){ v.onload=function(){ setTimeout(function(){ v.print(); URL.revokeObjectURL(url); }, 500); }; }
-  else { toast('Activá popups para imprimir','e'); }
+  var f = document.createElement('iframe');
+  f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='0';f.style.height='0';f.style.border='0';
+  document.body.appendChild(f);
+  var fdoc = f.contentDocument || f.contentWindow.document;
+  fdoc.open();fdoc.write(html);fdoc.close();
+  setTimeout(function(){
+    f.contentWindow.focus();
+    f.contentWindow.print();
+    setTimeout(function(){ if(f.parentNode) document.body.removeChild(f); }, 1000);
+  }, 200);
 }
 
 function genReporteDiario(meses, tipo){
@@ -4057,23 +4043,8 @@ async function guardarPresDesdeGP(){
 
 function imprimirPresupuesto(){
   var iframe = gi('gpPreviewBody');
-  var doc = iframe.contentDocument || iframe.contentWindow.document;
-  var html = doc.documentElement.outerHTML;
-  var blob = new Blob([html], {type:'text/html'});
-  var url = URL.createObjectURL(blob);
-  var v = window.open(url, '_blank');
-  if(v){
-    v.onload = function(){ 
-      setTimeout(function(){ v.print(); URL.revokeObjectURL(url); }, 300);
-    };
-  } else {
-    // Fallback si el navegador bloquea popups
-    var a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.click();
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-  }
+  iframe.contentWindow.focus();
+  iframe.contentWindow.print();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -4988,23 +4959,12 @@ function verPrevRecibo(){
 
 function imprimirRecibo(){
   var ifr = gi('recPreviewBody');
-  var doc = ifr.contentDocument||ifr.contentWindow.document;
-  var html = doc.documentElement.outerHTML;
-  var blob = new Blob([html],{type:'text/html'});
-  var url = URL.createObjectURL(blob);
-  var v = window.open(url,'_blank');
-  if(v){
-    v.onload=function(){
-      setTimeout(function(){
-        v.print();
-        // Auto-increment counter after printing
-        recCounter++;
-        localStorage.setItem('bi_rec_counter', recCounter);
-        gi('rec-num').value='REC-'+String(recCounter+1).padStart(6,'0');
-        URL.revokeObjectURL(url);
-      },400);
-    };
-  }
+  ifr.contentWindow.focus();
+  ifr.contentWindow.print();
+  // Auto-increment counter after imprimir
+  recCounter++;
+  localStorage.setItem('bi_rec_counter', recCounter);
+  gi('rec-num').value='REC-'+String(recCounter+1).padStart(6,'0');
 }
 
 function toggleSidebar(){
