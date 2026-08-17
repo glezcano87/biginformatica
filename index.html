@@ -1975,10 +1975,32 @@ async function compartirPres(){
   }
 }
 
+// Espera a que las imágenes (ej: logo) terminen de cargar antes de imprimir,
+// para evitar que el PDF salga con el logo roto por una carrera con la red.
+function printIframeSafely(iframe, despues){
+  var doc = iframe.contentDocument || iframe.contentWindow.document;
+  var imgs = Array.prototype.slice.call(doc.querySelectorAll('img')).filter(function(im){ return !im.complete; });
+  function doPrint(){
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    if(despues) despues();
+  }
+  if(!imgs.length){ doPrint(); return; }
+  var pendientes = imgs.length, hecho = false;
+  function marcar(){
+    pendientes--;
+    if(pendientes<=0 && !hecho){ hecho = true; doPrint(); }
+  }
+  imgs.forEach(function(im){
+    im.addEventListener('load', marcar);
+    im.addEventListener('error', marcar);
+  });
+  setTimeout(function(){ if(!hecho){ hecho = true; doPrint(); } }, 1500); // resguardo por si la red tarda demasiado
+}
+
 function imprimirPresPreview(){
   var iframe=gi('presPreviewBody');
-  iframe.contentWindow.focus();
-  iframe.contentWindow.print();
+  printIframeSafely(iframe);
 }
 
 async function rechazarPres(id){
@@ -2448,8 +2470,7 @@ function verOrdenPrev(id){
 
 function imprimirOrdenPreview(){
   var iframe=gi('ordenPreviewBody');
-  iframe.contentWindow.focus();
-  iframe.contentWindow.print();
+  printIframeSafely(iframe);
 }
 // ==================== FIN MODULO TALLER TECNICO ====================
 
@@ -3241,9 +3262,9 @@ function imprimirReporteNuevoTab(){
   var fdoc = f.contentDocument || f.contentWindow.document;
   fdoc.open();fdoc.write(html);fdoc.close();
   setTimeout(function(){
-    f.contentWindow.focus();
-    f.contentWindow.print();
-    setTimeout(function(){ if(f.parentNode) document.body.removeChild(f); }, 1000);
+    printIframeSafely(f, function(){
+      setTimeout(function(){ if(f.parentNode) document.body.removeChild(f); }, 1000);
+    });
   }, 200);
 }
 
@@ -4043,8 +4064,7 @@ async function guardarPresDesdeGP(){
 
 function imprimirPresupuesto(){
   var iframe = gi('gpPreviewBody');
-  iframe.contentWindow.focus();
-  iframe.contentWindow.print();
+  printIframeSafely(iframe);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -4959,12 +4979,11 @@ function verPrevRecibo(){
 
 function imprimirRecibo(){
   var ifr = gi('recPreviewBody');
-  ifr.contentWindow.focus();
-  ifr.contentWindow.print();
-  // Auto-increment counter after imprimir
-  recCounter++;
-  localStorage.setItem('bi_rec_counter', recCounter);
-  gi('rec-num').value='REC-'+String(recCounter+1).padStart(6,'0');
+  printIframeSafely(ifr, function(){
+    recCounter++;
+    localStorage.setItem('bi_rec_counter', recCounter);
+    gi('rec-num').value='REC-'+String(recCounter+1).padStart(6,'0');
+  });
 }
 
 function toggleSidebar(){
