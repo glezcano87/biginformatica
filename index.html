@@ -1435,7 +1435,18 @@ CREATE TABLE ordenes_servicio (
   created_at timestamptz DEFAULT now()
 );
 ALTER TABLE ordenes_servicio ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "all" ON ordenes_servicio FOR ALL USING (true) WITH CHECK (true);</pre>
+CREATE POLICY "all" ON ordenes_servicio FOR ALL USING (true) WITH CHECK (true);
+
+-- COTIZACION (compartida entre todos los dispositivos)
+CREATE TABLE configuracion (
+  id int PRIMARY KEY DEFAULT 1,
+  cotizacion_usd numeric NOT NULL DEFAULT 7800,
+  updated_at timestamptz DEFAULT now(),
+  CONSTRAINT single_row CHECK (id = 1)
+);
+INSERT INTO configuracion (id, cotizacion_usd) VALUES (1, 7800);
+ALTER TABLE configuracion ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "all" ON configuracion FOR ALL USING (true) WITH CHECK (true);</pre>
       </div>
     </div>
   </div>
@@ -1620,7 +1631,7 @@ function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Cone
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
 function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='usuarios'){loadUsuarios();}if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='recibo'){initRecibo();}if(p==='gpres'){initGPres();}if(p==='taller'){rT();}closeSidebar()}
-async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT()]);popFjSel();popMgSel();popCtMesSel();rDash()}
+async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lCotiz()]);popFjSel();popMgSel();popCtMesSel();rDash()}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
 async function lP(){if(!sb)return;var r=await sb.from('presupuestos').select('*').order('fecha',{ascending:false});if(r.error){toast('Error presupuestos: '+r.error.message,'e');return}PD=r.data||[];popMF('fmP',PD);usPS();rPres()}
@@ -4353,7 +4364,21 @@ function initCotiz(){
   if(cotizFechaStr) gi('cotizFecha').textContent = 'Actualizado: '+cotizFechaStr;
 }
 
-function editCotiz(){
+async function lCotiz(){
+  if(!sb) return;
+  var r = await sb.from('configuracion').select('*').eq('id',1).maybeSingle();
+  if(r.error||!r.data) return;
+  cotizacion = parseFloat(r.data.cotizacion_usd)||cotizacion;
+  localStorage.setItem('bi_cotiz', cotizacion);
+  if(r.data.updated_at){
+    var d = new Date(r.data.updated_at);
+    cotizFechaStr = d.toLocaleDateString('es-PY')+' '+d.toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'});
+    localStorage.setItem('bi_cotiz_fecha', cotizFechaStr);
+  }
+  initCotiz();
+}
+
+async function editCotiz(){
   var nueva = prompt('Cotizaci\u00f3n del d\u00eda (Gs. por 1 USD):', cotizacion);
   if(!nueva||isNaN(parseFloat(nueva))) return;
   cotizacion = parseFloat(nueva);
@@ -4363,7 +4388,13 @@ function editCotiz(){
   localStorage.setItem('bi_cotiz_fecha', ahora);
   gi('cotizValor').textContent = cotizacion.toLocaleString('es-PY');
   gi('cotizFecha').textContent = 'Actualizado: '+ahora;
-  toast('Cotizaci\u00f3n: \u20b2 '+cotizacion.toLocaleString('es-PY')+' / USD \u2713','s');
+  if(sb){
+    var r = await sb.from('configuracion').upsert({id:1, cotizacion_usd:cotizacion, updated_at:new Date().toISOString()});
+    if(r.error){ toast('Se actualiz\u00f3 en este dispositivo, pero no se pudo sincronizar: '+r.error.message,'e'); return; }
+    toast('Cotizaci\u00f3n: \u20b2 '+cotizacion.toLocaleString('es-PY')+' / USD \u2713 (sincronizada)','s');
+  } else {
+    toast('Cotizaci\u00f3n: \u20b2 '+cotizacion.toLocaleString('es-PY')+' / USD \u2713','s');
+  }
 }
 
 function setMon(prefix, moneda, btn){
