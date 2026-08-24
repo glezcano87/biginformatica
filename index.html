@@ -1987,13 +1987,30 @@ async function compartirPres(){
   }
 }
 
-function printIframeSafely(iframe, despues){
-  var doc = iframe.contentDocument || iframe.contentWindow.document;
-  esperarImagenes(doc, function(){
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
+// Abre una ventana nueva REAL (aislada de la app) y manda a imprimir ahí.
+// iOS Safari no aísla bien la impresión de un iframe: termina imprimiendo la
+// página principal de la app (con su propio CSS de impresión), no el
+// contenido del iframe. Al abrir una ventana nueva de verdad, con su propio
+// documento (sin ninguna referencia al CSS/JS de la app), se evita ese lío.
+function abrirEImprimirHtml(html, despues){
+  var w2 = window.open('', '_blank');
+  if(!w2){
+    toast('Activ\u00e1 las ventanas emergentes (popups) en el navegador para poder imprimir','e');
+    return;
+  }
+  w2.document.open();
+  w2.document.write(html);
+  w2.document.close();
+  esperarImagenes(w2.document, function(){
+    w2.focus();
+    w2.print();
     if(despues) despues();
   });
+}
+
+function printIframeSafely(iframe, despues){
+  var doc = iframe.contentDocument || iframe.contentWindow.document;
+  abrirEImprimirHtml(doc.documentElement.outerHTML, despues);
 }
 
 function imprimirPresPreview(){
@@ -3254,16 +3271,7 @@ function imprimirReporteNuevoTab(){
     'table{width:100%;border-collapse:collapse}'+
     '.rp{padding:20px}'+
     '</style></head><body>'+content+'</body></html>';
-  var f = document.createElement('iframe');
-  f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='0';f.style.height='0';f.style.border='0';
-  document.body.appendChild(f);
-  var fdoc = f.contentDocument || f.contentWindow.document;
-  fdoc.open();fdoc.write(html);fdoc.close();
-  setTimeout(function(){
-    printIframeSafely(f, function(){
-      setTimeout(function(){ if(f.parentNode) document.body.removeChild(f); }, 1000);
-    });
-  }, 200);
+  abrirEImprimirHtml(html);
 }
 
 function genReporteDiario(meses, tipo){
