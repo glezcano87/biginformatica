@@ -348,6 +348,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
       <span class="nav-lbl">Registros</span>
       <a class="nav-a" onclick="nav('ventas',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 2.5 2 2.5-2 3.5 2z"/></svg>Libro de Ventas</a>
       <a class="nav-a" onclick="nav('compras',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>Libro de Compras</a>
+      <a class="nav-a" onclick="nav('fe',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>Facturas Electr&#243;nicas</a>
     </div>
     <div class="nav-s">
       <span class="nav-lbl">An&#225;lisis</span>
@@ -492,6 +493,32 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         <select class="fs" id="ftV" onchange="rV()"><option value="">Todo tipo</option><option>Servicio</option><option>Producto</option></select>
       </div>
     </div><div style="overflow-x:auto"><table class="tbl-cards"><thead><tr><th>Fecha</th><th>Presupuesto</th><th>Factura</th><th>Cliente</th><th>Tipo</th><th>Descripci&#243;n</th><th>IVA</th><th class="tr">Monto</th><th></th></tr></thead><tbody id="tbV"></tbody></table></div></div>
+  </div>
+</div>
+
+<!-- FACTURAS ELECTRONICAS -->
+<div class="page" id="page-fe">
+  <div class="topbar"><div><h1>Facturas Electr&#243;nicas</h1><div class="meta" id="feMeta">&#8212;</div></div>
+  <div style="display:flex;gap:8px"><button class="btn btn-g" onclick="feExport()">Exportar</button><button class="btn btn-p" onclick="gi('feFile').click()"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Cargar KuDE</button>
+  <input type="file" id="feFile" accept="application/pdf,.pdf" multiple style="display:none" onchange="feFiles(this)"></div></div>
+  <div class="content">
+    <div class="fe-drop" id="feDrop" onclick="gi('feFile').click()">
+      <strong>Arrastr&#225; aqu&#237; los PDF de tus facturas de e-Kuatia&#39;i</strong>
+      <span>o toc&#225; para elegirlos. El sistema lee el CDC, el cliente y los montos autom&#225;ticamente.</span>
+    </div>
+    <div class="srow">
+      <div class="sc"><div class="lbl">Facturado</div><div class="val g" id="fe0">&#8370; 0</div></div>
+      <div class="sc"><div class="lbl">IVA d&#233;bito</div><div class="val b" id="fe1">&#8370; 0</div></div>
+      <div class="sc"><div class="lbl">Documentos</div><div class="val b" id="fe2">0</div></div>
+      <div class="sc"><div class="lbl">Sin venta vinculada</div><div class="val y" id="fe3">0</div></div>
+    </div>
+    <div class="tw"><div class="ttb">
+      <div class="sb"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="qFE" placeholder="Buscar cliente, RUC, n&#250;mero o CDC&#8230;" oninput="rFE()"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select class="fs" id="fmFE" onchange="rFE()"><option value="">Todos los meses</option></select>
+        <select class="fs" id="feEst" onchange="rFE()"><option value="">Todos los estados</option><option>Aprobado</option><option>Cancelado</option><option value="sinventa">Sin venta vinculada</option></select>
+      </div>
+    </div><div style="overflow-x:auto"><table class="tbl-cards"><thead><tr><th>Fecha</th><th>N&#250;mero</th><th>Cliente</th><th>RUC</th><th>Estado</th><th>Venta</th><th class="tr">IVA</th><th class="tr">Total</th><th></th></tr></thead><tbody id="tbFE"></tbody></table></div></div>
   </div>
 </div>
 
@@ -1621,6 +1648,34 @@ CREATE POLICY "all" ON configuracion FOR ALL USING (true) WITH CHECK (true);</pr
   </div>
 </div>
 
+<!-- MODAL FACTURA ELECTRONICA -->
+<div class="ov" id="mFE"><div class="modal" style="max-width:640px">
+  <div class="mh"><h2 id="mFEt">Registrar factura electr&#243;nica</h2><button class="ib" onclick="feClose()">&#10005;</button></div>
+  <div class="mb">
+    <div id="feAlert"></div>
+    <div class="fg">
+      <div class="fgg full"><label>CDC</label><input type="text" id="fe-cdc" maxlength="44" inputmode="numeric" oninput="feCheckCdc()"><div id="feCdcSt" style="font-size:11.5px"></div></div>
+      <div class="fgg"><label>Tipo de documento</label><input type="text" id="fe-tipo" readonly></div>
+      <div class="fgg"><label>N&#250;mero</label><input type="text" id="fe-numero" placeholder="001-001-0000001"></div>
+      <div class="fgg"><label>Fecha de emisi&#243;n *</label><input type="date" id="fe-fecha"></div>
+      <div class="fgg"><label>Timbrado</label><input type="text" id="fe-timbrado"></div>
+      <div class="fgg full"><label>Cliente (raz&#243;n social)</label><input type="text" id="fe-razon"></div>
+      <div class="fgg"><label>RUC / CI</label><input type="text" id="fe-ruc"></div>
+      <div class="fgg"><label>Condici&#243;n de venta</label><select id="fe-cond"><option>Contado</option><option>Cr&#233;dito</option></select></div>
+      <div class="fgg full"><label>Correo del cliente</label><input type="text" id="fe-email"></div>
+      <div class="fgg full"><label>Detalle</label><div id="feItems" class="fe-items"></div></div>
+      <div class="fgg"><label>Total (&#8370;) *</label><input type="number" id="fe-total" min="0"></div>
+      <div class="fgg"><label>IVA total (&#8370;)</label><input type="number" id="fe-iva" min="0"></div>
+      <div class="fgg"><label>Estado</label><select id="fe-estado"><option>Aprobado</option><option>Cancelado</option></select></div>
+      <div class="fgg"><label>Vincular con venta</label><select id="fe-venta" onchange="feVentaSel()"></select></div>
+      <div class="fgg" id="feTipoVentaWrap"><label>Tipo de la venta nueva</label><select id="fe-tventa"><option>Servicio</option><option>Producto</option></select></div>
+      <div class="fgg full"><label>Notas</label><textarea id="fe-notas" style="min-height:50px"></textarea></div>
+    </div>
+    <div id="fePdfSt" style="font-size:12px;color:var(--muted);margin-top:12px"></div>
+  </div>
+  <div class="mf"><span id="feQueue" style="margin-right:auto;font-size:12px;color:var(--muted);align-self:center"></span><button class="btn btn-g" onclick="feClose()">Cancelar</button><button class="btn btn-p" id="bsFE" onclick="feSave()">Guardar factura</button></div>
+</div></div>
+
 <div class="tc" id="toasts"></div>
 
 <script>
@@ -1634,7 +1689,7 @@ function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Cone
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
 function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='usuarios'){loadUsuarios();}if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='recibo'){initRecibo();}if(p==='gpres'){initGPres();}if(p==='taller'){rT();}closeSidebar()}
-async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lCotiz()]);popFjSel();popMgSel();popCtMesSel();rDash()}
+async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lCotiz(),(typeof lFE==='function'?lFE():null)]);popFjSel();popMgSel();popCtMesSel();rDash()}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
 async function lP(){if(!sb)return;var r=await sb.from('presupuestos').select('*').order('fecha',{ascending:false});if(r.error){toast('Error presupuestos: '+r.error.message,'e');return}PD=r.data||[];popMF('fmP',PD);usPS();rPres()}
@@ -5030,6 +5085,355 @@ function closeSidebar(){
   }
   tryInit(20);
 })();
+</script>
+<style>
+.fe-drop{border:1.5px dashed var(--border);border-radius:12px;padding:18px 20px;margin-bottom:20px;cursor:pointer;display:flex;flex-direction:column;gap:4px;transition:border-color .15s,background .15s}
+.fe-drop strong{font-size:13.5px;font-weight:600}
+.fe-drop span{font-size:12px;color:var(--muted)}
+.fe-drop:hover,.fe-drop.over{border-color:var(--accent2);background:rgba(37,99,235,.06)}
+.fe-items{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12.5px}
+.fe-items div{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
+.fe-items div+div{border-top:1px solid rgba(255,255,255,.05)}
+.fe-alert{border-radius:8px;padding:10px 12px;font-size:12.5px;margin-bottom:14px;line-height:1.4}
+.fe-alert.w{background:rgba(245,158,11,.12);color:var(--yellow)}
+.fe-alert.e{background:rgba(239,68,68,.12);color:var(--red)}
+.fe-cdc{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--muted);word-break:break-all}
+</style>
+<script>
+// ══════════════ FACTURAS ELECTRÓNICAS (Fase 1: registro de KuDE de e-Kuatia'i) ══════════════
+var FED=[],feQ=[],feCur=null,feEdit=null,FE_RUC_EMISOR='4211172';
+var FE_TIPOS={'01':'Factura','04':'Autofactura','05':'Nota de Crédito','06':'Nota de Débito','07':'Nota de Remisión'};
+var PDFJS_URL='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+
+function feEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function feNum(s){return parseInt(String(s||'0').replace(/\./g,'').replace(/,\d+$/,''),10)||0}
+function feDig(s){return String(s||'').replace(/\D/g,'')}
+function feCdcDv(base){var k=2,t=0;for(var i=base.length-1;i>=0;i--){t+=parseInt(base[i],10)*k;k=k===11?2:k+1}var r=t%11;return r>1?11-r:0}
+function feParseCdc(cdc){
+  if(!/^\d{44}$/.test(cdc))return null;
+  return{tipo:cdc.slice(0,2),ruc:String(parseInt(cdc.slice(2,10),10)),numero:cdc.slice(11,14)+'-'+cdc.slice(14,17)+'-'+cdc.slice(17,24),
+    fecha:cdc.slice(25,29)+'-'+cdc.slice(29,31)+'-'+cdc.slice(31,33),valido:feCdcDv(cdc.slice(0,43))===parseInt(cdc[43],10)};
+}
+function feSigno(r){return r.tipo_documento==='05'?-1:1}
+
+async function lFE(){
+  if(!sb)return;
+  var r=await sb.from('facturas_electronicas').select('*').order('fecha_emision',{ascending:false}).order('numero',{ascending:false});
+  if(r.error){if(!/does not exist|schema cache/i.test(r.error.message))toast('Error facturas: '+r.error.message,'e');return}
+  FED=r.data||[];
+  popMF('fmFE',FED.map(function(x){return{fecha:x.fecha_emision}}));
+  rFE();
+}
+
+function rFE(){
+  var q=gi('qFE').value.toLowerCase(),m=gi('fmFE').value,est=gi('feEst').value;
+  var rows=FED.filter(function(r){
+    var txt=[r.razon_social,r.ruc_receptor,r.numero,r.cdc].join(' ').toLowerCase();
+    return (!q||txt.includes(q))&&(!m||(r.fecha_emision||'').startsWith(m))&&
+      (!est||(est==='sinventa'?(!r.venta_id&&r.estado==='Aprobado'&&r.tipo_documento==='01'):r.estado===est));
+  });
+  var ok=rows.filter(function(r){return r.estado==='Aprobado'});
+  var tot=ok.reduce(function(s,r){return s+feSigno(r)*(r.total||0)},0);
+  var iva=ok.reduce(function(s,r){return s+feSigno(r)*(r.total_iva||0)},0);
+  gi('fe0').textContent='₲ '+fmt(tot);
+  gi('fe1').textContent='₲ '+fmt(iva);
+  gi('fe2').textContent=rows.length;
+  gi('fe3').textContent=ok.filter(function(r){return !r.venta_id&&r.tipo_documento==='01'}).length;
+  gi('feMeta').textContent=rows.length+' documentos · ₲ '+fmt(tot);
+  var tb=gi('tbFE');
+  if(!rows.length){tb.innerHTML=er(9,FED.length?'No hay documentos en este filtro.':'Todavía no cargaste facturas. Subí el PDF de una factura de e-Kuatia\'i para empezar.');return}
+  tb.innerHTML=rows.map(function(r){
+    var v=r.venta_id?VD.find(function(x){return x.id===r.venta_id}):null;
+    var tipo=r.tipo_documento!=='01'?'<span class="bx bm" style="margin-left:6px">'+feEsc(FE_TIPOS[r.tipo_documento]||r.tipo_documento)+'</span>':'';
+    var estB=r.estado==='Aprobado'?'<span class="bx bg">Aprobado</span>':'<span class="bx br">Cancelado</span>';
+    var venB=r.venta_id?'<span class="bx bb">'+(v?'Vinculada':'Vinculada')+'</span>':(r.tipo_documento==='01'&&r.estado==='Aprobado'?'<span class="bx by">Sin vincular</span>':'<span class="bx bm">—</span>');
+    var neg=feSigno(r)<0?'−':'';
+    return '<tr>'+
+      '<td data-label="Fecha" class="mn">'+fd(r.fecha_emision)+'</td>'+
+      '<td data-label="Número"><div class="mn" style="font-weight:600">'+feEsc(r.numero)+tipo+'</div><div class="fe-cdc">'+feEsc(r.cdc)+'</div></td>'+
+      '<td data-label="Cliente" style="font-weight:500">'+feEsc(r.razon_social||'—')+'</td>'+
+      '<td data-label="RUC" style="color:var(--muted);font-size:12px;white-space:nowrap">'+feEsc(r.ruc_receptor||'')+'</td>'+
+      '<td data-label="Estado">'+estB+'</td>'+
+      '<td data-label="Venta">'+venB+'</td>'+
+      '<td data-label="IVA" class="mn tr" style="color:var(--muted);white-space:nowrap">₲ '+neg+fmt(r.total_iva)+'</td>'+
+      '<td data-label="Total" class="mn tr" style="white-space:nowrap;font-weight:600;color:'+(r.estado==='Aprobado'?'var(--green)':'var(--muted)')+(r.estado!=='Aprobado'?';text-decoration:line-through':'')+'">₲ '+neg+fmt(r.total)+'</td>'+
+      '<td data-label="Acciones"><div class="acts">'+
+        (r.pdf_path?'<button class="ib" data-fe="pdf" data-id="'+r.id+'" title="Ver KuDE"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>':'')+
+        '<button class="ib" data-fe="sifen" data-id="'+r.id+'" title="Consultar en SIFEN (copia el CDC)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></button>'+
+        '<button class="ib" data-fe="edit" data-id="'+r.id+'" title="Editar">'+ie()+'</button>'+
+        '<button class="ib d" data-fe="del" data-id="'+r.id+'" title="Eliminar">'+it()+'</button>'+
+      '</div></td></tr>';
+  }).join('');
+}
+
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-fe]');if(!b)return;
+  var id=b.getAttribute('data-id'),a=b.getAttribute('data-fe');
+  if(a==='pdf')feVerPdf(id);else if(a==='sifen')feSifen(id);else if(a==='edit')feOpenEdit(id);else if(a==='del')feDel(id);
+});
+
+// ── Arrastrar y soltar ──
+(function(){
+  var d=gi('feDrop');if(!d)return;
+  ['dragenter','dragover'].forEach(function(ev){d.addEventListener(ev,function(e){e.preventDefault();d.classList.add('over')})});
+  ['dragleave','drop'].forEach(function(ev){d.addEventListener(ev,function(e){e.preventDefault();d.classList.remove('over')})});
+  d.addEventListener('drop',function(e){feQueueFiles(e.dataTransfer.files)});
+})();
+
+function feFiles(inp){feQueueFiles(inp.files);inp.value=''}
+function feQueueFiles(files){
+  if(!sb||!currentUser){toast('Iniciá sesión primero','e');return}
+  var arr=[].slice.call(files||[]).filter(function(f){return /pdf$/i.test(f.type)||/\.pdf$/i.test(f.name)});
+  if(!arr.length){toast('Elegí archivos PDF','e');return}
+  feQ=feQ.concat(arr);
+  if(!gi('mFE').classList.contains('open'))feNext();
+}
+
+var pdfjsLoading=null;
+function feLoadPdfJs(){
+  if(window.pdfjsLib)return Promise.resolve();
+  if(pdfjsLoading)return pdfjsLoading;
+  pdfjsLoading=new Promise(function(res,rej){
+    var s=document.createElement('script');s.src=PDFJS_URL+'pdf.min.js';
+    s.onload=function(){window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_URL+'pdf.worker.min.js';res()};
+    s.onerror=function(){pdfjsLoading=null;rej(new Error('No se pudo cargar el lector de PDF'))};
+    document.head.appendChild(s);
+  });
+  return pdfjsLoading;
+}
+
+async function fePdfText(file){
+  await feLoadPdfJs();
+  var doc=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,out='';
+  for(var p=1;p<=doc.numPages;p++){
+    var tc=await (await doc.getPage(p)).getTextContent(),lines={};
+    tc.items.forEach(function(i){var y=Math.round(i.transform[5]);(lines[y]=lines[y]||[]).push(i)});
+    Object.keys(lines).sort(function(a,b){return b-a}).forEach(function(y){
+      out+=lines[y].sort(function(a,b){return a.transform[4]-b.transform[4]}).map(function(i){return i.str}).join(' ').replace(/\s+/g,' ').trim()+'\n';
+    });
+  }
+  return out;
+}
+
+function feParseKude(txt){
+  var o={items:[]},m,lines=txt.split('\n').map(function(l){return l.trim()}).filter(Boolean);
+  function g(re){var x=txt.match(re);return x?x[1].trim():''}
+  o.cdc=g(/CDC:?\s*([\d\s]{44,60})/).replace(/\s/g,'').slice(0,44);
+  o.timbrado=g(/TIMBRADO\s*N[°º]?\s*(\d+)/i);
+  o.numero=g(/(\d{3}-\d{3}-\d{7})/);
+  var f=g(/Fecha de emisi[oó]n:\s*(\d{2}\/\d{2}\/\d{4})/i);if(f){var p=f.split('/');o.fecha=p[2]+'-'+p[1]+'-'+p[0]}
+  o.ruc_receptor=g(/RUC\/Documento de Identidad N[°º]?:\s*([\w.-]+)/i);
+  o.razon_social=g(/Nombre o Raz[oó]n Social:\s*(.+)/i);
+  o.email=g(/Correo Electr[oó]nico:\s*(\S+@\S+)/i);
+  o.tipo_transaccion=g(/Tipo de transacci[oó]n:\s*(.+)/i);
+  o.total=feNum(g(/TOTAL DE LA OPERACI[OÓ]N:?\s*([\d.]+)/i));
+  if((m=txt.match(/LIQUIDACI[OÓ]N IVA:?\s*\(5%\)\s*([\d.]+)\s*\(10%\)\s*([\d.]+)\s*TOTAL IVA:?\s*([\d.]+)/i))){o.iva5=feNum(m[1]);o.iva10=feNum(m[2]);o.total_iva=feNum(m[3])}
+  if((m=txt.match(/SUBTOTAL:?\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/i))){o.exentas=feNum(m[2]);o.gravado5=feNum(m[3]);o.gravado10=feNum(m[4])}
+  var inItems=false,numRe=/^\d[\d.]*(,\d+)?$/;
+  lines.forEach(function(l){
+    if(/^SUBTOTAL/i.test(l)){inItems=false;return}
+    if(/IMPUESTO\)/i.test(l)){inItems=true;return}
+    if(!inItems)return;
+    var t=l.split(/\s+/);if(t.length<7)return;
+    var tail=t.slice(-5);if(!tail.every(function(x){return numRe.test(x)}))return;
+    var head=t.slice(0,-5),code='';
+    if(head.length>2&&numRe.test(head[0])&&numRe.test(head[1]))code=head.shift();
+    else if(!numRe.test(head[0]))code=head.shift();
+    var qty=head.shift();
+    o.items.push({codigo:code,cantidad:parseFloat(qty.replace(/\./g,'').replace(',','.')),descripcion:head.join(' '),
+      precio:feNum(tail[0]),descuento:feNum(tail[1]),exentas:feNum(tail[2]),g5:feNum(tail[3]),g10:feNum(tail[4])});
+  });
+  var c=feParseCdc(o.cdc);
+  o.tipo_documento=c?c.tipo:'01';
+  if(c){if(!o.numero)o.numero=c.numero;if(!o.fecha)o.fecha=c.fecha}
+  return o;
+}
+
+async function feNext(){
+  if(!feQ.length){feCur=null;return}
+  var file=feQ.shift();
+  try{
+    var data=feParseKude(await fePdfText(file));
+    if(!data.cdc){toast(file.name+': no se encontró el CDC. ¿Es un KuDE de e-Kuatia\'i?','e');return feNext()}
+    var dup=FED.find(function(x){return x.cdc===data.cdc});
+    if(dup){toast('La factura '+dup.numero+' ya estaba registrada','e');return feNext()}
+    feCur={file:file,data:data};feEdit=null;
+    feFill(data);
+    gi('mFEt').textContent='Registrar '+(FE_TIPOS[data.tipo_documento]||'documento').toLowerCase();
+    gi('fePdfSt').textContent='Archivo: '+file.name+' (se guardará una copia del PDF)';
+    gi('feQueue').textContent=feQ.length?'Quedan '+feQ.length+' archivo(s)':'';
+    gi('mFE').classList.add('open');
+  }catch(err){toast(file.name+': '+err.message,'e');feNext()}
+}
+
+function feFill(d){
+  gi('fe-cdc').value=d.cdc||'';
+  gi('fe-numero').value=d.numero||'';
+  gi('fe-fecha').value=d.fecha||'';
+  gi('fe-timbrado').value=d.timbrado||'';
+  gi('fe-razon').value=d.razon_social||'';
+  gi('fe-ruc').value=d.ruc_receptor||'';
+  gi('fe-cond').value=d.condicion||'Contado';
+  gi('fe-email').value=d.email||'';
+  gi('fe-total').value=d.total||'';
+  gi('fe-iva').value=d.total_iva||0;
+  gi('fe-estado').value=d.estado||'Aprobado';
+  gi('fe-notas').value=d.notas||'';
+  gi('fe-tventa').value=/servicio/i.test(d.tipo_transaccion||'')?'Servicio':'Producto';
+  var it=d.items||[];
+  gi('feItems').innerHTML=it.length?it.map(function(i){return '<div><span>'+feEsc(i.cantidad)+' × '+feEsc(i.descripcion)+'</span><span class="mn">₲ '+fmt((i.exentas||0)+(i.g5||0)+(i.g10||0))+'</span></div>'}).join(''):'<span style="color:var(--muted)">Sin detalle</span>';
+  feCheckCdc();
+  feFillVentas(d);
+  feAlerts(d);
+}
+
+function feCheckCdc(){
+  var v=feDig(gi('fe-cdc').value),c=feParseCdc(v),st=gi('feCdcSt');
+  if(!v){st.innerHTML='';gi('fe-tipo').value='';return}
+  if(!c){st.innerHTML='<span style="color:var(--red)">El CDC debe tener 44 dígitos ('+v.length+')</span>';return}
+  gi('fe-tipo').value=FE_TIPOS[c.tipo]||('Tipo '+c.tipo);
+  st.innerHTML=c.valido?'<span style="color:var(--green)">✓ CDC válido</span>':'<span style="color:var(--red)">El dígito verificador no coincide: revisá el CDC</span>';
+}
+
+function feAlerts(d){
+  var msgs=[],c=feParseCdc(d.cdc||'');
+  if(c){
+    if(c.ruc!==FE_RUC_EMISOR)msgs.push(['e','Este documento fue emitido por el RUC '+c.ruc+', no por Big Informática.']);
+    if(d.numero&&c.numero!==d.numero)msgs.push(['w','El número del PDF ('+d.numero+') no coincide con el del CDC ('+c.numero+').']);
+    if(d.fecha&&c.fecha!==d.fecha)msgs.push(['w','La fecha del PDF no coincide con la del CDC.']);
+  }
+  if(d.total&&d.gravado10!=null){
+    var calc=Math.round((d.gravado10||0)/11)+Math.round((d.gravado5||0)/21);
+    if(Math.abs(calc-(d.total_iva||0))>2)msgs.push(['w','El IVA leído (₲ '+fmt(d.total_iva)+') no coincide con el calculado (₲ '+fmt(calc)+'). Revisalo.']);
+  }
+  if(d.tipo_documento==='01'&&!feEdit)msgs.push(['w','Revisá la condición de venta: el PDF no permite leer qué casilla está marcada.']);
+  gi('feAlert').innerHTML=msgs.map(function(x){return '<div class="fe-alert '+x[0]+'">'+feEsc(x[1])+'</div>'}).join('');
+}
+
+function feFillVentas(d){
+  var s=gi('fe-venta'),num=feDig(d.numero),total=d.total||0,sel='',opts=[];
+  var usadas=FED.filter(function(x){return x.venta_id&&(!feEdit||x.id!==feEdit)}).map(function(x){return x.venta_id});
+  var exact=VD.filter(function(v){return num&&feDig(v.factura)===num});
+  var fdt=d.fecha?new Date(d.fecha):null;
+  var cand=VD.filter(function(v){
+    if(exact.indexOf(v)>=0||usadas.indexOf(v.id)>=0)return false;
+    if(v.factura)return false;
+    if(!fdt||!v.fecha)return true;
+    return Math.abs(new Date(v.fecha)-fdt)<=45*864e5;
+  }).sort(function(a,b){return (Math.abs((b.monto||0)-total)===0)-(Math.abs((a.monto||0)-total)===0)||(b.fecha||'').localeCompare(a.fecha||'')}).slice(0,25);
+  function lbl(v){return fd(v.fecha)+' · '+(v.cliente||'Sin cliente')+' · ₲ '+fmt(v.monto)+(v.factura?' · Fact. '+v.factura:'')}
+  opts.push('<option value="">No vincular</option>');
+  if(d.tipo_documento==='01')opts.push('<option value="__new">Crear venta nueva con esta factura</option>');
+  if(exact.length)opts.push('<optgroup label="Con este número de factura">'+exact.map(function(v){return '<option value="'+v.id+'">'+feEsc(lbl(v))+'</option>'}).join('')+'</optgroup>');
+  if(cand.length)opts.push('<optgroup label="Ventas sin factura">'+cand.map(function(v){return '<option value="'+v.id+'">'+feEsc(lbl(v))+'</option>'}).join('')+'</optgroup>');
+  if(d.venta_id&&!VD.some(function(v){return v.id===d.venta_id}))opts.push('<option value="'+d.venta_id+'">Venta vinculada (no encontrada)</option>');
+  s.innerHTML=opts.join('');
+  if(d.venta_id)sel=d.venta_id;
+  else if(exact.length)sel=exact[0].id;
+  else{var eq=cand.find(function(v){return v.monto===total});sel=eq?eq.id:(d.tipo_documento==='01'?'__new':'')}
+  s.value=sel;feVentaSel();
+}
+function feVentaSel(){gi('feTipoVentaWrap').style.display=gi('fe-venta').value==='__new'?'':'none'}
+
+function feOpenEdit(id){
+  var r=FED.find(function(x){return x.id===id});if(!r)return;
+  feEdit=id;feCur=null;
+  feFill({cdc:r.cdc,numero:r.numero,fecha:r.fecha_emision,timbrado:r.timbrado,razon_social:r.razon_social,ruc_receptor:r.ruc_receptor,
+    condicion:r.condicion,email:r.email,total:r.total,total_iva:r.total_iva,estado:r.estado,notas:r.notas,items:r.items,
+    tipo_documento:r.tipo_documento,tipo_transaccion:r.tipo_transaccion,venta_id:r.venta_id});
+  gi('feAlert').innerHTML=r.estado==='Aprobado'?'':'<div class="fe-alert w">Marcar como cancelada acá no la cancela en SIFEN: la cancelación se hace en e-Kuatia\'i dentro de las 48 horas.</div>';
+  gi('mFEt').textContent='Editar '+(FE_TIPOS[r.tipo_documento]||'documento').toLowerCase()+' '+r.numero;
+  gi('fePdfSt').textContent=r.pdf_path?'PDF guardado':'Sin PDF guardado';
+  gi('feQueue').textContent='';
+  gi('mFE').classList.add('open');
+}
+
+function feClose(){cm('mFE');feEdit=null;if(feCur){feCur=null;feNext()}}
+
+async function feSave(){
+  var cdc=feDig(gi('fe-cdc').value),c=feParseCdc(cdc);
+  if(!c){toast('El CDC debe tener 44 dígitos','e');return}
+  if(!c.valido&&!confirm('El dígito verificador del CDC no coincide. ¿Guardar igual?'))return;
+  var fecha=gi('fe-fecha').value,total=parseInt(gi('fe-total').value,10);
+  if(!fecha||isNaN(total)){toast('Completá fecha y total','e');return}
+  if(FED.some(function(x){return x.cdc===cdc&&x.id!==feEdit})){toast('Ese CDC ya está registrado','e');return}
+  var btn=gi('bsFE');btn.disabled=true;btn.textContent='Guardando…';
+  try{
+    var d=feCur?feCur.data:{};
+    var pay={cdc:cdc,tipo_documento:c.tipo,numero:gi('fe-numero').value.trim()||c.numero,timbrado:gi('fe-timbrado').value.trim()||null,
+      fecha_emision:fecha,ruc_receptor:gi('fe-ruc').value.trim()||null,razon_social:gi('fe-razon').value.trim()||null,
+      email:gi('fe-email').value.trim()||null,condicion:gi('fe-cond').value,total:total,
+      total_iva:parseInt(gi('fe-iva').value,10)||0,estado:gi('fe-estado').value,notas:gi('fe-notas').value.trim()||null};
+    if(feCur){
+      Object.assign(pay,{tipo_transaccion:d.tipo_transaccion||null,exentas:d.exentas||0,gravado5:d.gravado5||0,gravado10:d.gravado10||0,
+        iva5:d.iva5||0,iva10:d.iva10||0,items:d.items||[]});
+    }
+    // Venta vinculada
+    var vsel=gi('fe-venta').value,ventaId=vsel&&vsel!=='__new'?vsel:null;
+    if(vsel==='__new'){
+      var desc=(d.items||[]).map(function(i){return i.descripcion}).join(', ')||null;
+      var vr=await sb.from('ventas').insert({fecha:fecha,factura:pay.numero,cliente:pay.razon_social,tipo:gi('fe-tventa').value,
+        descripcion:desc,monto:total,iva:pay.total_iva>0}).select('id').single();
+      if(vr.error)throw new Error('No se pudo crear la venta: '+vr.error.message);
+      ventaId=vr.data.id;
+    }else if(ventaId){
+      var v=VD.find(function(x){return x.id===ventaId});
+      if(v&&!v.factura){var ur=await sb.from('ventas').update({factura:pay.numero}).eq('id',ventaId);if(ur.error)throw new Error('No se pudo actualizar la venta: '+ur.error.message)}
+    }
+    pay.venta_id=ventaId;
+    // PDF
+    if(feCur&&feCur.file){
+      var path=fecha.slice(0,4)+'/'+cdc+'.pdf';
+      var up=await sb.storage.from('kude').upload(path,feCur.file,{contentType:'application/pdf',upsert:true});
+      if(up.error)toast('La factura se guarda sin PDF: '+up.error.message,'e');else pay.pdf_path=path;
+    }
+    var res=feEdit?await sb.from('facturas_electronicas').update(pay).eq('id',feEdit):await sb.from('facturas_electronicas').insert(pay);
+    if(res.error)throw new Error(res.error.message);
+    toast((feEdit?'Factura actualizada':'Factura '+pay.numero+' registrada')+(vsel==='__new'?' y venta creada':''),'s');
+    cm('mFE');feEdit=null;
+    if(vsel==='__new'||ventaId)await lV();
+    await lFE();
+    if(feCur){feCur=null;feNext()}
+  }catch(err){toast(err.message,'e')}
+  finally{btn.disabled=false;btn.textContent='Guardar factura'}
+}
+
+async function feVerPdf(id){
+  var r=FED.find(function(x){return x.id===id});if(!r||!r.pdf_path)return;
+  var w=window.open('','_blank');
+  var s=await sb.storage.from('kude').createSignedUrl(r.pdf_path,300);
+  if(s.error){if(w)w.close();toast('No se pudo abrir el PDF: '+s.error.message,'e');return}
+  if(w)w.location.href=s.data.signedUrl;else window.location.href=s.data.signedUrl;
+}
+
+function feSifen(id){
+  var r=FED.find(function(x){return x.id===id});if(!r)return;
+  var done=function(){toast('CDC copiado: pegalo en la consulta de SIFEN','s')};
+  if(navigator.clipboard)navigator.clipboard.writeText(r.cdc).then(done,function(){prompt('Copiá el CDC:',r.cdc)});else prompt('Copiá el CDC:',r.cdc);
+  window.open('https://ekuatia.set.gov.py/consultas/','_blank');
+}
+
+async function feDel(id){
+  var r=FED.find(function(x){return x.id===id});if(!r)return;
+  if(!confirm('¿Eliminar el registro de la factura '+r.numero+'?\n\nSolo se borra del sistema: en SIFEN la factura sigue existiendo. La venta vinculada no se elimina.'))return;
+  if(r.pdf_path)await sb.storage.from('kude').remove([r.pdf_path]);
+  var d=await sb.from('facturas_electronicas').delete().eq('id',id);
+  if(d.error){toast('Error: '+d.error.message,'e');return}
+  toast('Registro eliminado','s');lFE();
+}
+
+function feExport(){
+  if(!FED.length){toast('No hay facturas para exportar','e');return}
+  var m=gi('fmFE').value,rows=FED.filter(function(r){return !m||(r.fecha_emision||'').startsWith(m)});
+  var data=rows.map(function(r){var s=feSigno(r);return{'Fecha':fd(r.fecha_emision),'Tipo':FE_TIPOS[r.tipo_documento]||r.tipo_documento,'Número':r.numero,
+    'Timbrado':r.timbrado,'CDC':r.cdc,'RUC cliente':r.ruc_receptor,'Cliente':r.razon_social,'Condición':r.condicion,'Estado':r.estado,
+    'Exentas':s*(r.exentas||0),'Gravado 5%':s*(r.gravado5||0),'Gravado 10%':s*(r.gravado10||0),'IVA 5%':s*(r.iva5||0),'IVA 10%':s*(r.iva10||0),
+    'IVA total':s*(r.total_iva||0),'Total':s*(r.total||0)}});
+  var ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();
+  ws['!cols']=[{wch:11},{wch:16},{wch:16},{wch:10},{wch:46},{wch:13},{wch:34},{wch:10},{wch:10},{wch:10},{wch:11},{wch:12},{wch:9},{wch:10},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,'Facturas');
+  XLSX.writeFile(wb,'facturas_electronicas'+(m?'_'+m:'')+'.xlsx');
+}
 </script>
 </body>
 </html>
