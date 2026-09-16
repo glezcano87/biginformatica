@@ -5146,7 +5146,7 @@ function rFE(){
     var v=r.venta_id?VD.find(function(x){return x.id===r.venta_id}):null;
     var tipo=r.tipo_documento!=='01'?'<span class="bx bm" style="margin-left:6px">'+feEsc(FE_TIPOS[r.tipo_documento]||r.tipo_documento)+'</span>':'';
     var estB=r.estado==='Aprobado'?'<span class="bx bg">Aprobado</span>':'<span class="bx br">Cancelado</span>';
-    var venB=r.venta_id?'<span class="bx bb">'+(v?'Vinculada':'Vinculada')+'</span>':(r.tipo_documento==='01'&&r.estado==='Aprobado'?'<span class="bx by">Sin vincular</span>':'<span class="bx bm">—</span>');
+    var venB=r.venta_id?'<button class="bx bb" data-fe="edit" data-id="'+r.id+'" style="border:none;cursor:pointer;font:inherit" title="'+feEsc(v?fd(v.fecha)+' · '+(v.cliente||'')+' · ₲ '+fmt(v.monto):'Venta vinculada')+'">Vinculada</button>':(r.tipo_documento==='01'&&r.estado==='Aprobado'?'<button class="bx by" data-fe="edit" data-id="'+r.id+'" style="border:none;cursor:pointer;font:inherit" title="Vincular con una venta">Vincular venta</button>':'<span class="bx bm">—</span>');
     var neg=feSigno(r)<0?'−':'';
     var usd=r.moneda&&r.moneda!=='PYG'?'<div style="font-size:11px;color:var(--muted);font-weight:500">'+feEsc(r.moneda)+' '+(r.total_moneda!=null?Number(r.total_moneda).toLocaleString('es-PY'):'')+'</div>':'';
     var imp=!r.pdf_path?'<div style="font-size:11px;color:var(--muted)">Sin PDF</div>':'';
@@ -5324,10 +5324,15 @@ function feAlerts(d){
   gi('feAlert').innerHTML=msgs.map(function(x){return '<div class="fe-alert '+x[0]+'">'+feEsc(x[1])+'</div>'}).join('');
 }
 
+function feMismoNum(fact,num){
+  var a=feDig(fact),b=feDig(num);if(!a||!b)return false;
+  if(a===b)return true;
+  return a.length<=7&&parseInt(a,10)===parseInt(b.slice(-7),10);
+}
 function feFillVentas(d){
   var s=gi('fe-venta'),num=feDig(d.numero),total=d.total||0,sel='',opts=[];
   var usadas=FED.filter(function(x){return x.venta_id&&(!feEdit||x.id!==feEdit)}).map(function(x){return x.venta_id});
-  var exact=VD.filter(function(v){return num&&feDig(v.factura)===num});
+  var exact=VD.filter(function(v){return num&&feMismoNum(v.factura,d.numero)&&usadas.indexOf(v.id)<0});
   var fdt=d.fecha?new Date(d.fecha):null;
   var cand=VD.filter(function(v){
     if(exact.indexOf(v)>=0||usadas.indexOf(v.id)>=0)return false;
