@@ -5148,15 +5148,17 @@ function rFE(){
     var estB=r.estado==='Aprobado'?'<span class="bx bg">Aprobado</span>':'<span class="bx br">Cancelado</span>';
     var venB=r.venta_id?'<span class="bx bb">'+(v?'Vinculada':'Vinculada')+'</span>':(r.tipo_documento==='01'&&r.estado==='Aprobado'?'<span class="bx by">Sin vincular</span>':'<span class="bx bm">—</span>');
     var neg=feSigno(r)<0?'−':'';
+    var usd=r.moneda&&r.moneda!=='PYG'?'<div style="font-size:11px;color:var(--muted);font-weight:500">'+feEsc(r.moneda)+' '+(r.total_moneda!=null?Number(r.total_moneda).toLocaleString('es-PY'):'')+'</div>':'';
+    var imp=!r.pdf_path?'<div style="font-size:11px;color:var(--muted)">Sin PDF</div>':'';
     return '<tr>'+
       '<td data-label="Fecha" class="mn">'+fd(r.fecha_emision)+'</td>'+
       '<td data-label="Número"><div class="mn" style="font-weight:600">'+feEsc(r.numero)+tipo+'</div><div class="fe-cdc">'+feEsc(r.cdc)+'</div></td>'+
-      '<td data-label="Cliente" style="font-weight:500">'+feEsc(r.razon_social||'—')+'</td>'+
+      '<td data-label="Cliente" style="font-weight:500">'+feEsc(r.razon_social||'—')+imp+'</td>'+
       '<td data-label="RUC" style="color:var(--muted);font-size:12px;white-space:nowrap">'+feEsc(r.ruc_receptor||'')+'</td>'+
       '<td data-label="Estado">'+estB+'</td>'+
       '<td data-label="Venta">'+venB+'</td>'+
       '<td data-label="IVA" class="mn tr" style="color:var(--muted);white-space:nowrap">₲ '+neg+fmt(r.total_iva)+'</td>'+
-      '<td data-label="Total" class="mn tr" style="white-space:nowrap;font-weight:600;color:'+(r.estado==='Aprobado'?'var(--green)':'var(--muted)')+(r.estado!=='Aprobado'?';text-decoration:line-through':'')+'">₲ '+neg+fmt(r.total)+'</td>'+
+      '<td data-label="Total" class="mn tr" style="white-space:nowrap;font-weight:600;color:'+(r.estado==='Aprobado'?'var(--green)':'var(--muted)')+(r.estado!=='Aprobado'?';text-decoration:line-through':'')+'">₲ '+neg+fmt(r.total)+usd+'</td>'+
       '<td data-label="Acciones"><div class="acts">'+
         (r.pdf_path?'<button class="ib" data-fe="pdf" data-id="'+r.id+'" title="Ver KuDE"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>':'')+
         '<button class="ib" data-fe="sifen" data-id="'+r.id+'" title="Consultar en SIFEN (copia el CDC)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></button>'+
@@ -5243,6 +5245,8 @@ function feParseKude(txt){
     o.items.push({codigo:code,cantidad:parseFloat(qty.replace(/\./g,'').replace(',','.')),descripcion:head.join(' '),
       precio:feNum(tail[0]),descuento:feNum(tail[1]),exentas:feNum(tail[2]),g5:feNum(tail[3]),g10:feNum(tail[4])});
   });
+  var mon=txt.match(/Moneda:?\s*(USD|D[oó]lar|EUR|BRL)/i);
+  if(mon)o.moneda_pdf=/eur/i.test(mon[1])?'EUR':/brl/i.test(mon[1])?'BRL':'USD';
   var c=feParseCdc(o.cdc);
   o.tipo_documento=c?c.tipo:'01';
   if(c){if(!o.numero)o.numero=c.numero;if(!o.fecha)o.fecha=c.fecha}
@@ -5256,10 +5260,19 @@ async function feNext(){
     var data=feParseKude(await fePdfText(file));
     if(!data.cdc){toast(file.name+': no se encontró el CDC. ¿Es un KuDE de e-Kuatia\'i?','e');return feNext()}
     var dup=FED.find(function(x){return x.cdc===data.cdc});
-    if(dup){toast('La factura '+dup.numero+' ya estaba registrada','e');return feNext()}
-    feCur={file:file,data:data};feEdit=null;
+    if(dup&&dup.pdf_path){toast('La factura '+dup.numero+' ya estaba registrada','e');return feNext()}
+    feCur={file:file,data:data};feEdit=dup?dup.id:null;
+    if(dup){
+      data.venta_id=dup.venta_id;data.estado=dup.estado;data.condicion=dup.condicion;
+      if(dup.moneda&&dup.moneda!=='PYG'&&data.total){
+        var k=(dup.total||0)/data.total;
+        ['total','total_iva','exentas','gravado5','gravado10','iva5','iva10'].forEach(function(f){data[f]=Math.round((data[f]||0)*k)});
+        data.moneda=dup.moneda;data.total_moneda=dup.total_moneda;
+      }
+    }
     feFill(data);
-    gi('mFEt').textContent='Registrar '+(FE_TIPOS[data.tipo_documento]||'documento').toLowerCase();
+    if(dup)gi('feAlert').innerHTML='<div class="fe-alert w">Esta factura ya estaba importada sin PDF: revisá los datos y guardá para completarla.</div>'+gi('feAlert').innerHTML;
+    gi('mFEt').textContent=(dup?'Completar ':'Registrar ')+(FE_TIPOS[data.tipo_documento]||'documento').toLowerCase()+(dup?' '+dup.numero:'');
     gi('fePdfSt').textContent='Archivo: '+file.name+' (se guardará una copia del PDF)';
     gi('feQueue').textContent=feQ.length?'Quedan '+feQ.length+' archivo(s)':'';
     gi('mFE').classList.add('open');
@@ -5306,6 +5319,7 @@ function feAlerts(d){
     var calc=Math.round((d.gravado10||0)/11)+Math.round((d.gravado5||0)/21);
     if(Math.abs(calc-(d.total_iva||0))>2)msgs.push(['w','El IVA leído (₲ '+fmt(d.total_iva)+') no coincide con el calculado (₲ '+fmt(calc)+'). Revisalo.']);
   }
+  if(d.moneda_pdf&&!d.moneda)msgs.push(['e','Esta factura parece estar en '+d.moneda_pdf+'. Cargá el total y el IVA en guaraníes, según la cotización usada.']);
   if(d.tipo_documento==='01'&&!feEdit)msgs.push(['w','Revisá la condición de venta: el PDF no permite leer qué casilla está marcada.']);
   gi('feAlert').innerHTML=msgs.map(function(x){return '<div class="fe-alert '+x[0]+'">'+feEsc(x[1])+'</div>'}).join('');
 }
@@ -5365,6 +5379,8 @@ async function feSave(){
       email:gi('fe-email').value.trim()||null,condicion:gi('fe-cond').value,total:total,
       total_iva:parseInt(gi('fe-iva').value,10)||0,estado:gi('fe-estado').value,notas:gi('fe-notas').value.trim()||null};
     if(feCur){
+      if(/^Importado del Excel/.test(pay.notas||''))pay.notas=null;
+      if(d.moneda)pay.moneda=d.moneda;else if(d.moneda_pdf){pay.moneda=d.moneda_pdf;pay.total_moneda=d.total_moneda_pdf||null}
       Object.assign(pay,{tipo_transaccion:d.tipo_transaccion||null,exentas:d.exentas||0,gravado5:d.gravado5||0,gravado10:d.gravado10||0,
         iva5:d.iva5||0,iva10:d.iva10||0,items:d.items||[]});
     }
@@ -5438,7 +5454,7 @@ function feExport(){
   var data=rows.map(function(r){var s=feSigno(r);return{'Fecha':fd(r.fecha_emision),'Tipo':FE_TIPOS[r.tipo_documento]||r.tipo_documento,'Número':r.numero,
     'Timbrado':r.timbrado,'CDC':r.cdc,'RUC cliente':r.ruc_receptor,'Cliente':r.razon_social,'Condición':r.condicion,'Estado':r.estado,
     'Exentas':s*(r.exentas||0),'Gravado 5%':s*(r.gravado5||0),'Gravado 10%':s*(r.gravado10||0),'IVA 5%':s*(r.iva5||0),'IVA 10%':s*(r.iva10||0),
-    'IVA total':s*(r.total_iva||0),'Total':s*(r.total||0)}});
+    'IVA total':s*(r.total_iva||0),'Total':s*(r.total||0),'Moneda':r.moneda||'PYG','Total en moneda':r.total_moneda!=null?s*r.total_moneda:''}});
   var ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();
   ws['!cols']=[{wch:11},{wch:16},{wch:16},{wch:10},{wch:46},{wch:13},{wch:34},{wch:10},{wch:10},{wch:10},{wch:11},{wch:12},{wch:9},{wch:10},{wch:10},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws,'Facturas');
