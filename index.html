@@ -1664,10 +1664,13 @@ CREATE POLICY "all" ON configuracion FOR ALL USING (true) WITH CHECK (true);</pr
       <div class="fgg"><label>Condici&#243;n de venta</label><select id="fe-cond"><option>Contado</option><option>Cr&#233;dito</option></select></div>
       <div class="fgg full"><label>Correo del cliente</label><input type="text" id="fe-email"></div>
       <div class="fgg full"><label>Detalle</label><div id="feItems" class="fe-items"></div></div>
-      <div class="fgg"><label>Total (&#8370;) *</label><input type="number" id="fe-total" min="0"></div>
+      <div class="fgg"><label>Total (&#8370;) *</label><input type="number" id="fe-total" min="0" oninput="feRenderVentas()"></div>
       <div class="fgg"><label>IVA total (&#8370;)</label><input type="number" id="fe-iva" min="0"></div>
       <div class="fgg"><label>Estado</label><select id="fe-estado"><option>Aprobado</option><option>Cancelado</option></select></div>
-      <div class="fgg"><label>Vincular con venta</label><select id="fe-venta" onchange="feVentaSel()"></select></div>
+      <div class="fgg"></div>
+      <div class="fgg full"><label style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>Ventas de esta factura</span><span id="feVSum"></span></label>
+        <input type="text" id="feVq" placeholder="Buscar venta por cliente o monto&#8230;" oninput="feRenderVentas()" style="margin-bottom:6px">
+        <div id="feVList" class="fe-vlist"></div></div>
       <div class="fgg" id="feTipoVentaWrap"><label>Tipo de la venta nueva</label><select id="fe-tventa"><option>Servicio</option><option>Producto</option></select></div>
       <div class="fgg full"><label>Notas</label><textarea id="fe-notas" style="min-height:50px"></textarea></div>
     </div>
@@ -5097,6 +5100,13 @@ function closeSidebar(){
 .fe-alert{border-radius:8px;padding:10px 12px;font-size:12.5px;margin-bottom:14px;line-height:1.4}
 .fe-alert.w{background:rgba(245,158,11,.12);color:var(--yellow)}
 .fe-alert.e{background:rgba(239,68,68,.12);color:var(--red)}
+.fe-vlist{border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;background:var(--card)}
+.fe-vlist label{display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12.5px;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;color:var(--text)}
+.fe-vlist label+label{border-top:1px solid rgba(255,255,255,.05)}
+.fe-vlist label.sel{background:rgba(37,99,235,.12)}
+.fe-vlist input{width:auto;margin:0;flex-shrink:0}
+.fe-vlist .m{margin-left:auto;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap}
+.fe-vlist .h{font-size:11px;color:var(--muted)}
 .fe-cdc{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--muted);word-break:break-all}
 </style>
 <script>
@@ -5143,10 +5153,11 @@ function rFE(){
   var tb=gi('tbFE');
   if(!rows.length){tb.innerHTML=er(9,FED.length?'No hay documentos en este filtro.':'Todavía no cargaste facturas. Subí el PDF de una factura de e-Kuatia\'i para empezar.');return}
   tb.innerHTML=rows.map(function(r){
-    var v=r.venta_id?VD.find(function(x){return x.id===r.venta_id}):null;
+    var ids=feVentaIds(r),vs=ids.map(function(id){return VD.find(function(x){return x.id===id})}).filter(Boolean);
+    var vsum=vs.reduce(function(t,x){return t+(x.monto||0)},0),vdif=vs.length===ids.length&&Math.abs(vsum-(r.total||0))>1;
     var tipo=r.tipo_documento!=='01'?'<span class="bx bm" style="margin-left:6px">'+feEsc(FE_TIPOS[r.tipo_documento]||r.tipo_documento)+'</span>':'';
     var estB=r.estado==='Aprobado'?'<span class="bx bg">Aprobado</span>':'<span class="bx br">Cancelado</span>';
-    var venB=r.venta_id?'<button class="bx bb" data-fe="edit" data-id="'+r.id+'" style="border:none;cursor:pointer;font:inherit" title="'+feEsc(v?fd(v.fecha)+' · '+(v.cliente||'')+' · ₲ '+fmt(v.monto):'Venta vinculada')+'">Vinculada</button>':(r.tipo_documento==='01'&&r.estado==='Aprobado'?'<button class="bx by" data-fe="edit" data-id="'+r.id+'" style="border:none;cursor:pointer;font:inherit" title="Vincular con una venta">Vincular venta</button>':'<span class="bx bm">—</span>');
+    var venB=r.venta_id?'<button class="bx '+(vdif?'by':'bb')+'" data-fe="edit" data-id="'+r.id+'" style="border:none;cursor:pointer;font:inherit" title="'+feEsc(vs.map(function(x){return fd(x.fecha)+' · '+(x.cliente||'')+' · ₲ '+fmt(x.monto)}).join('\n')+(vdif?'\nLas ventas suman ₲ '+fmt(vsum):''))+'">'+(ids.length>1?ids.length+' ventas':'Vinculada')+(vdif?' · difiere':'')+'</button>':(r.tipo_documento==='01'&&r.estado==='Aprobado'?'<button class="bx by" data-fe="edit" data-id="'+r.id+'" style="border:none;cursor:pointer;font:inherit" title="Vincular con una venta">Vincular venta</button>':'<span class="bx bm">—</span>');
     var neg=feSigno(r)<0?'−':'';
     var usd=r.moneda&&r.moneda!=='PYG'?'<div style="font-size:11px;color:var(--muted);font-weight:500">'+feEsc(r.moneda)+' '+(r.total_moneda!=null?Number(r.total_moneda).toLocaleString('es-PY'):'')+'</div>':'';
     var imp=!r.pdf_path?'<div style="font-size:11px;color:var(--muted)">Sin PDF</div>':'';
@@ -5263,7 +5274,7 @@ async function feNext(){
     if(dup&&dup.pdf_path){toast('La factura '+dup.numero+' ya estaba registrada','e');return feNext()}
     feCur={file:file,data:data};feEdit=dup?dup.id:null;
     if(dup){
-      data.venta_id=dup.venta_id;data.estado=dup.estado;data.condicion=dup.condicion;
+      data.venta_id=dup.venta_id;data.venta_ids=dup.venta_ids;data.estado=dup.estado;data.condicion=dup.condicion;
       if(dup.moneda&&dup.moneda!=='PYG'&&data.total){
         var k=(dup.total||0)/data.total;
         ['total','total_iva','exentas','gravado5','gravado10','iva5','iva10'].forEach(function(f){data[f]=Math.round((data[f]||0)*k)});
@@ -5329,37 +5340,86 @@ function feMismoNum(fact,num){
   if(a===b)return true;
   return a.length<=7&&parseInt(a,10)===parseInt(b.slice(-7),10);
 }
+var feSel=[],feNew=false,feTotalRef=0,feUsadas=[],feNumRef='',feFechaRef='';
+function feVentaIds(r){return (r.venta_ids&&r.venta_ids.length)?r.venta_ids:(r.venta_id?[r.venta_id]:[])}
 function feFillVentas(d){
-  var s=gi('fe-venta'),num=feDig(d.numero),total=d.total||0,sel='',opts=[];
-  var usadas=FED.filter(function(x){return x.venta_id&&(!feEdit||x.id!==feEdit)}).map(function(x){return x.venta_id});
-  var exact=VD.filter(function(v){return num&&feMismoNum(v.factura,d.numero)&&usadas.indexOf(v.id)<0});
-  var fdt=d.fecha?new Date(d.fecha):null;
-  var cand=VD.filter(function(v){
-    if(exact.indexOf(v)>=0||usadas.indexOf(v.id)>=0)return false;
-    if(v.factura)return false;
-    if(!fdt||!v.fecha)return true;
-    return Math.abs(new Date(v.fecha)-fdt)<=45*864e5;
-  }).sort(function(a,b){return (Math.abs((b.monto||0)-total)===0)-(Math.abs((a.monto||0)-total)===0)||(b.fecha||'').localeCompare(a.fecha||'')}).slice(0,25);
-  function lbl(v){return fd(v.fecha)+' · '+(v.cliente||'Sin cliente')+' · ₲ '+fmt(v.monto)+(v.factura?' · Fact. '+v.factura:'')}
-  opts.push('<option value="">No vincular</option>');
-  if(d.tipo_documento==='01')opts.push('<option value="__new">Crear venta nueva con esta factura</option>');
-  if(exact.length)opts.push('<optgroup label="Con este número de factura">'+exact.map(function(v){return '<option value="'+v.id+'">'+feEsc(lbl(v))+'</option>'}).join('')+'</optgroup>');
-  if(cand.length)opts.push('<optgroup label="Ventas sin factura">'+cand.map(function(v){return '<option value="'+v.id+'">'+feEsc(lbl(v))+'</option>'}).join('')+'</optgroup>');
-  if(d.venta_id&&!VD.some(function(v){return v.id===d.venta_id}))opts.push('<option value="'+d.venta_id+'">Venta vinculada (no encontrada)</option>');
-  s.innerHTML=opts.join('');
-  if(d.venta_id)sel=d.venta_id;
-  else if(exact.length)sel=exact[0].id;
-  else{var eq=cand.find(function(v){return v.monto===total});sel=eq?eq.id:(d.tipo_documento==='01'?'__new':'')}
-  s.value=sel;feVentaSel();
+  feTotalRef=d.total||0;feNumRef=d.numero||'';feFechaRef=d.fecha||'';gi('feVq').value='';
+  feUsadas=[];FED.forEach(function(x){if(!feEdit||x.id!==feEdit)feUsadas=feUsadas.concat(feVentaIds(x))});
+  feSel=(d.venta_ids&&d.venta_ids.length)?d.venta_ids.slice():(d.venta_id?[d.venta_id]:[]);
+  feNew=false;
+  if(!feSel.length){
+    var exact=VD.filter(function(v){return feMismoNum(v.factura,d.numero)&&feUsadas.indexOf(v.id)<0});
+    var cand=feCandidatas();
+    var eq=cand.find(function(v){return v.monto===feTotalRef});
+    if(exact.length)feSel=exact.map(function(v){return v.id});
+    else if(eq)feSel=[eq.id];
+    else{
+      var par=null;
+      for(var i=0;i<cand.length&&!par;i++)for(var j=i+1;j<cand.length;j++){
+        var a=cand[i],b=cand[j];
+        if((a.monto||0)+(b.monto||0)===feTotalRef&&(a.cliente||'').toLowerCase()===(b.cliente||'').toLowerCase()){par=[a.id,b.id];break}
+      }
+      if(par)feSel=par;
+      else if(d.tipo_documento==='01'&&!feEdit)feNew=true;
+    }
+  }
+  gi('feVList').setAttribute('data-tipo',d.tipo_documento||'01');
+  feRenderVentas();
 }
-function feVentaSel(){gi('feTipoVentaWrap').style.display=gi('fe-venta').value==='__new'?'':'none'}
-
+function feCandidatas(){
+  var fdt=feFechaRef?new Date(feFechaRef):null;
+  return VD.filter(function(v){
+    if(feUsadas.indexOf(v.id)>=0||v.factura)return false;
+    return !fdt||!v.fecha||Math.abs(new Date(v.fecha)-fdt)<=45*864e5;
+  }).sort(function(a,b){
+    var da=fdt?Math.abs(new Date(a.fecha)-fdt):0,db=fdt?Math.abs(new Date(b.fecha)-fdt):0;return da-db;
+  });
+}
+function feRenderVentas(){
+  var q=(gi('feVq').value||'').toLowerCase().trim(),qd=feDig(q);
+  var lista;
+  if(q){
+    lista=VD.filter(function(v){
+      if(feUsadas.indexOf(v.id)>=0)return false;
+      var t=[(v.cliente||''),(v.descripcion||''),(v.factura||'')].join(' ').toLowerCase();
+      return t.includes(q)||(qd&&String(v.monto||'').includes(qd));
+    }).slice(0,40);
+  }else{
+    var exact=VD.filter(function(v){return feMismoNum(v.factura,feNumRef)&&feUsadas.indexOf(v.id)<0});
+    lista=exact.concat(feCandidatas().filter(function(v){return exact.indexOf(v)<0})).slice(0,30);
+  }
+  var sel=feSel.map(function(id){return VD.find(function(v){return v.id===id})||{id:id,cliente:'Venta no encontrada',monto:0}});
+  lista=sel.concat(lista.filter(function(v){return feSel.indexOf(v.id)<0}));
+  var html='';
+  if(gi('feVList').getAttribute('data-tipo')==='01')html+='<label class="'+(feNew?'sel':'')+'"><input type="checkbox" data-fevnew="1"'+(feNew?' checked':'')+'><span><strong>Crear venta nueva</strong> con los datos de esta factura</span></label>';
+  html+=lista.map(function(v){
+    var on=feSel.indexOf(v.id)>=0;
+    return '<label class="'+(on?'sel':'')+'"><input type="checkbox" data-fev="'+v.id+'"'+(on?' checked':'')+'>'+
+      '<span>'+feEsc(v.cliente||'Sin cliente')+'<div class="h">'+(v.fecha?fd(v.fecha):'')+(v.tipo?' · '+feEsc(v.tipo):'')+(v.descripcion?' · '+feEsc(String(v.descripcion).slice(0,50)):'')+(v.factura?' · Fact. '+feEsc(v.factura):'')+'</div></span>'+
+      '<span class="m">₲ '+fmt(v.monto)+'</span></label>';
+  }).join('');
+  if(!lista.length)html+='<div style="padding:10px 12px;font-size:12px;color:var(--muted)">'+(q?'No hay ventas que coincidan.':'No hay ventas sin factura cerca de esta fecha. Usá el buscador.')+'</div>';
+  gi('feVList').innerHTML=html;
+  var suma=sel.reduce(function(t,v){return t+(v.monto||0)},0),tot=parseInt(gi('fe-total').value,10)||feTotalRef;
+  var sv=gi('feVSum');
+  if(feNew)sv.innerHTML='<span style="color:var(--green)">Se crea una venta por ₲ '+fmt(tot)+'</span>';
+  else if(!feSel.length)sv.innerHTML='<span style="color:var(--muted)">Sin vincular</span>';
+  else sv.innerHTML='<span style="color:'+(Math.abs(suma-tot)<=1?'var(--green)':'var(--yellow)')+'">'+feSel.length+' venta(s): ₲ '+fmt(suma)+' de ₲ '+fmt(tot)+(Math.abs(suma-tot)<=1?' ✓':'')+'</span>';
+  gi('feTipoVentaWrap').style.display=feNew?'':'none';
+}
+document.addEventListener('change',function(e){
+  var t=e.target;if(!t.closest||!t.closest('#feVList'))return;
+  if(t.hasAttribute('data-fevnew')){feNew=t.checked;if(feNew)feSel=[]}
+  else{var id=t.getAttribute('data-fev');feNew=false;
+    if(t.checked){if(feSel.indexOf(id)<0)feSel.push(id)}else feSel=feSel.filter(function(x){return x!==id})}
+  feRenderVentas();
+});
 function feOpenEdit(id){
   var r=FED.find(function(x){return x.id===id});if(!r)return;
   feEdit=id;feCur=null;
   feFill({cdc:r.cdc,numero:r.numero,fecha:r.fecha_emision,timbrado:r.timbrado,razon_social:r.razon_social,ruc_receptor:r.ruc_receptor,
     condicion:r.condicion,email:r.email,total:r.total,total_iva:r.total_iva,estado:r.estado,notas:r.notas,items:r.items,
-    tipo_documento:r.tipo_documento,tipo_transaccion:r.tipo_transaccion,venta_id:r.venta_id});
+    tipo_documento:r.tipo_documento,tipo_transaccion:r.tipo_transaccion,venta_id:r.venta_id,venta_ids:r.venta_ids});
   gi('feAlert').innerHTML=r.estado==='Aprobado'?'':'<div class="fe-alert w">Marcar como cancelada acá no la cancela en SIFEN: la cancelación se hace en e-Kuatia\'i dentro de las 48 horas.</div>';
   gi('mFEt').textContent='Editar '+(FE_TIPOS[r.tipo_documento]||'documento').toLowerCase()+' '+r.numero;
   gi('fePdfSt').textContent=r.pdf_path?'PDF guardado':'Sin PDF guardado';
@@ -5389,33 +5449,41 @@ async function feSave(){
       Object.assign(pay,{tipo_transaccion:d.tipo_transaccion||null,exentas:d.exentas||0,gravado5:d.gravado5||0,gravado10:d.gravado10||0,
         iva5:d.iva5||0,iva10:d.iva10||0,items:d.items||[]});
     }
-    // Venta vinculada
-    var vsel=gi('fe-venta').value,ventaId=vsel&&vsel!=='__new'?vsel:null;
-    if(vsel==='__new'){
+    // Ventas vinculadas
+    var vids=feSel.slice();
+    if(feNew){
       var desc=(d.items||[]).map(function(i){return i.descripcion}).join(', ')||null;
       var vr=await sb.from('ventas').insert({fecha:fecha,factura:pay.numero,cliente:pay.razon_social,tipo:gi('fe-tventa').value,
         descripcion:desc,monto:total,iva:pay.total_iva>0}).select('id').single();
       if(vr.error)throw new Error('No se pudo crear la venta: '+vr.error.message);
-      ventaId=vr.data.id;
-    }else if(ventaId){
-      var v=VD.find(function(x){return x.id===ventaId});
-      if(v&&!v.factura){var ur=await sb.from('ventas').update({factura:pay.numero}).eq('id',ventaId);if(ur.error)throw new Error('No se pudo actualizar la venta: '+ur.error.message)}
+      vids=[vr.data.id];
+    }else{
+      for(var vi=0;vi<vids.length;vi++){
+        var v=VD.find(function(x){return x.id===vids[vi]});
+        if(v&&!v.factura){var ur=await sb.from('ventas').update({factura:pay.numero}).eq('id',v.id);if(ur.error)throw new Error('No se pudo actualizar la venta: '+ur.error.message)}
+      }
     }
-    pay.venta_id=ventaId;
+    pay.venta_id=vids[0]||null;
+    pay.venta_ids=vids;
     // PDF
     if(feCur&&feCur.file){
       var path=fecha.slice(0,4)+'/'+cdc+'.pdf';
       var up=await sb.storage.from('kude').upload(path,feCur.file,{contentType:'application/pdf',upsert:true});
       if(up.error)toast('La factura se guarda sin PDF: '+up.error.message,'e');else pay.pdf_path=path;
     }
-    var res=feEdit?await sb.from('facturas_electronicas').update(pay).eq('id',feEdit):await sb.from('facturas_electronicas').insert(pay);
+    var guardar=function(){return feEdit?sb.from('facturas_electronicas').update(pay).eq('id',feEdit):sb.from('facturas_electronicas').insert(pay)};
+    var res=await guardar();
+    if(res.error&&/venta_ids/.test(res.error.message)){
+      if(vids.length>1)throw new Error('Para vincular varias ventas falta ejecutar el SQL de actualización en Supabase');
+      delete pay.venta_ids;res=await guardar();
+    }
     if(res.error){
       if(/facturas_electronicas_cdc_key|duplicate key/i.test(res.error.message)){cm('mFE');await lFE();throw new Error('Esa factura ya estaba registrada')}
       throw new Error(res.error.message);
     }
-    toast((feEdit?'Factura actualizada':'Factura '+pay.numero+' registrada')+(vsel==='__new'?' y venta creada':''),'s');
+    toast((feEdit?'Factura actualizada':'Factura '+pay.numero+' registrada')+(feNew?' y venta creada':''),'s');
     cm('mFE');feEdit=null;
-    if(vsel==='__new'||ventaId)await lV();
+    if(feNew||vids.length)await lV();
     await lFE();
     if(feCur){feCur=null;feNext()}
   }catch(err){toast(err.message,'e')}
