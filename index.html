@@ -5119,7 +5119,7 @@ function feSigno(r){return r.tipo_documento==='05'?-1:1}
 async function lFE(){
   if(!sb)return;
   var r=await sb.from('facturas_electronicas').select('*').order('fecha_emision',{ascending:false}).order('numero',{ascending:false});
-  if(r.error){if(!/does not exist|schema cache/i.test(r.error.message))toast('Error facturas: '+r.error.message,'e');return}
+  if(r.error){toast('Error facturas: '+r.error.message,'e');return}
   FED=r.data||[];
   popMF('fmFE',FED.map(function(x){return{fecha:x.fecha_emision}}));
   rFE();
@@ -5388,7 +5388,10 @@ async function feSave(){
       if(up.error)toast('La factura se guarda sin PDF: '+up.error.message,'e');else pay.pdf_path=path;
     }
     var res=feEdit?await sb.from('facturas_electronicas').update(pay).eq('id',feEdit):await sb.from('facturas_electronicas').insert(pay);
-    if(res.error)throw new Error(res.error.message);
+    if(res.error){
+      if(/facturas_electronicas_cdc_key|duplicate key/i.test(res.error.message)){cm('mFE');await lFE();throw new Error('Esa factura ya estaba registrada')}
+      throw new Error(res.error.message);
+    }
     toast((feEdit?'Factura actualizada':'Factura '+pay.numero+' registrada')+(vsel==='__new'?' y venta creada':''),'s');
     cm('mFE');feEdit=null;
     if(vsel==='__new'||ventaId)await lV();
@@ -5421,6 +5424,13 @@ async function feDel(id){
   if(d.error){toast('Error: '+d.error.message,'e');return}
   toast('Registro eliminado','s');lFE();
 }
+
+// Carga garantizada: al abrir la página y al terminar de leer este script
+(function(){
+  var _nav=nav;
+  nav=function(p,el){_nav(p,el);if(p==='fe')lFE()};
+  if(sb&&currentUser)lFE();
+})();
 
 function feExport(){
   if(!FED.length){toast('No hay facturas para exportar','e');return}
