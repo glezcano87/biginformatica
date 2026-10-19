@@ -262,8 +262,8 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 .gp-wrap{max-width:900px;margin:0 auto}
 .gp-form{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
 .gp-form h3{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px}
-.gp-items-header{display:grid;grid-template-columns:3fr 1fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:6px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:0 4px}
-.gp-item-row{display:grid;grid-template-columns:3fr 1fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+.gp-items-header{display:grid;grid-template-columns:3fr 1fr 0.7fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:6px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:0 4px}
+.gp-item-row{display:grid;grid-template-columns:3fr 1fr 0.7fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
 .gp-item-row input,.gp-item-row select{font-size:12px;padding:7px 9px}
 .gp-item-row .calc-val{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12px;font-weight:600;color:var(--green);text-align:right;font-variant-numeric:tabular-nums}
 .gp-total-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:16px;flex-wrap:wrap}
@@ -964,7 +964,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
       <div class="gp-form">
         <h3>&#205;tems del Presupuesto</h3>
         <div class="gp-items-header">
-          <span>Descripci&#243;n</span><span>Cant.</span><span>Costo Prov.</span><span>Margen</span><span>Precio Venta</span><span></span>
+          <span>Descripci&#243;n</span><span>Tipo</span><span>Cant.</span><span>Costo Prov.</span><span>Margen</span><span>Precio Venta</span><span></span>
         </div>
         <div id="gpItems"></div>
         <button class="btn btn-g" onclick="addGPItem()" style="margin-top:4px;font-size:12px">
@@ -1562,9 +1562,9 @@ function editPres(id){
           var margenMatch = notas.match(/Margen:\s*(\d+)%/);
           if(margenMatch) margen = parseInt(margenMatch[1]);
           var costo = Math.round(pventa * (1 - margen/100) / qty);
-          gpItems.push({desc:desc, qty:qty, costo:costo, margen:margen});
+          gpItems.push({desc:desc, qty:qty, costo:costo, margen:margen, tipo:'Servicio'});
         } else if(part){
-          gpItems.push({desc:part, qty:1, costo:0, margen:gpMargen||20});
+          gpItems.push({desc:part, qty:1, costo:0, margen:gpMargen||20, tipo:'Servicio'});
         }
       });
     }
@@ -3219,7 +3219,7 @@ function initGPres(){
     introEl.value = introDefault;
   }
   if(!gpItems.length){
-    gpItems=[{desc:'',qty:1,costo:0,margen:gpMargen}];
+    gpItems=[{desc:'',qty:1,costo:0,margen:gpMargen,tipo:'Servicio'}];
     renderGPItems();
   }
 }
@@ -3278,7 +3278,8 @@ function setMargenGlobal(pct,btn){
 }
 
 function addGPItem(){
-  gpItems.push({desc:'',qty:1,costo:0,margen:gpMargen});
+  var tipoDefault = (gi('gp-tipo')&&gi('gp-tipo').value==='Producto')?'Producto':'Servicio';
+  gpItems.push({desc:'',qty:1,costo:0,margen:gpMargen,tipo:tipoDefault});
   renderGPItems();
 }
 
@@ -3294,10 +3295,14 @@ function renderGPItems(){
   var cont=gi('gpItems');
   cont.innerHTML=gpItems.map(function(it,i){
     var pventa=gpPrecioVenta(it);
+    var tipoIt = it.tipo||'Servicio';
     return '<div class="gp-item-row" data-idx="'+i+'">'+
       '<input type="text" class="gpi-desc" data-idx="'+i+'" placeholder="Descripción del ítem" value="'+it.desc.replace(/"/g,'&quot;')+'">'+
+      '<select class="gpi-tipo" data-idx="'+i+'">'+
+        ['Servicio','Producto'].map(function(t){return '<option value="'+t+'"'+(tipoIt===t?' selected':'')+'>'+t+'</option>';}).join('')+
+      '</select>'+
       '<input type="text" class="gpi-qty" data-idx="'+i+'" placeholder="1" value="'+it.qty+'" style="text-align:center;width:100%">'+
-      '<input type="text" class="gpi-costo" data-idx="'+i+'" placeholder="0" value="'+( it.costo>0 ? Math.round(it.costo).toLocaleString("es-PY") : "")+'" style="text-align:right">'+ 
+      '<input type="text" class="gpi-costo" data-idx="'+i+'" placeholder="0" value="'+( it.costo>0 ? Math.round(it.costo).toLocaleString("es-PY") : "")+'" style="text-align:right">'+
       '<select class="gpi-margen" data-idx="'+i+'">'+
         [10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95].map(function(p){return '<option value="'+p+'"'+(it.margen===p?' selected':'')+'>'+p+'%</option>';}).join('')+
       '</select>'+
@@ -3325,6 +3330,11 @@ function renderGPItems(){
       var raw=parseFmt(this.value);
       gpItems[idx].costo=raw;
       updateGPRow(parseInt(this.dataset.idx));
+    });
+  });
+  cont.querySelectorAll('.gpi-tipo').forEach(function(el){
+    el.addEventListener('change',function(){
+      gpItems[parseInt(this.dataset.idx)].tipo=this.value;
     });
   });
   cont.querySelectorAll('.gpi-margen').forEach(function(el){
@@ -3363,7 +3373,7 @@ function calcGPres(){
 
 function limpiarGPres(){
   if(!confirm('\u00bfLimpiar todos los datos?')) return;
-  gpItems=[{desc:'',qty:1,costo:0,margen:gpMargen}];
+  gpItems=[{desc:'',qty:1,costo:0,margen:gpMargen,tipo:'Servicio'}];
   gi('gp-cliente').value='';
   gi('gp-fecha').value=new Date().toISOString().slice(0,10);
   gi('gp-numero').value='';
