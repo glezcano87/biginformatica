@@ -912,7 +912,6 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
           <div class="fgg"><label>Fecha</label><input type="date" id="gp-fecha"></div>
           <div class="fgg"><label>N&#176; Presupuesto</label><input type="text" id="gp-numero" placeholder="Ej: Presupuesto 08-06-26"></div>
           <div class="fgg"><label>Descripci&#243;n general</label><input type="text" id="gp-descripcion" placeholder="Ej: Equipos inform&#225;ticos, Servicio de soporte&#8230;"></div>
-          <div class="fgg"><label>Tipo</label><select id="gp-tipo" class="fs" style="width:100%"><option value="Servicio">Servicio</option><option value="Producto">Producto</option><option value="Mixto">Mixto (Producto + Servicio)</option></select></div>
           <div class="fgg full">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
               <label style="margin:0">Introducci&#243;n (opcional)</label>
@@ -1539,7 +1538,6 @@ function editPres(id){
     gi('gp-numero').value = r.numero||'';
     gi('gp-cliente').value = r.cliente||'';
     gi('gp-descripcion').value = r.descripcion||'';
-    if(r.tipo) gi('gp-tipo').value = r.tipo;
     gi('gp-intro').value = localStorage.getItem('bi_intro_default')||'';
 
     // Parse items from notas
@@ -3278,8 +3276,7 @@ function setMargenGlobal(pct,btn){
 }
 
 function addGPItem(){
-  var tipoDefault = (gi('gp-tipo')&&gi('gp-tipo').value==='Producto')?'Producto':'Servicio';
-  gpItems.push({desc:'',qty:1,costo:0,margen:gpMargen,tipo:tipoDefault});
+  gpItems.push({desc:'',qty:1,costo:0,margen:gpMargen,tipo:'Servicio'});
   renderGPItems();
 }
 
@@ -3378,7 +3375,6 @@ function limpiarGPres(){
   gi('gp-fecha').value=new Date().toISOString().slice(0,10);
   gi('gp-numero').value='';
   gi('gp-descripcion').value='';
-  gi('gp-tipo').value='Servicio';
   gi('gp-intro').value=localStorage.getItem('bi_intro_default')||'';
   gi('gpPreviewWrap').style.display='none';
   renderGPItems();
@@ -3500,7 +3496,6 @@ async function guardarPresDesdeGP(){
   }).join(' | ');
   var payload={
     fecha:fecha, numero:numero, cliente:cliente,
-    tipo:gi('gp-tipo').value||'Servicio',
     descripcion:gi('gp-descripcion').value.trim()||null,
     monto:totalGs, estado:'Pendiente',
     notas:'Items: '+itemsTexto+' | Margen: '+gpMargen+'%'
