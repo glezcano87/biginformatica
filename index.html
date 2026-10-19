@@ -359,6 +359,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
     <div class="nav-s">
       <span class="nav-lbl">Gesti&#243;n</span>
       <a class="nav-a" onclick="nav('presupuestos',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Presupuestos</a>
+      <a class="nav-a" onclick="nav('entregas',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>Entregas</a>
       <a class="nav-a" onclick="nav('taller',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Taller T&#233;cnico</a>
       <a class="nav-a" onclick="nav('gastos',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Gastos Fijos</a>
     </div>
@@ -701,6 +702,70 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
     </div>
   </div>
 </div>
+
+<!-- PAGINA ENTREGAS -->
+<div class="page" id="page-entregas">
+  <div class="topbar">
+    <div><h1>Entrega de Mercader&#237;a</h1><div class="meta" id="entMeta">&#8212;</div></div>
+    <button class="btn btn-p" onclick="oEnt()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4v16m8-8H4"/></svg>
+      Nueva Entrega
+    </button>
+  </div>
+  <div class="content">
+    <div id="entSqlBanner" style="display:none;background:rgba(217,119,6,.1);border:1px solid #d97706;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px">
+      <b>&#9888;&#65039; Falta crear la tabla de entregas (se hace una sola vez).</b> Pod&#233;s imprimir la Nota de Entrega igual, pero para guardar el historial ejecut&#225; este SQL en Supabase &rarr; SQL Editor:
+      <pre id="entSql" style="white-space:pre-wrap;font-size:11px;background:rgba(0,0,0,.25);padding:10px;border-radius:8px;margin:8px 0;max-height:180px;overflow:auto"></pre>
+      <button class="btn btn-g btn-sm" onclick="copiarEntSql()">Copiar SQL</button>
+    </div>
+    <div class="srow">
+      <div class="sc"><div class="lbl">Por entregar</div><div class="val y" id="en0">0</div></div>
+      <div class="sc"><div class="lbl">Entregas parciales</div><div class="val p" id="en1">0</div></div>
+      <div class="sc"><div class="lbl">Entregados completos</div><div class="val g" id="en2">0</div></div>
+      <div class="sc"><div class="lbl">Notas emitidas</div><div class="val b" id="en3">0</div></div>
+    </div>
+    <div class="tw" style="margin-bottom:16px">
+      <div class="ttb"><b style="font-size:14px">Presupuestos aprobados pendientes de entrega</b></div>
+      <div style="overflow-x:auto"><table class="tbl-cards">
+        <thead><tr><th>N&#176;</th><th>Fecha</th><th>Cliente</th><th>Descripci&#243;n</th><th class="tr">Monto</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="tbEntPend"></tbody>
+      </table></div>
+    </div>
+    <div class="tw">
+      <div class="ttb">
+        <div class="sb"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="qEnt" placeholder="Buscar entrega, cliente, presupuesto&#8230;" oninput="rEnt()">
+        </div>
+      </div>
+      <div style="overflow-x:auto"><table class="tbl-cards">
+        <thead><tr><th>N&#176;</th><th>Fecha</th><th>Cliente</th><th>Presupuesto</th><th>Recibi&#243;</th><th>Tipo</th><th>Acciones</th></tr></thead>
+        <tbody id="tbEnt"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENTREGA -->
+<div class="ov" id="mEnt"><div class="modal">
+  <div class="mh"><h2>Nueva Entrega de Mercader&#237;a</h2><button class="ib" onclick="cm('mEnt')">&#10005;</button></div>
+  <div class="mb"><div class="fg">
+    <div class="fgg"><label>N&#176; de Entrega</label><input type="text" id="en-numero" readonly style="opacity:.7"></div>
+    <div class="fgg"><label>Fecha</label><input type="date" id="en-fecha"></div>
+    <div class="fgg full"><label>Presupuesto aprobado</label><select id="en-pres" onchange="entCargarItems()"></select></div>
+    <div class="fgg full"><label>Cliente</label><input type="text" id="en-cliente"></div>
+    <div class="fgg full">
+      <label>Equipos / art&#237;culos a entregar</label>
+      <div id="en-items"></div>
+      <button class="btn" onclick="entAgregarItem()" style="margin-top:8px;font-size:12px;padding:6px 14px;border:1px dashed var(--border);background:transparent;color:var(--text)">+ Agregar art&#237;culo</button>
+    </div>
+    <div class="fgg"><label>Recibido por</label><input type="text" id="en-recibe" placeholder="Nombre de quien recibe"></div>
+    <div class="fgg"><label>C.I. / RUC</label><input type="text" id="en-doc"></div>
+    <div class="fgg"><label>Entregado por</label><input type="text" id="en-entrega" value="Gustavo Lezcano"></div>
+    <div class="fgg"><label>Tipo de entrega</label><select id="en-completa"><option value="1">Entrega completa</option><option value="0">Entrega parcial</option></select></div>
+    <div class="fgg full"><label>Observaciones</label><textarea id="en-notas" rows="2"></textarea></div>
+  </div></div>
+  <div class="mf"><button class="btn btn-g" onclick="cm('mEnt')">Cancelar</button><button class="btn btn-g" onclick="imprimirEntregaForm()">Imprimir / PDF</button><button class="btn btn-p" id="bsEnt" onclick="sEnt()">Guardar y Imprimir</button></div>
+</div></div>
 
 <!-- MODAL ORDEN DE SERVICIO -->
 <div class="ov" id="mTaller"><div class="modal">
@@ -1713,8 +1778,8 @@ function clCfg(){localStorage.removeItem('bi_url');localStorage.removeItem('bi_k
 function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Conectado a Supabase','s');gi('cfgSt').textContent='Conectado correctamente';loadAll()}catch(e){setConn(false);toast('Error: '+e.message,'e')}}
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
-function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='usuarios'){loadUsuarios();}if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='recibo'){initRecibo();}if(p==='gpres'){initGPres();}if(p==='taller'){rT();}closeSidebar()}
-async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lCotiz(),(typeof lFE==='function'?lFE():null)]);popFjSel();popMgSel();popCtMesSel();rDash()}
+function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='usuarios'){loadUsuarios();}if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='recibo'){initRecibo();}if(p==='gpres'){initGPres();}if(p==='taller'){rT();}if(p==='entregas'){rEnt();}closeSidebar()}
+async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lEntregas(),lCotiz(),(typeof lFE==='function'?lFE():null)]);popFjSel();popMgSel();popCtMesSel();rDash()}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
 async function lP(){if(!sb)return;var r=await sb.from('presupuestos').select('*').order('fecha',{ascending:false});if(r.error){toast('Error presupuestos: '+r.error.message,'e');return}PD=r.data||[];popMF('fmP',PD);usPS();rPres()}
@@ -2275,6 +2340,202 @@ async function sv2(tbl,btnId,editing,pay,modalId,lbl){var btn=gi(btnId);btn.disa
 async function dlV(id){if(!confirm('\u00bfEliminar esta venta?'))return;await dl2('ventas',id);await lV();usV()}
 async function dlC(id){if(!confirm('\u00bfEliminar esta compra?'))return;await dl2('compras',id);await lC();usC()}
 async function dlP(id){if(!confirm('\u00bfEliminar este presupuesto?'))return;await dl2('presupuestos',id);await lP();usPS()}
+
+// ==================== MODULO ENTREGA DE MERCADERIA ====================
+var ED=[],ENT_OK=true;
+var ENT_SQL="create table if not exists public.entregas (\n  id uuid primary key default gen_random_uuid(),\n  numero text,\n  fecha date,\n  presupuesto_id uuid,\n  presupuesto_num text,\n  cliente text,\n  items jsonb,\n  recibido_por text,\n  documento text,\n  entregado_por text,\n  notas text,\n  completa boolean default true,\n  created_at timestamptz default now()\n);\nalter table public.entregas enable row level security;\n-- Copia las mismas reglas de acceso que ya tiene ordenes_servicio\ndo $$\ndeclare p record;\nbegin\n  for p in select * from pg_policies where schemaname='public' and tablename='ordenes_servicio' loop\n    execute format('drop policy if exists %I on public.entregas','ent_'||p.policyname);\n    execute format('create policy %I on public.entregas as %s for %s to %s %s %s',\n      'ent_'||p.policyname, p.permissive, p.cmd, array_to_string(p.roles,','),\n      case when p.qual is not null then 'using ('||p.qual||')' else '' end,\n      case when p.with_check is not null then 'with check ('||p.with_check||')' else '' end);\n  end loop;\nend $$;";
+function escE(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function hoyISO(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+async function lEntregas(){
+  if(!sb)return;
+  var r=await sb.from('entregas').select('*').order('fecha',{ascending:false});
+  if(r.error){ENT_OK=false;ED=[];rEnt();return}
+  ENT_OK=true;ED=r.data||[];rEnt();
+}
+function copiarEntSql(){
+  var t=ENT_SQL;
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast('SQL copiado','s')},function(){toast('No se pudo copiar, seleccionalo manualmente','e')})}
+  else toast('Seleccioná y copiá el SQL manualmente','e');
+}
+function proximoNumeroEntrega(){
+  var max=0;
+  ED.forEach(function(r){var m=(r.numero||'').match(/(\d+)$/);if(m){var n=parseInt(m[1]);if(n>max)max=n}});
+  return 'ENT-'+String(max+1).padStart(4,'0');
+}
+function entItemsDePres(p){
+  var out=[];
+  if(p&&p.notas&&p.notas.indexOf('Items:')>-1){
+    var parte=p.notas.substring(p.notas.indexOf('Items:')+6);
+    parte.split('|').forEach(function(s){
+      s=s.trim();
+      if(!s||s.indexOf('Margen')===0)return;
+      var m=s.match(/^(\d+)x\s+(.+?)(?:\s+\[(Producto|Servicio)\])?\s+=\s+(.+?)$/);
+      if(m&&m[3]!=='Servicio')out.push({desc:m[2].trim(),qty:parseInt(m[1])||1});
+    });
+  }
+  if(!out.length&&p)out.push({desc:p.descripcion||('Según presupuesto '+(p.numero||'')),qty:1});
+  return out;
+}
+function entEntregadoDe(presId){
+  var map={};
+  ED.filter(function(e){return String(e.presupuesto_id)===String(presId)}).forEach(function(e){
+    (e.items||[]).forEach(function(i){var k=(i.desc||'').toLowerCase();map[k]=(map[k]||0)+(parseInt(i.qty)||0)});
+  });
+  return map;
+}
+function entEstadoPres(p){
+  var es=ED.filter(function(e){return String(e.presupuesto_id)===String(p.id)});
+  if(!es.length)return 'Pendiente';
+  return es.some(function(e){return e.completa})?'Entregado':'Parcial';
+}
+function oEnt(presId){
+  if(!sb){toast('Conectá Supabase primero','e');return}
+  var aprob=PD.filter(function(p){return p.estado==='Aprobado'});
+  var sel=gi('en-pres');
+  sel.innerHTML='<option value="">— Seleccionar presupuesto —</option>'+aprob.map(function(p){
+    return '<option value="'+escE(p.id)+'">'+escE((p.numero||'S/N')+' · '+(p.cliente||'')+' · ₲ '+fmt(p.monto))+'</option>';
+  }).join('');
+  gi('en-numero').value=proximoNumeroEntrega();
+  gi('en-fecha').value=hoyISO();
+  gi('en-cliente').value='';gi('en-recibe').value='';gi('en-doc').value='';gi('en-notas').value='';
+  gi('en-entrega').value='Gustavo Lezcano';gi('en-completa').value='1';
+  gi('en-items').innerHTML='';
+  if(presId){sel.value=presId;entCargarItems()}else entAgregarItem();
+  gi('mEnt').classList.add('open');
+}
+function entCargarItems(){
+  var p=PD.find(function(x){return String(x.id)===String(gi('en-pres').value)});
+  gi('en-items').innerHTML='';
+  if(!p){entAgregarItem();return}
+  gi('en-cliente').value=p.cliente||'';
+  var ya=entEntregadoDe(p.id),hay=false;
+  entItemsDePres(p).forEach(function(i){
+    var rest=i.qty-(ya[i.desc.toLowerCase()]||0);
+    if(rest>0){entAgregarItem(i.desc,rest,'');hay=true}
+  });
+  if(!hay){entAgregarItem();toast('Este presupuesto ya figura entregado; agregá artículos manualmente si hace falta','e')}
+}
+function entAgregarItem(desc,qty,serie){
+  var d=document.createElement('div');
+  d.className='en-it';
+  d.style.cssText='display:grid;grid-template-columns:60px 1fr 1fr 32px;gap:6px;margin-bottom:6px';
+  d.innerHTML='<input type="number" min="1" class="en-q" value="'+(qty||1)+'" title="Cantidad">'+
+    '<input type="text" class="en-d" placeholder="Descripción del equipo" value="'+escE(desc||'')+'">'+
+    '<input type="text" class="en-s" placeholder="N° de serie (opcional)" value="'+escE(serie||'')+'">'+
+    '<button class="ib d" type="button" onclick="this.parentNode.remove()" title="Quitar">✕</button>';
+  gi('en-items').appendChild(d);
+}
+function entLeerForm(){
+  var items=[];
+  document.querySelectorAll('#en-items .en-it').forEach(function(r){
+    var desc=r.querySelector('.en-d').value.trim();
+    var qty=parseInt(r.querySelector('.en-q').value)||0;
+    if(desc&&qty>0)items.push({desc:desc,qty:qty,serie:r.querySelector('.en-s').value.trim()});
+  });
+  var p=PD.find(function(x){return String(x.id)===String(gi('en-pres').value)});
+  return {
+    numero:gi('en-numero').value,fecha:gi('en-fecha').value||hoyISO(),
+    presupuesto_id:p?p.id:null,presupuesto_num:p?(p.numero||null):null,
+    cliente:gi('en-cliente').value.trim(),items:items,
+    recibido_por:gi('en-recibe').value.trim()||null,documento:gi('en-doc').value.trim()||null,
+    entregado_por:gi('en-entrega').value.trim()||null,notas:gi('en-notas').value.trim()||null,
+    completa:gi('en-completa').value==='1'
+  };
+}
+function entValidar(d){
+  if(!d.cliente){toast('Completá el cliente','e');return false}
+  if(!d.items.length){toast('Agregá al menos un artículo a entregar','e');return false}
+  return true;
+}
+function imprimirEntregaForm(){
+  var d=entLeerForm();if(!entValidar(d))return;
+  imprimirEntrega(d);
+}
+async function sEnt(){
+  var d=entLeerForm();if(!entValidar(d))return;
+  var btn=gi('bsEnt');btn.disabled=true;btn.textContent='Guardando…';
+  var r=await sb.from('entregas').insert(d);
+  btn.disabled=false;btn.textContent='Guardar y Imprimir';
+  if(r.error){
+    ENT_OK=false;rEnt();
+    toast('No se pudo guardar el historial ('+r.error.message+'). Se imprime igual.','e');
+    imprimirEntrega(d);return;
+  }
+  toast('Entrega '+d.numero+' guardada ✓','s');
+  cm('mEnt');
+  await lEntregas();
+  imprimirEntrega(d);
+}
+function rEnt(){
+  var pe=gi('page-entregas');if(!pe)return;
+  gi('entSqlBanner').style.display=ENT_OK?'none':'block';
+  if(!ENT_OK)gi('entSql').textContent=ENT_SQL;
+  var aprob=PD.filter(function(p){return p.estado==='Aprobado'});
+  var est=aprob.map(function(p){return {p:p,e:entEstadoPres(p)}});
+  var pend=est.filter(function(x){return x.e!=='Entregado'});
+  gi('en0').textContent=est.filter(function(x){return x.e==='Pendiente'}).length;
+  gi('en1').textContent=est.filter(function(x){return x.e==='Parcial'}).length;
+  gi('en2').textContent=est.filter(function(x){return x.e==='Entregado'}).length;
+  gi('en3').textContent=ED.length;
+  gi('entMeta').textContent=ED.length+' nota'+(ED.length===1?'':'s')+' de entrega · '+pend.length+' presupuesto'+(pend.length===1?'':'s')+' por entregar';
+  var bx={Pendiente:'by',Parcial:'bp',Entregado:'bg'};
+  gi('tbEntPend').innerHTML=pend.length?pend.map(function(x){
+    var p=x.p;
+    return '<tr><td data-label="N°" style="font-weight:600;color:var(--accent2)">'+escE(p.numero||'—')+'</td>'+
+      '<td data-label="Fecha" class="mn">'+fd(p.fecha)+'</td>'+
+      '<td data-label="Cliente">'+escE(p.cliente||'—')+'</td>'+
+      '<td data-label="Descripción" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escE(p.descripcion||'—')+'</td>'+
+      '<td data-label="Monto" class="mn tr" style="white-space:nowrap">₲ '+fmt(p.monto)+'</td>'+
+      '<td data-label="Estado"><span class="bx '+bx[x.e]+'">'+x.e+'</span></td>'+
+      '<td data-label="Acciones"><button class="btn btn-p btn-sm" data-id="'+escE(p.id)+'" onclick="oEnt(this.dataset.id)">Entregar</button></td></tr>';
+  }).join(''):er(7,'No hay presupuestos aprobados pendientes de entrega.');
+  var q=(gi('qEnt').value||'').toLowerCase();
+  var rows=ED.filter(function(r){return !q||[r.numero,r.cliente,r.presupuesto_num,r.recibido_por].filter(Boolean).join(' ').toLowerCase().indexOf(q)>-1});
+  gi('tbEnt').innerHTML=rows.length?rows.map(function(r){
+    return '<tr><td data-label="N°" style="font-weight:600;color:var(--accent2)">'+escE(r.numero||'—')+'</td>'+
+      '<td data-label="Fecha" class="mn">'+fd(r.fecha)+'</td>'+
+      '<td data-label="Cliente">'+escE(r.cliente||'—')+'</td>'+
+      '<td data-label="Presupuesto" class="mn">'+escE(r.presupuesto_num||'—')+'</td>'+
+      '<td data-label="Recibió">'+escE(r.recibido_por||'—')+'</td>'+
+      '<td data-label="Tipo"><span class="bx '+(r.completa?'bg':'bp')+'">'+(r.completa?'Completa':'Parcial')+'</span></td>'+
+      '<td data-label="Acciones"><div class="acts"><button class="ib" data-id="'+escE(r.id)+'" onclick="reimprimirEnt(this.dataset.id)" title="Imprimir / PDF"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg></button>'+
+      '<button class="ib d" data-id="'+escE(r.id)+'" onclick="dlEnt(this.dataset.id)" title="Eliminar">'+it()+'</button></div></td></tr>';
+  }).join(''):er(7,ENT_OK?'Todavía no hay entregas registradas.':'Creá la tabla con el SQL de arriba para ver el historial.');
+}
+function reimprimirEnt(id){var r=ED.find(function(x){return String(x.id)===String(id)});if(r)imprimirEntrega(r)}
+async function dlEnt(id){if(!confirm('¿Eliminar esta nota de entrega?'))return;await dl2('entregas',id);await lEntregas()}
+function htmlEntrega(d){
+  var logo='https://raw.githubusercontent.com/glezcano87/biginformatica/main/logo.png';
+  var f=d.fecha?fd(d.fecha):'';
+  var filas=(d.items||[]).map(function(i,n){
+    return '<tr><td style="text-align:center;font-weight:700;color:#1B6B8A;padding:9px 13px;'+(n%2?'background:#f4f8fa':'')+'">'+escE(i.qty)+'</td>'+
+      '<td style="padding:9px 13px;'+(n%2?'background:#f4f8fa':'')+'">'+escE(i.desc)+'</td>'+
+      '<td style="padding:9px 13px;font-family:monospace;'+(n%2?'background:#f4f8fa':'')+'">'+escE(i.serie||'—')+'</td></tr>';
+  }).join('');
+  var titulo='Entrega_'+(d.cliente||'').replace(/[\\\/:*?"<>|]/g,'').trim().replace(/\s+/g,'_')+(d.presupuesto_num?'_Pres'+d.presupuesto_num:'');
+  var px='-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact';
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+escE(titulo)+'</title><style>'+
+    '*{box-sizing:border-box;'+px+'}body{font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;margin:0;padding:28px 34px;font-size:13px}'+
+    '@page{size:A4;margin:12mm}table{border-collapse:collapse;width:100%}'+
+    '.hd{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #8DC63F;padding-bottom:14px;margin-bottom:18px}'+
+    '.bd{background:#1B6B8A;color:#fff;font-weight:700;letter-spacing:1px;padding:7px 16px;border-radius:6px;font-size:13px;display:inline-block}'+
+    '.box{background:#eef6f9;border-left:4px solid #1B6B8A;border-radius:6px;padding:12px 16px;margin-bottom:18px;line-height:1.7}'+
+    'th{background:#1B6B8A;color:#fff;padding:10px 13px;text-align:left;font-size:12px}'+
+    '.sg{display:flex;justify-content:space-between;gap:40px;margin-top:70px}.sg div{flex:1;border-top:1px solid #333;padding-top:6px;text-align:center;font-size:12px;line-height:1.6}'+
+    '</style></head><body>'+
+    '<div class="hd"><div><img src="'+logo+'" style="height:58px" alt="Big Informática"></div>'+
+    '<div style="text-align:right"><span class="bd">NOTA DE ENTREGA</span><div style="margin-top:8px;font-size:12px;color:#555">N° <b>'+escE(d.numero||'')+'</b> · Fecha: <b>'+f+'</b></div></div></div>'+
+    '<div class="box"><b style="color:#1B6B8A">ENTREGADO A:</b> '+escE(d.cliente||'')+
+    (d.presupuesto_num?'<br><b style="color:#1B6B8A">REF. PRESUPUESTO:</b> N° '+escE(d.presupuesto_num):'')+
+    '<br><b style="color:#1B6B8A">TIPO DE ENTREGA:</b> '+(d.completa===false?'Parcial':'Completa')+'</div>'+
+    '<table><thead><tr><th style="width:70px;text-align:center">Cant.</th><th>Descripción</th><th style="width:200px">N° de serie</th></tr></thead><tbody>'+filas+'</tbody></table>'+
+    (d.notas?'<p style="margin-top:14px"><b>Observaciones:</b> '+escE(d.notas)+'</p>':'')+
+    '<p style="margin-top:22px;font-size:12px;color:#444">El cliente declara haber recibido la mercadería detallada en conformidad y en buen estado de funcionamiento. Este documento no reemplaza la factura ni la nota de remisión.</p>'+
+    '<div class="sg"><div><b>Entregado por</b><br>'+escE(d.entregado_por||'Gustavo Lezcano')+'<br>Big Informática</div>'+
+    '<div><b>Recibí conforme</b><br>'+escE(d.recibido_por||'')+'<br>C.I./RUC: '+escE(d.documento||'')+'</div></div>'+
+    '</body></html>';
+}
+function imprimirEntrega(d){abrirEImprimirHtml(htmlEntrega(d))}
 
 // ==================== MODULO TALLER TECNICO ====================
 var MODELOS_POR_MARCA={
