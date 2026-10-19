@@ -946,6 +946,16 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
           <button class="gp-mb" onclick="setMargenGlobal(40,this)">40%</button>
           <button class="gp-mb" onclick="setMargenGlobal(45,this)">45%</button>
           <button class="gp-mb" onclick="setMargenGlobal(50,this)">50%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(60,this)">60%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(70,this)">70%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(80,this)">80%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(90,this)">90%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(100,this)">100%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(110,this)">110%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(120,this)">120%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(130,this)">130%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(140,this)">140%</button>
+          <button class="gp-mb" onclick="setMargenGlobal(150,this)">150%</button>
         </div>
         <div style="font-size:12px;color:var(--muted)">El margen global se aplica a todos los &#237;tems. Pod&#233;s ajustar cada &#237;tem individualmente.</div>
       </div>
@@ -3315,7 +3325,7 @@ function renderGPItems(){
       '<input type="text" class="gpi-qty" data-idx="'+i+'" placeholder="1" value="'+it.qty+'" style="text-align:center;width:100%">'+
       '<input type="text" class="gpi-costo" data-idx="'+i+'" placeholder="0" value="'+( it.costo>0 ? Math.round(it.costo).toLocaleString("es-PY") : "")+'" style="text-align:right">'+ 
       '<select class="gpi-margen" data-idx="'+i+'">'+
-        [10,15,20,25,30,35,40,45,50].map(function(p){return '<option value="'+p+'"'+(it.margen===p?' selected':'')+'>'+p+'%</option>';}).join('')+
+        [10,15,20,25,30,35,40,45,50,60,70,80,90,100,110,120,130,140,150].map(function(p){return '<option value="'+p+'"'+(it.margen===p?' selected':'')+'>'+p+'%</option>';}).join('')+
       '</select>'+
       '<div class="calc-val gpi-result" data-idx="'+i+'">'+(pventa>0?'₲ '+fmt(pventa):'—')+'</div>'+
       '<button class="rem-btn" data-idx="'+i+'">−</button>'+
