@@ -912,6 +912,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
           <div class="fgg"><label>Fecha</label><input type="date" id="gp-fecha"></div>
           <div class="fgg"><label>N&#176; Presupuesto</label><input type="text" id="gp-numero" placeholder="Ej: Presupuesto 08-06-26"></div>
           <div class="fgg"><label>Descripci&#243;n general</label><input type="text" id="gp-descripcion" placeholder="Ej: Equipos inform&#225;ticos, Servicio de soporte&#8230;"></div>
+          <div class="fgg"><label>Tipo</label><select id="gp-tipo" class="fs" style="width:100%"><option value="Servicio">Servicio</option><option value="Producto">Producto</option><option value="Mixto">Mixto (Producto + Servicio)</option></select></div>
           <div class="fgg full">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
               <label style="margin:0">Introducci&#243;n (opcional)</label>
@@ -998,36 +999,6 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         </div>
       </div>
 
-          <!-- LIBRO DIARIO -->
-      <div class="db-panel" style="margin-top:16px">
-        <div class="db-panel-h"><span class="title">&#128218; Libro Diario — Ventas y Compras</span></div>
-        <div class="db-panel-body">
-          <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Registro completo de ventas y compras. Ideal para declaraciones fiscales.</p>
-          <div class="fg" style="margin-bottom:12px">
-            <div class="fgg"><label>Período</label>
-              <select class="fs" id="rpDiarioPer" onchange="popRpDiario()">
-                <option value="mes">Mes</option><option value="bimestre">Bimestre</option>
-                <option value="trimestre">Trimestre</option><option value="semestre">Semestre</option>
-                <option value="anual">Anual</option>
-              </select>
-            </div>
-            <div class="fgg" id="rpDiarioMesWrap"><label>Mes</label>
-              <select class="fs" id="rpDiarioMes"></select>
-            </div>
-            <div class="fgg"><label>Incluir</label>
-              <select class="fs" id="rpDiarioTipo">
-                <option value="ambos">Ventas y Compras</option>
-                <option value="ventas">Solo Ventas</option>
-                <option value="compras">Solo Compras</option>
-              </select>
-            </div>
-          </div>
-          <button class="btn btn-p" onclick="generarPDF('diario')">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Generar Libro Diario
-          </button>
-        </div>
-      </div>
 </div>
   </div>
 </div>
@@ -1569,6 +1540,7 @@ function editPres(id){
     gi('gp-numero').value = r.numero||'';
     gi('gp-cliente').value = r.cliente||'';
     gi('gp-descripcion').value = r.descripcion||'';
+    if(r.tipo) gi('gp-tipo').value = r.tipo;
     gi('gp-intro').value = localStorage.getItem('bi_intro_default')||'';
 
     // Parse items from notas
@@ -3272,8 +3244,10 @@ function setGPMoneda(moneda, btn){
 }
 
 function gpPrecioVenta(it){
-  // costo en la moneda seleccionada / (1 - margen)
+  // margen < 100: precio = costo / (1 - margen/100)  [margen sobre venta]
+  // margen >= 100: precio = costo * (1 + margen/100) [markup sobre costo, evita div/0]
   if(!it.costo||it.costo<=0) return 0;
+  if(it.margen>=100) return Math.round(it.costo * it.qty * (1 + it.margen/100));
   return Math.round(it.costo * it.qty / (1 - it.margen/100));
 }
 
@@ -3319,7 +3293,7 @@ function parseFmt(s){
 function renderGPItems(){
   var cont=gi('gpItems');
   cont.innerHTML=gpItems.map(function(it,i){
-    var pventa=it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0;
+    var pventa=gpPrecioVenta(it);
     return '<div class="gp-item-row" data-idx="'+i+'">'+
       '<input type="text" class="gpi-desc" data-idx="'+i+'" placeholder="Descripción del ítem" value="'+it.desc.replace(/"/g,'&quot;')+'">'+
       '<input type="text" class="gpi-qty" data-idx="'+i+'" placeholder="1" value="'+it.qty+'" style="text-align:center;width:100%">'+
@@ -3371,7 +3345,7 @@ function renderGPItems(){
 
 function updateGPRow(i){
   var it=gpItems[i];
-  var pventa=it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0;
+  var pventa=gpPrecioVenta(it);
   var res=document.querySelector('.gpi-result[data-idx="'+i+'"]');
   if(res) res.textContent=pventa>0?'₲ '+fmt(pventa):'—';
   calcGPres();
@@ -3394,6 +3368,7 @@ function limpiarGPres(){
   gi('gp-fecha').value=new Date().toISOString().slice(0,10);
   gi('gp-numero').value='';
   gi('gp-descripcion').value='';
+  gi('gp-tipo').value='Servicio';
   gi('gp-intro').value=localStorage.getItem('bi_intro_default')||'';
   gi('gpPreviewWrap').style.display='none';
   renderGPItems();
@@ -3510,11 +3485,12 @@ async function guardarPresDesdeGP(){
   var totalVenta=items.reduce(function(s,it){return s+gpPrecioVenta(it);},0);
   var totalGs=gpTotalGs(totalVenta);
   var itemsTexto=items.map(function(it){
-    var pv=it.costo>0?Math.round(it.costo*it.qty/(1-it.margen/100)):0;
+    var pv=gpPrecioVenta(it);
     return it.qty+'x '+it.desc+' = Gs. '+fmt(pv)+'.-';
   }).join(' | ');
   var payload={
     fecha:fecha, numero:numero, cliente:cliente,
+    tipo:gi('gp-tipo').value||'Servicio',
     descripcion:gi('gp-descripcion').value.trim()||null,
     monto:totalGs, estado:'Pendiente',
     notas:'Items: '+itemsTexto+' | Margen: '+gpMargen+'%'
