@@ -3411,11 +3411,11 @@ function verPrevGPres(){
     '.stl{font-size:11px;font-weight:800;color:#1B6B8A;text-transform:uppercase;letter-spacing:.6px;border-bottom:2px solid #8DC63F;padding-bottom:5px;margin-bottom:10px}'+
     'table{width:100%;border-collapse:collapse;margin-bottom:14px}'+
     'thead th{background:#1B6B8A;color:#fff;padding:9px 13px;font-size:12px;font-weight:700;text-align:left}'+
-    'thead th:last-child{text-align:right}'+
+    'thead th:last-child{text-align:right;white-space:nowrap}'+
     'thead th:first-child{text-align:center;width:70px}'+
     'tbody td{padding:9px 13px;border-bottom:1px solid #e4f2e4;font-size:13px}'+
     'tbody td:first-child{text-align:center;font-weight:700;color:#1B6B8A}'+
-    'tbody td:last-child{text-align:right;font-weight:700;color:#1B6B8A;font-variant-numeric:tabular-nums}'+
+    'tbody td:last-child{text-align:right;font-weight:700;color:#1B6B8A;font-variant-numeric:tabular-nums;white-space:nowrap}'+
     'tbody tr:nth-child(even){background:#f6fbf2}'+
     '.tot{background:linear-gradient(90deg,#1B6B8A,#8DC63F);border-radius:8px;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}'+
     '.tot-l{color:rgba(255,255,255,.88);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}'+
@@ -3469,10 +3469,21 @@ function verPrevGPres(){
   var iframe = gi('gpPreviewBody');
   var doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
-  doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0">'+html+'</body></html>');
+  doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+gpNombreArchivo().replace(/&/g,'&amp;')+'</title></head><body style="margin:0;padding:0">'+html+'</body></html>');
   doc.close();
   gi('gpPreviewWrap').style.display='block';
   gi('gpPreviewWrap').scrollIntoView({behavior:'smooth'});
+}
+
+// Nombre sugerido al guardar el PDF: Presupuesto_<descripción general>_<cliente>
+// (el navegador usa el <title> del documento como nombre de archivo)
+function gpNombreArchivo(){
+  function limpiar(s){
+    return String(s||'').replace(/[\\\/:*?"<>|]/g,'').replace(/\s+/g,' ').trim();
+  }
+  var desc=limpiar(gi('gp-descripcion').value);
+  var cli=limpiar(gi('gp-cliente').value);
+  return ['Presupuesto',desc,cli].filter(Boolean).join('_').slice(0,120);
 }
 
 function formatDateLong(d){
