@@ -958,7 +958,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
           <button class="gp-mb" onclick="setMargenGlobal(140,this)">140%</button>
           <button class="gp-mb" onclick="setMargenGlobal(150,this)">150%</button>
         </div>
-        <div style="font-size:12px;color:var(--muted)">El margen global se aplica a todos los &#237;tems. Pod&#233;s ajustar cada &#237;tem individualmente.</div>
+        <div style="font-size:12px;color:var(--muted)">Ganancia calculada sobre el costo (ej: 20% → costo ×1.20 &bull; 100% → costo ×2). Se aplica a todos los &#237;tems; pod&#233;s ajustar cada uno individualmente.</div>
       </div>
 
       <!-- ITEMS -->
@@ -1562,7 +1562,7 @@ function editPres(id){
           var margen = gpMargen||20;
           var margenMatch = notas.match(/Margen:\s*(\d+)%/);
           if(margenMatch) margen = parseInt(margenMatch[1]);
-          var costo = Math.round(pventa * (1 - margen/100) / qty);
+          var costo = Math.round(pventa / (1 + margen/100) / qty);
           gpItems.push({desc:desc, qty:qty, costo:costo, margen:margen});
         } else if(part){
           gpItems.push({desc:part, qty:1, costo:0, margen:gpMargen||20});
@@ -3244,11 +3244,10 @@ function setGPMoneda(moneda, btn){
 }
 
 function gpPrecioVenta(it){
-  // margen < 100: precio = costo / (1 - margen/100)  [margen sobre venta]
-  // margen >= 100: precio = costo * (1 + margen/100) [markup sobre costo, evita div/0]
+  // Markup sobre costo: precio = costo * (1 + margen/100)
+  // 20% → ×1.20 | 50% → ×1.50 | 100% → ×2.00 | 150% → ×2.50
   if(!it.costo||it.costo<=0) return 0;
-  if(it.margen>=100) return Math.round(it.costo * it.qty * (1 + it.margen/100));
-  return Math.round(it.costo * it.qty / (1 - it.margen/100));
+  return Math.round(it.costo * it.qty * (1 + it.margen/100));
 }
 
 function gpSimboloMoneda(){
