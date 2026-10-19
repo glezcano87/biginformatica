@@ -912,7 +912,13 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
           <div class="fgg"><label>Fecha</label><input type="date" id="gp-fecha"></div>
           <div class="fgg"><label>N&#176; Presupuesto</label><input type="text" id="gp-numero" placeholder="Ej: Presupuesto 08-06-26"></div>
           <div class="fgg"><label>Descripci&#243;n general</label><input type="text" id="gp-descripcion" placeholder="Ej: Equipos inform&#225;ticos, Servicio de soporte&#8230;"></div>
-          <div class="fgg full"><label>Introducci&#243;n (opcional)</label><textarea id="gp-intro" placeholder="Ej: Nos complace presentarle el presupuesto de impresoras Epson EcoTank." style="min-height:52px" oninput="calcGPres()"></textarea></div>
+          <div class="fgg full">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <label style="margin:0">Introducci&#243;n (opcional)</label>
+              <button onclick="guardarIntroDefault()" style="font-size:11px;padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer" title="Guardar este texto como predeterminado">&#128190; Guardar como predeterminado</button>
+            </div>
+            <textarea id="gp-intro" placeholder="Ej: Nos complace presentarle el presupuesto de impresoras Epson EcoTank." style="min-height:52px" oninput="calcGPres()"></textarea>
+          </div>
           <div class="fgg"><label>Moneda del Presupuesto</label>
             <div class="moneda-btns">
               <button class="moneda-btn active" id="gpMonedaGS" onclick="setGPMoneda('GS',this)">&#8370; Guaran&#237;es</button>
@@ -1553,7 +1559,7 @@ function editPres(id){
     gi('gp-numero').value = r.numero||'';
     gi('gp-cliente').value = r.cliente||'';
     gi('gp-descripcion').value = r.descripcion||'';
-    gi('gp-intro').value = '';
+    gi('gp-intro').value = localStorage.getItem('bi_intro_default')||'';
 
     // Parse items from notas
     gpItems = [];
@@ -3225,10 +3231,21 @@ var gpMargen=20;
 function initGPres(){
   if(!gi('gp-fecha').value) gi('gp-fecha').value=new Date().toISOString().slice(0,10);
   gpMoneda='GS';gi('gpMonedaGS').classList.add('active');gi('gpMonedaUSD').classList.remove('active');gi('gpCotizWrap').style.display='none';
+  // Cargar intro predeterminada si el campo está vacío
+  var introEl = gi('gp-intro');
+  if(!introEl.value){
+    var introDefault = localStorage.getItem('bi_intro_default')||'';
+    introEl.value = introDefault;
+  }
   if(!gpItems.length){
     gpItems=[{desc:'',qty:1,costo:0,margen:gpMargen}];
     renderGPItems();
   }
+}
+function guardarIntroDefault(){
+  var txt = gi('gp-intro').value.trim();
+  localStorage.setItem('bi_intro_default', txt);
+  toast('Introducción guardada como predeterminada ✓','s');
 }
 
 var gpMoneda = 'GS'; // GS o USD
@@ -3367,7 +3384,7 @@ function limpiarGPres(){
   gi('gp-fecha').value=new Date().toISOString().slice(0,10);
   gi('gp-numero').value='';
   gi('gp-descripcion').value='';
-  gi('gp-intro').value='';
+  gi('gp-intro').value=localStorage.getItem('bi_intro_default')||'';
   gi('gpPreviewWrap').style.display='none';
   renderGPItems();
   calcGPres();
