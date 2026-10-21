@@ -4112,13 +4112,14 @@ var gpMargen=20;
 
 function proximoNumeroPres(){
   var max=0;
-  PD.forEach(function(r){var m=String(r.numero||'').trim().match(/^(\d{3,5})$/);if(m){var n=parseInt(m[1],10);if(n>max)max=n}});
+  PD.forEach(function(r){var m=String(r.numero||'').trim().match(/^([01]\d{3})$/);if(m){var n=parseInt(m[1],10);if(n>max)max=n}});
   var loc=parseInt(localStorage.getItem('bi_ult_pres'),10)||0;
-  if(loc>max&&loc<100000)max=loc;
+  if(loc>max&&loc<2000)max=loc;
+  if(max<864)max=864;
   return String(max+1).padStart(4,'0');
 }
 function registrarNumeroPres(num){
-  var m=String(num||'').trim().match(/^(\d{3,5})$/);
+  var m=String(num||'').trim().match(/^([01]\d{3})$/);
   if(!m)return;
   var n=parseInt(m[1],10);
   try{if(n>(parseInt(localStorage.getItem('bi_ult_pres'),10)||0))localStorage.setItem('bi_ult_pres',String(n))}catch(e){}
@@ -5007,8 +5008,9 @@ function ccParsearJson(data){
       if(/\b(usd|d[oó]lar(es)?|dolar(es)?)\b/i.test(txt)){
         var c=NaN,v=NaN;
         Object.keys(o).forEach(function(k){
-          if(/venta|sale|sell|selling/i.test(k))v=ccNum(o[k]);
-          else if(/compra|purchase|buy|buying/i.test(k))c=ccNum(o[k]);
+          if(/arbitr|trend|fraction|updated/i.test(k))return;
+          if(/venta|sale|sell|selling/i.test(k)){if(!isFinite(v)||!(v>=4000))v=ccNum(o[k])}
+          else if(/compra|purchase|buy|buying/i.test(k)){if(!isFinite(c)||!(c>=4000))c=ccNum(o[k])}
         });
         if(ccValido(c,v)){hallado={compra:c,venta:v};return}
       }
@@ -5026,19 +5028,24 @@ function ccParsearHtml(html){
   }
   return null;
 }
+var ccUltimoError='';
 async function ccObtener(){
-  for(var i=0;i<CC_FUENTES.length;i++){
-    var f=CC_FUENTES[i];
-    try{
-      var ctl=new AbortController();var to=setTimeout(function(){ctl.abort()},8000);
-      var r=await fetch(f.url,{signal:ctl.signal,cache:'no-store'});
-      clearTimeout(to);
-      if(!r.ok)continue;
-      var res;
-      if(f.tipo==='json'){var t=await r.text();try{res=ccParsearJson(JSON.parse(t))}catch(e){res=ccParsearHtml(t)}}
-      else res=ccParsearHtml(await r.text());
-      if(res)return res;
-    }catch(e){}
+  ccUltimoError='';
+  for(var intento=0;intento<3;intento++){
+    for(var i=0;i<CC_FUENTES.length;i++){
+      var f=CC_FUENTES[i];
+      try{
+        var ctl=new AbortController();var to=setTimeout(function(){ctl.abort()},8000);
+        var r=await fetch(f.url,{signal:ctl.signal});
+        clearTimeout(to);
+        if(!r.ok){ccUltimoError='respuesta '+r.status;continue}
+        var t=await r.text(),res=null;
+        try{res=ccParsearJson(JSON.parse(t))}catch(e){res=ccParsearHtml(t)}
+        if(res)return res;
+        ccUltimoError='formato no reconocido';
+      }catch(e){ccUltimoError=(e&&e.name==='AbortError')?'tiempo agotado':'bloqueado por el navegador ('+(e&&e.message||e)+')'}
+    }
+    await new Promise(function(ok){setTimeout(ok,700)});
   }
   return null;
 }
@@ -5053,7 +5060,7 @@ async function sincronizarCotizChaco(manual){
   if(manual&&btn){btn.disabled=false;btn.textContent='Sincronizar Cambios Chaco'}
   if(!res){
     if(manual){
-      toast('No se pudo consultar Cambios Chaco ahora. Se mantiene ₲ '+cotizacion.toLocaleString('es-PY')+'. Podés cargarla con "Manual".','e');
+      toast('No se pudo consultar Cambios Chaco ('+ccUltimoError+'). Se mantiene ₲ '+cotizacion.toLocaleString('es-PY')+'. Podés cargarla con "Manual".','e');
     }
     return;
   }
