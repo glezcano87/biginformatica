@@ -405,7 +405,8 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
   <div class="cotiz-item">
     <span>&#128178; USD / &#8370;</span>
     <strong id="cotizValor">7.800</strong>
-    <button class="cotiz-edit" onclick="editCotiz()">Actualizar cotizaci&#243;n</button>
+    <button class="cotiz-edit" onclick="sincronizarCotizChaco(true)" title="Trae la cotizaci\u00f3n actual de Cambios Chaco">Sincronizar Cambios Chaco</button>
+    <button class="cotiz-edit" onclick="editCotiz()" title="Cargar la cotizaci\u00f3n a mano">Manual</button>
   </div>
   <div style="margin-left:auto;font-size:11px;color:var(--muted)" id="cotizFecha"></div>
 </div>
@@ -1134,7 +1135,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
         <div class="fg" style="margin-bottom:0">
           <div class="fgg"><label>Cliente / Empresa *</label><input type="text" id="gp-cliente" placeholder="Ej: Genetyx S.A." oninput="calcGPres()"></div>
           <div class="fgg"><label>Fecha</label><input type="date" id="gp-fecha"></div>
-          <div class="fgg"><label>N&#176; Presupuesto</label><input type="text" id="gp-numero" placeholder="Ej: Presupuesto 08-06-26"></div>
+          <div class="fgg"><label>N&#176; Presupuesto</label><input type="text" id="gp-numero" placeholder="Autom\u00e1tico (ej: 0865)" title="Se numera solo, correlativo. Podes editarlo si hace falta."></div>
           <div class="fgg"><label>Descripci&#243;n general</label><input type="text" id="gp-descripcion" placeholder="Ej: Equipos inform&#225;ticos, Servicio de soporte&#8230;"></div>
           <div class="fgg full">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
@@ -1779,7 +1780,7 @@ function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Cone
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
 function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='usuarios'){loadUsuarios();}if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='recibo'){initRecibo();}if(p==='gpres'){initGPres();}if(p==='taller'){rT();}if(p==='entregas'){rEnt();}closeSidebar()}
-async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lEntregas(),lCotiz(),(typeof lFE==='function'?lFE():null)]);popFjSel();popMgSel();popCtMesSel();rDash()}
+async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lEntregas(),lCotiz(),(typeof lFE==='function'?lFE():null)]);popFjSel();popMgSel();popCtMesSel();rDash();sincronizarCotizChaco(false)}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
 async function lP(){if(!sb)return;var r=await sb.from('presupuestos').select('*').order('fecha',{ascending:false});if(r.error){toast('Error presupuestos: '+r.error.message,'e');return}PD=r.data||[];popMF('fmP',PD);usPS();rPres()}
@@ -4109,7 +4110,21 @@ function rPendientes(){
 var gpItems=[];
 var gpMargen=20;
 
+function proximoNumeroPres(){
+  var max=0;
+  PD.forEach(function(r){var m=String(r.numero||'').trim().match(/^(\d{3,5})$/);if(m){var n=parseInt(m[1],10);if(n>max)max=n}});
+  var loc=parseInt(localStorage.getItem('bi_ult_pres'),10)||0;
+  if(loc>max&&loc<100000)max=loc;
+  return String(max+1).padStart(4,'0');
+}
+function registrarNumeroPres(num){
+  var m=String(num||'').trim().match(/^(\d{3,5})$/);
+  if(!m)return;
+  var n=parseInt(m[1],10);
+  try{if(n>(parseInt(localStorage.getItem('bi_ult_pres'),10)||0))localStorage.setItem('bi_ult_pres',String(n))}catch(e){}
+}
 function initGPres(){
+  if(!gi('gp-numero').value&&!eP)gi('gp-numero').value=proximoNumeroPres();
   if(!gi('gp-fecha').value) gi('gp-fecha').value=new Date().toISOString().slice(0,10);
   gpMoneda='GS';gi('gpMonedaGS').classList.add('active');gi('gpMonedaUSD').classList.remove('active');gi('gpCotizWrap').style.display='none';
   // Cargar intro predeterminada si el campo está vacío
@@ -4275,7 +4290,8 @@ function limpiarGPres(){
   gpItems=[{desc:'',qty:1,costo:0,margen:gpMargen,tipo:'Producto'}];
   gi('gp-cliente').value='';
   gi('gp-fecha').value=new Date().toISOString().slice(0,10);
-  gi('gp-numero').value='';
+  eP=null;
+  gi('gp-numero').value=proximoNumeroPres();
   gi('gp-descripcion').value='';
   gi('gp-intro').value=localStorage.getItem('bi_intro_default')||'';
   gi('gpPreviewWrap').style.display='none';
@@ -4290,6 +4306,7 @@ function verPrevGPres(){
   if(!items.length){toast('Agrega al menos un \u00edtem con descripci\u00f3n y costo','e');return;}
   var fecha=gi('gp-fecha').value;
   var numero=gi('gp-numero').value.trim()||('Presupuesto '+fd(fecha));
+  registrarNumeroPres(numero);
   var descGen=gi('gp-descripcion').value.trim();
   var intro=gi('gp-intro').value.trim()||'Nos complace presentarle el presupuesto solicitado.';
   var totalVenta=items.reduce(function(s,it){return s+gpPrecioVenta(it);},0);
@@ -4437,7 +4454,7 @@ async function guardarPresDesdeGP(){
   } else {
     var ri=await sb.from('presupuestos').insert(payload);
     saveError=ri.error;
-    if(!saveError) toast('Presupuesto guardado \u2713','s');
+    if(!saveError){ toast('Presupuesto guardado \u2713','s'); registrarNumeroPres(numero); }
   }
   if(saveError){toast('Error: '+saveError.message,'e');return;}
   await lP();
@@ -4966,6 +4983,93 @@ var modalMonedas = {};
 function initCotiz(){
   gi('cotizValor').textContent = cotizacion.toLocaleString('es-PY');
   if(cotizFechaStr) gi('cotizFecha').textContent = 'Actualizado: '+cotizFechaStr;
+}
+
+// ==================== COTIZACION CAMBIOS CHACO ====================
+var CC_FUENTES=[
+  {url:'https://www.cambioschaco.com.py/api/branch_office/1/exchange',tipo:'json'}
+];
+function ccNum(v){
+  if(typeof v==='number')return v;
+  if(typeof v!=='string')return NaN;
+  var t=v.trim();
+  if(/^\d{1,2}[.,]\d{3}$/.test(t))t=t.replace(/[.,]/,'');
+  else t=t.replace(',','.');
+  return parseFloat(t);
+}
+function ccValido(c,v){return isFinite(c)&&isFinite(v)&&c>=4000&&v<=12000&&v>=c&&(v-c)<600}
+function ccParsearJson(data){
+  var hallado=null;
+  (function walk(o){
+    if(hallado||!o||typeof o!=='object')return;
+    if(!Array.isArray(o)){
+      var txt=Object.keys(o).map(function(k){return typeof o[k]==='string'?o[k]:''}).join(' ');
+      if(/\b(usd|d[oó]lar(es)?|dolar(es)?)\b/i.test(txt)){
+        var c=NaN,v=NaN;
+        Object.keys(o).forEach(function(k){
+          if(/venta|sale|sell|selling/i.test(k))v=ccNum(o[k]);
+          else if(/compra|purchase|buy|buying/i.test(k))c=ccNum(o[k]);
+        });
+        if(ccValido(c,v)){hallado={compra:c,venta:v};return}
+      }
+    }
+    Object.keys(o).forEach(function(k){walk(o[k])});
+  })(data);
+  return hallado;
+}
+function ccParsearHtml(html){
+  var txt=String(html).replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ');
+  var re=/D[oó]lar(?:es)?(?:\s+Americano)?[^\d]{0,60}?(\d{1,2}[.,]\d{3})[^\d]{1,40}?(\d{1,2}[.,]\d{3})/gi,m;
+  while((m=re.exec(txt))){
+    var c=ccNum(m[1]),v=ccNum(m[2]);
+    if(ccValido(c,v))return {compra:c,venta:v};
+  }
+  return null;
+}
+async function ccObtener(){
+  for(var i=0;i<CC_FUENTES.length;i++){
+    var f=CC_FUENTES[i];
+    try{
+      var ctl=new AbortController();var to=setTimeout(function(){ctl.abort()},8000);
+      var r=await fetch(f.url,{signal:ctl.signal,cache:'no-store'});
+      clearTimeout(to);
+      if(!r.ok)continue;
+      var res;
+      if(f.tipo==='json'){var t=await r.text();try{res=ccParsearJson(JSON.parse(t))}catch(e){res=ccParsearHtml(t)}}
+      else res=ccParsearHtml(await r.text());
+      if(res)return res;
+    }catch(e){}
+  }
+  return null;
+}
+async function sincronizarCotizChaco(manual){
+  if(!manual){
+    var ult=parseInt(localStorage.getItem('bi_cotiz_cc_ts'),10)||0;
+    if(Date.now()-ult<30*60*1000)return;
+  }
+  var btn=document.querySelector('.cotiz-item .cotiz-edit');
+  if(manual&&btn){btn.disabled=true;btn.textContent='Consultando…'}
+  var res=await ccObtener();
+  if(manual&&btn){btn.disabled=false;btn.textContent='Sincronizar Cambios Chaco'}
+  if(!res){
+    if(manual){
+      toast('No se pudo consultar Cambios Chaco ahora. Se mantiene ₲ '+cotizacion.toLocaleString('es-PY')+'. Podés cargarla con "Manual".','e');
+    }
+    return;
+  }
+  try{localStorage.setItem('bi_cotiz_cc_ts',String(Date.now()))}catch(e){}
+  cotizacion=res.venta;
+  var d=new Date();
+  var ahora=d.toLocaleDateString('es-PY')+' '+d.toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'});
+  cotizFechaStr=ahora;
+  try{localStorage.setItem('bi_cotiz',cotizacion);localStorage.setItem('bi_cotiz_fecha',ahora)}catch(e){}
+  gi('cotizValor').textContent=cotizacion.toLocaleString('es-PY');
+  gi('cotizFecha').textContent='Cambios Chaco · compra '+res.compra.toLocaleString('es-PY')+' / venta '+res.venta.toLocaleString('es-PY')+' · '+ahora;
+  if(sb){
+    var r=await sb.from('configuracion').upsert({id:1,cotizacion_usd:cotizacion,updated_at:d.toISOString()});
+    if(r.error&&manual){toast('Se actualizó en este dispositivo, pero no se pudo guardar: '+r.error.message,'e');return}
+  }
+  if(manual)toast('Cotización Cambios Chaco: venta ₲ '+res.venta.toLocaleString('es-PY')+' (compra '+res.compra.toLocaleString('es-PY')+') ✓','s');
 }
 
 async function lCotiz(){
