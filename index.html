@@ -746,6 +746,21 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
   </div>
 </div>
 
+<!-- MODAL MODIFICACION RAPIDA TALLER -->
+<div class="ov" id="mTq"><div class="modal">
+  <div class="mh"><h2 id="tq-titulo">Modificaci&#243;n r&#225;pida</h2><button class="ib" onclick="cm('mTq')">&#10005;</button></div>
+  <div class="mb"><div class="fg">
+    <div class="fgg full"><div id="tq-resumen" style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.7"></div></div>
+    <div class="fgg"><label>Estado</label><select id="tq-estado"><option>Recibido</option><option>En Reparaci&#243;n</option><option>Entregado</option></select></div>
+    <div class="fgg"><label>Anticipo / cobrado (&#8370;)</label><input type="number" id="tq-anticipo" min="0" oninput="tqSaldo()"></div>
+    <div class="fgg full"><div id="tq-saldo" style="font-size:12px;color:var(--muted)"></div></div>
+    <div class="fgg"><label>Entrega estimada</label><input type="date" id="tq-fechaentrega"></div>
+    <div class="fgg full"><label>Trabajos realizados</label><textarea id="tq-trabajos" rows="3" placeholder="Qu&#233; se le hizo al equipo&#8230;"></textarea></div>
+    <div class="fgg full"><label>Observaciones</label><textarea id="tq-obs" rows="2"></textarea></div>
+  </div></div>
+  <div class="mf"><button class="btn btn-g" onclick="cm('mTq')">Cancelar</button><button class="btn btn-g" onclick="gi('tq-estado').value='Entregado'">Marcar Entregado</button><button class="btn btn-p" id="bsTq" onclick="sTq()">Guardar</button></div>
+</div></div>
+
 <!-- MODAL ENTREGA -->
 <div class="ov" id="mEnt"><div class="modal">
   <div class="mh"><h2>Nueva Entrega de Mercader&#237;a</h2><button class="ib" onclick="cm('mEnt')">&#10005;</button></div>
@@ -2576,6 +2591,52 @@ async function lT(){
   rT();
 }
 
+
+// ---------- Taller: modificacion rapida ----------
+var tqId=null;
+function tqMontoRef(r){return r.monto_presupuesto||(PD.find(function(p){return String(p.id)===String(r.presupuesto_id)})||{}).monto||0}
+async function cambiarEstadoT(id,estado){
+  var r=TD.find(function(x){return String(x.id)===String(id)});if(!r)return;
+  var antes=r.estado;if(antes===estado)return;
+  var res=await sb.from('ordenes_servicio').update({estado:estado}).eq('id',id);
+  if(res.error){toast('Error: '+res.error.message,'e');rT();return}
+  r.estado=estado;rT();
+  toast(r.numero+': '+antes+' → '+estado+' ✓','s');
+}
+function oTq(id){
+  var r=TD.find(function(x){return String(x.id)===String(id)});if(!r)return;
+  tqId=id;
+  gi('tq-titulo').textContent='Modificación rápida · '+(r.numero||'');
+  var ref=tqMontoRef(r);gi('tq-saldo').setAttribute('data-ref',ref);
+  gi('tq-resumen').innerHTML='<b>'+escE(r.cliente_nombre||'')+'</b><br>'+escE([r.tipo_equipo,r.marca,r.modelo].filter(Boolean).join(' · '))+
+    (r.falla_mencionada?'<br><span style="color:var(--muted)">Falla: '+escE(r.falla_mencionada)+'</span>':'')+
+    (ref?'<br>Presupuesto: <b>₲ '+fmt(ref)+'</b>':'');
+  gi('tq-estado').value=r.estado||'Recibido';
+  gi('tq-anticipo').value=r.anticipo||'';
+  gi('tq-fechaentrega').value=r.fecha_entrega_estimada||'';
+  gi('tq-trabajos').value=r.trabajos_realizados||'';
+  gi('tq-obs').value=r.observaciones||'';
+  tqSaldo();
+  gi('mTq').classList.add('open');
+}
+function tqSaldo(){
+  var ref=parseFloat(gi('tq-saldo').getAttribute('data-ref'))||0,a=parseFloat(gi('tq-anticipo').value)||0;
+  gi('tq-saldo').textContent=ref?('Saldo pendiente: ₲ '+fmt(Math.max(ref-a,0))+(a>ref?' (el anticipo supera el presupuesto)':'')):'';
+}
+async function sTq(){
+  var r=TD.find(function(x){return String(x.id)===String(tqId)});if(!r)return;
+  var a=parseFloat(gi('tq-anticipo').value)||0;
+  if(a<0){toast('El anticipo no puede ser negativo','e');return}
+  var pay={estado:gi('tq-estado').value,anticipo:a,fecha_entrega_estimada:gi('tq-fechaentrega').value||null,
+    trabajos_realizados:gi('tq-trabajos').value.trim()||null,observaciones:gi('tq-obs').value.trim()||null};
+  var btn=gi('bsTq');btn.disabled=true;btn.textContent='Guardando…';
+  var res=await sb.from('ordenes_servicio').update(pay).eq('id',tqId);
+  btn.disabled=false;btn.textContent='Guardar';
+  if(res.error){toast('Error: '+res.error.message,'e');return}
+  Object.assign(r,pay);cm('mTq');rT();
+  toast((r.numero||'Orden')+' actualizada ✓','s');
+}
+
 function proximoNumeroOrden(){
   var max=0;
   TD.forEach(function(r){
@@ -2712,8 +2773,10 @@ function rT(){
       '<td data-label="Equipo" style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(r.tipo_equipo||'')+' '+(r.marca||'')+' '+(r.modelo||'')+'">'+(r.tipo_equipo||'&#8212;')+(r.modelo?' &#183; '+r.modelo:'')+'</td>'+
       '<td data-label="Presupuesto" class="mn tr">'+(montoRef?'\u20b2 '+fmt(montoRef):'&#8212;')+'</td>'+
       '<td data-label="Anticipo" class="mn tr" style="color:'+(saldo>0?'var(--yellow)':'var(--green)')+'">'+(r.anticipo?'\u20b2 '+fmt(r.anticipo):'&#8212;')+'</td>'+
-      '<td data-label="Estado"><span class="bx '+(eb[r.estado]||'bm')+'">'+r.estado+'</span></td>'+
+      '<td data-label="Estado"><select class="bx '+(eb[r.estado]||'bm')+'" data-id="'+r.id+'" onchange="cambiarEstadoT(this.dataset.id,this.value)" title="Cambiar estado" style="cursor:pointer;border:none;font:inherit;font-size:11px;font-weight:600;padding:4px 6px;outline:none">'+
+        ['Recibido','En Reparaci\u00f3n','Entregado'].map(function(e){return '<option value="'+e+'"'+(r.estado===e?' selected':'')+' style="background:#16213a;color:#e6edf7">'+e+'</option>'}).join('')+'</select></td>'+
       '<td data-label="Acciones"><div class="acts">'+
+        '<button class="ib" data-id="'+r.id+'" onclick="oTq(this.dataset.id)" title="Modificaci\u00f3n r\u00e1pida" style="color:var(--yellow)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></button>'+
         '<button class="ib" data-id="'+r.id+'" onclick="verOrdenPrev(this.dataset.id)" title="Vista previa / PDF"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>'+
         '<button class="ib" data-id="'+r.id+'" onclick="edT(this.dataset.id)" title="Editar">'+ie()+'</button>'+
         '<button class="ib d" data-id="'+r.id+'" onclick="dlT(this.dataset.id)" title="Eliminar">'+it()+'</button>'+
