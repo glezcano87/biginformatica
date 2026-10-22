@@ -138,6 +138,10 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 .db-kpi-text .val{font-size:18px;font-weight:700;letter-spacing:-.4px}
 .db-kpi-text .delta{font-size:11px;margin-top:2px}
 .delta-up{color:var(--green)}.delta-dn{color:var(--red)}.delta-nu{color:var(--muted)}
+.db-link{cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+.db-kpi.db-link:hover,.db-kpi.db-link:focus-visible{border-color:var(--accent);transform:translateY(-2px);outline:none}
+.db-row.db-link:hover,.db-row.db-link:focus-visible{background:rgba(255,255,255,.04);outline:none}
+.db-hover-link:hover{filter:brightness(1.15)}
 .db-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(30,51,88,.5);font-size:13px}
 .db-row:last-child{border-bottom:none}
 .db-row .name{color:var(--text);font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
@@ -430,13 +434,13 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
     </div>
     <!-- KPI ROW -->
     <div class="db-kpi-row">
-      <div class="db-kpi"><div class="db-kpi-icon" style="background:rgba(34,197,94,.15)">&#128176;</div><div class="db-kpi-text"><div class="lbl">Ingresos del Mes</div><div class="val g" id="dbIng">&#8370; 0</div><div class="delta" id="dbIngD">&#8212;</div></div></div>
-      <div class="db-kpi"><div class="db-kpi-icon" style="background:rgba(239,68,68,.15)">&#128094;</div><div class="db-kpi-text"><div class="lbl">Costos del Mes</div><div class="val r" id="dbCos">&#8370; 0</div><div class="delta" id="dbCosD">&#8212;</div></div></div>
-      <div class="db-kpi"><div class="db-kpi-icon" style="background:rgba(59,130,246,.15)">&#128200;</div><div class="db-kpi-text"><div class="lbl">Margen Bruto</div><div class="val b" id="dbMrg">0%</div><div class="delta delta-nu" id="dbMrgD">&#8212;</div></div></div>
-      <div class="db-kpi"><div class="db-kpi-icon" style="background:rgba(245,158,11,.15)">&#127970;</div><div class="db-kpi-text"><div class="lbl">Gastos Fijos</div><div class="val y" id="dbGF">&#8370; 0</div><div class="delta delta-nu">Costo fijo mensual</div></div></div>
-      <div class="db-kpi"><div class="db-kpi-icon" style="background:rgba(167,139,250,.15)">&#128203;</div><div class="db-kpi-text"><div class="lbl">Presupuestos Pendientes</div><div class="val p" id="dbPP">0</div><div class="delta delta-nu" id="dbPPD">&#8212;</div></div></div>
-      <div class="db-kpi"><div class="db-kpi-icon" style="background:rgba(34,197,94,.12)">&#9989;</div><div class="db-kpi-text"><div class="lbl">Presupuestos Aprobados</div><div class="val g" id="dbPA">0</div><div class="delta delta-nu" id="dbPAD">&#8212;</div></div></div>
-      <div class="db-kpi"><div class="db-kpi-icon" style="background:rgba(245,158,11,.15)">&#128179;</div><div class="db-kpi-text"><div class="lbl">Cobros Pendientes</div><div class="val y" id="dbCobP">&#8370; 0</div><div class="delta delta-nu" id="dbCobPD">&#8212;</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Ingresos del Mes" onclick="irA('ventas')" onkeydown="if(event.key==='Enter')irA('ventas')"><div class="db-kpi-icon" style="background:rgba(34,197,94,.15)">&#128176;</div><div class="db-kpi-text"><div class="lbl">Ingresos del Mes</div><div class="val g" id="dbIng">&#8370; 0</div><div class="delta" id="dbIngD">&#8212;</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Costos del Mes" onclick="irA('compras')" onkeydown="if(event.key==='Enter')irA('compras')"><div class="db-kpi-icon" style="background:rgba(239,68,68,.15)">&#128094;</div><div class="db-kpi-text"><div class="lbl">Costos del Mes</div><div class="val r" id="dbCos">&#8370; 0</div><div class="delta" id="dbCosD">&#8212;</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Margen Bruto" onclick="irA('margenes')" onkeydown="if(event.key==='Enter')irA('margenes')"><div class="db-kpi-icon" style="background:rgba(59,130,246,.15)">&#128200;</div><div class="db-kpi-text"><div class="lbl">Margen Bruto</div><div class="val b" id="dbMrg">0%</div><div class="delta delta-nu" id="dbMrgD">&#8212;</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Gastos Fijos" onclick="irA('gastos')" onkeydown="if(event.key==='Enter')irA('gastos')"><div class="db-kpi-icon" style="background:rgba(245,158,11,.15)">&#127970;</div><div class="db-kpi-text"><div class="lbl">Gastos Fijos</div><div class="val y" id="dbGF">&#8370; 0</div><div class="delta delta-nu">Costo fijo mensual</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Presupuestos Pendientes" onclick="irA('presupuestos',{tab:'pendiente'})" onkeydown="if(event.key==='Enter')irA('presupuestos',{tab:'pendiente'})"><div class="db-kpi-icon" style="background:rgba(167,139,250,.15)">&#128203;</div><div class="db-kpi-text"><div class="lbl">Presupuestos Pendientes</div><div class="val p" id="dbPP">0</div><div class="delta delta-nu" id="dbPPD">&#8212;</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Presupuestos Aprobados" onclick="irA('presupuestos',{tab:'aprobado'})" onkeydown="if(event.key==='Enter')irA('presupuestos',{tab:'aprobado'})"><div class="db-kpi-icon" style="background:rgba(34,197,94,.12)">&#9989;</div><div class="db-kpi-text"><div class="lbl">Presupuestos Aprobados</div><div class="val g" id="dbPA">0</div><div class="delta delta-nu" id="dbPAD">&#8212;</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Cobros Pendientes" onclick="irA('cobros')" onkeydown="if(event.key==='Enter')irA('cobros')"><div class="db-kpi-icon" style="background:rgba(245,158,11,.15)">&#128179;</div><div class="db-kpi-text"><div class="lbl">Cobros Pendientes</div><div class="val y" id="dbCobP">&#8370; 0</div><div class="delta delta-nu" id="dbCobPD">&#8212;</div></div></div>
     </div>
     <!-- CHARTS + LISTAS -->
     <div class="db-grid" style="margin-bottom:20px">
@@ -2288,22 +2292,45 @@ function rDash(){
 
   // Last ventas
   var lv=VD.slice(0,5);
-  gi('dbLastV').innerHTML=lv.length?lv.map(r=>'<div class="db-row"><div><div class="name">'+(r.cliente||r.descripcion||'Venta')+'</div><div class="tag">'+fd(r.fecha)+(r.tipo?' · '+r.tipo:'')+'</div></div><span class="amt" style="color:var(--green)">₲ '+fmt(r.monto)+'</span></div>').join(''):'<div style="color:var(--muted);font-size:13px;padding:8px 0">Sin ventas registradas</div>';
+  gi('dbLastV').innerHTML=lv.length?lv.map(r=>'<div class="db-row db-link" role="link" tabindex="0" onclick="irA(\'ventas\')"><div><div class="name">'+(r.cliente||r.descripcion||'Venta')+'</div><div class="tag">'+fd(r.fecha)+(r.tipo?' · '+r.tipo:'')+'</div></div><span class="amt" style="color:var(--green)">₲ '+fmt(r.monto)+'</span></div>').join(''):'<div style="color:var(--muted);font-size:13px;padding:8px 0">Sin ventas registradas</div>';
 
   // Last compras
   var lc=CD.slice(0,5);
-  gi('dbLastC').innerHTML=lc.length?lc.map(r=>'<div class="db-row"><div><div class="name">'+(r.proveedor||r.descripcion||'Compra')+'</div><div class="tag">'+fd(r.fecha)+(r.tipo?' · '+r.tipo:'')+'</div></div><span class="amt" style="color:var(--red)">₲ '+fmt(r.monto)+'</span></div>').join(''):'<div style="color:var(--muted);font-size:13px;padding:8px 0">Sin compras registradas</div>';
+  gi('dbLastC').innerHTML=lc.length?lc.map(r=>'<div class="db-row db-link" role="link" tabindex="0" onclick="irA(\'compras\')"><div><div class="name">'+(r.proveedor||r.descripcion||'Compra')+'</div><div class="tag">'+fd(r.fecha)+(r.tipo?' · '+r.tipo:'')+'</div></div><span class="amt" style="color:var(--red)">₲ '+fmt(r.monto)+'</span></div>').join(''):'<div style="color:var(--muted);font-size:13px;padding:8px 0">Sin compras registradas</div>';
 
   // Last presupuestos
   var lp=PD.slice(0,5);
   var eb={'Pendiente':'by','Aprobado':'bg','Rechazado':'br'};
-  gi('dbLastP').innerHTML=lp.length?lp.map(r=>'<div class="db-row"><div><div class="name">'+(r.numero||r.cliente||'Presupuesto')+'</div><div class="tag">'+(r.cliente||'')+' · '+fd(r.fecha)+'</div></div><span class="bx '+(eb[r.estado]||'bm')+'" style="font-size:10px">'+r.estado+'</span></div>').join(''):'<div style="color:var(--muted);font-size:13px;padding:8px 0">Sin presupuestos registrados</div>';
+  gi('dbLastP').innerHTML=lp.length?lp.map(r=>'<div class="db-row db-link" role="link" tabindex="0" onclick="irA(\'presupuestos\',{buscar:\''+String(r.numero||r.cliente||'').replace(/[\\\'"<>]/g,'')+'\'})"><div><div class="name">'+(r.numero||r.cliente||'Presupuesto')+'</div><div class="tag">'+(r.cliente||'')+' · '+fd(r.fecha)+'</div></div><span class="bx '+(eb[r.estado]||'bm')+'" style="font-size:10px">'+r.estado+'</span></div>').join(''):'<div style="color:var(--muted);font-size:13px;padding:8px 0">Sin presupuestos registrados</div>';
 
   // Taller Tecnico: barra de estados + últimas órdenes
   rDbTaller();
 
   rDbBarChart();
   rDbPieChart(cCur);
+}
+function setPTab(t,el){
+  presTabActivo=t;
+  document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active')});
+  var e=el||gi('ptab-'+t);if(e)e.classList.add('active');
+  rPres();
+}
+function irA(pagina,opt){
+  opt=opt||{};
+  nav(pagina,document.querySelector('.nav-a[onclick*="\''+pagina+'\'"]'));
+  if(pagina==='presupuestos'){
+    setPTab(opt.tab||'todos');
+    var q=gi('qP');if(q)q.value=opt.buscar||'';
+    var fm=gi('fmP');if(fm)fm.value='';
+    rPres();
+  }
+  if(pagina==='taller'){
+    gi('ftEstado').value=opt.estado||'';
+    gi('qT').value=opt.buscar||'';
+    rT();
+  }
+  window.scrollTo(0,0);
+  var c=document.querySelector('.main, main');if(c&&c.scrollTo)c.scrollTo(0,0);
 }
 function rDbTaller(){
   var colores={'Recibido':'#d97706','En Reparación':'#7c3aed','Entregado':'#16a34a'};
@@ -2317,18 +2344,18 @@ function rDbTaller(){
   } else {
     bar.innerHTML=estados.map(function(e,i){
       var pct=counts[i]/total*100;
-      return pct>0?'<div style="width:'+pct+'%;background:'+colores[e]+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">'+(pct>=8?counts[i]:'')+'</div>':'';
+      return pct>0?'<div class="db-hover-link" title="Ver \u00f3rdenes: '+e+'" onclick="irA(\'taller\',{estado:\''+e+'\'})" style="cursor:pointer;width:'+pct+'%;background:'+colores[e]+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">'+(pct>=8?counts[i]:'')+'</div>':'';
     }).join('');
   }
 
   gi('dbTallerLegend').innerHTML=estados.map(function(e,i){
-    return '<span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:'+colores[e]+';display:inline-block"></span>'+e+': <strong>'+counts[i]+'</strong></span>';
-  }).join('')+'<span style="color:var(--muted)">Total: <strong>'+total+'</strong> orden'+(total!==1?'es':'')+'</span>';
+    return '<span class="db-hover-link" title="Ver \u00f3rdenes: '+e+'" onclick="irA(\'taller\',{estado:\''+e+'\'})" style="display:flex;align-items:center;gap:6px;cursor:pointer"><span style="width:10px;height:10px;border-radius:3px;background:'+colores[e]+';display:inline-block"></span>'+e+': <strong>'+counts[i]+'</strong></span>';
+  }).join('')+'<span class="db-hover-link" onclick="irA(\'taller\')" style="color:var(--muted);cursor:pointer">Total: <strong>'+total+'</strong> orden'+(total!==1?'es':'')+'</span>';
 
   var lt=TD.slice(0,5);
   var ebT={'Recibido':'by','En Reparación':'bp','Entregado':'bg'};
   gi('dbLastT').innerHTML=lt.length?lt.map(function(r){
-    return '<div class="db-row"><div><div class="name">'+(r.numero||'Orden')+' &#8212; '+(r.cliente_nombre||'')+'</div><div class="tag">'+(r.tipo_equipo||'')+(r.modelo?' · '+r.modelo:'')+' · '+fd(r.fecha)+'</div></div><span class="bx '+(ebT[r.estado]||'bm')+'" style="font-size:10px">'+r.estado+'</span></div>';
+    return '<div class="db-row db-link" role="link" tabindex="0" onclick="irA(\'taller\',{buscar:\''+String(r.numero||'').replace(/[\\\'"<>]/g,'')+'\'})"><div><div class="name">'+(r.numero||'Orden')+' &#8212; '+(r.cliente_nombre||'')+'</div><div class="tag">'+(r.tipo_equipo||'')+(r.modelo?' · '+r.modelo:'')+' · '+fd(r.fecha)+'</div></div><span class="bx '+(ebT[r.estado]||'bm')+'" style="font-size:10px">'+r.estado+'</span></div>';
   }).join(''):'<div style="color:var(--muted);font-size:13px;padding:8px 0">Sin &#243;rdenes registradas</div>';
 }
 function rDbBarChart(){
