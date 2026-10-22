@@ -1615,7 +1615,7 @@ CREATE POLICY "all" ON configuracion FOR ALL USING (true) WITH CHECK (true);</pr
     </div>
 
     <div id="recSqlBanner" style="display:none;background:rgba(217,119,6,.1);border:1px solid #d97706;border-radius:10px;padding:14px;margin:18px auto 0;max-width:700px;font-size:13px">
-      <b>&#9888;&#65039; Falta crear la tabla de recibos (se hace una sola vez).</b> Pod&#233;s imprimir igual, pero para guardar el historial ejecut&#225; este SQL en Supabase &rarr; SQL Editor:
+      <b>&#9888;&#65039; Falta crear o actualizar la tabla de recibos (se hace una sola vez).</b> Pod&#233;s imprimir igual, pero para guardar el historial ejecut&#225; este SQL en Supabase &rarr; SQL Editor (es seguro: no borra nada de lo que ya hay):
       <pre id="recSql" style="white-space:pre-wrap;font-size:11px;background:rgba(0,0,0,.25);padding:10px;border-radius:8px;margin:8px 0;max-height:180px;overflow:auto"></pre>
       <button class="btn btn-g btn-sm" onclick="copiarSql('rec')">Copiar SQL</button>
     </div>
@@ -5608,7 +5608,7 @@ function initMontoInputs(){
 // ══════════════════════════════════════════════════════════
 var recCounter = parseInt(localStorage.getItem('bi_rec_counter')||'101');
 var RD=[],REC_OK=true,recGuardado=false;
-var REC_SQL="create table if not exists public.recibos (\n  id uuid primary key default gen_random_uuid(),\n  numero text,\n  fecha date,\n  cliente text,\n  metodo text,\n  monto numeric,\n  moneda text default 'GS',\n  cotizacion numeric,\n  presupuesto_id uuid,\n  presupuesto_num text,\n  concepto text,\n  notas text,\n  created_at timestamptz default now()\n);\nalter table public.recibos enable row level security;\n-- Copia las mismas reglas de acceso que ya tiene ordenes_servicio\ndo $$\ndeclare p record;\nbegin\n  for p in select * from pg_policies where schemaname='public' and tablename='ordenes_servicio' loop\n    execute format('drop policy if exists %I on public.recibos','rec_'||p.policyname);\n    execute format('create policy %I on public.recibos as %s for %s to %s %s %s',\n      'rec_'||p.policyname, p.permissive, p.cmd, array_to_string(p.roles,','),\n      case when p.qual is not null then 'using ('||p.qual||')' else '' end,\n      case when p.with_check is not null then 'with check ('||p.with_check||')' else '' end);\n  end loop;\nend $$;";
+var REC_SQL="create table if not exists public.recibos (\n  id uuid primary key default gen_random_uuid(),\n  numero text,\n  fecha date,\n  cliente text,\n  metodo text,\n  monto numeric,\n  moneda text default 'GS',\n  cotizacion numeric,\n  presupuesto_id uuid,\n  presupuesto_num text,\n  concepto text,\n  notas text,\n  created_at timestamptz default now()\n);\nalter table public.recibos add column if not exists numero text;\nalter table public.recibos add column if not exists fecha date;\nalter table public.recibos add column if not exists cliente text;\nalter table public.recibos add column if not exists metodo text;\nalter table public.recibos add column if not exists monto numeric;\nalter table public.recibos add column if not exists moneda text default 'GS';\nalter table public.recibos add column if not exists cotizacion numeric;\nalter table public.recibos add column if not exists presupuesto_id text;\nalter table public.recibos add column if not exists presupuesto_num text;\nalter table public.recibos add column if not exists concepto text;\nalter table public.recibos add column if not exists notas text;\nalter table public.recibos add column if not exists created_at timestamptz default now();\nalter table public.recibos enable row level security;\n-- Copia las mismas reglas de acceso que ya tiene ordenes_servicio\ndo $$\ndeclare p record;\nbegin\n  for p in select * from pg_policies where schemaname='public' and tablename='ordenes_servicio' loop\n    execute format('drop policy if exists %I on public.recibos','rec_'||p.policyname);\n    execute format('create policy %I on public.recibos as %s for %s to %s %s %s',\n      'rec_'||p.policyname, p.permissive, p.cmd, array_to_string(p.roles,','),\n      case when p.qual is not null then 'using ('||p.qual||')' else '' end,\n      case when p.with_check is not null then 'with check ('||p.with_check||')' else '' end);\n  end loop;\nend $$;\nnotify pgrst, 'reload schema';";
 function copiarSql(k){
   var t=(k==='rec')?REC_SQL:ENT_SQL;
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast('SQL copiado','s')},function(){toast('No se pudo copiar, seleccionalo manualmente','e')})}
@@ -5666,7 +5666,18 @@ async function guardarRecibo(imprimir){
     recRender(d);
     var btn=gi('bsRec');btn.disabled=true;
     var payload={numero:d.numero,fecha:d.fecha,cliente:d.cliente,metodo:d.metodo,monto:d.monto,moneda:d.moneda,cotizacion:d.cotizacion,presupuesto_id:d.presupuesto_id,presupuesto_num:d.presupuesto_num,concepto:d.concepto,notas:d.notas};
-    var r=sb?await sb.from('recibos').insert(payload):{error:{message:'sin conexi\u00f3n'}};
+    var omit=[],r;
+    if(!sb)r={error:{message:'sin conexi\u00f3n'}};
+    else{
+      var pl=Object.assign({},payload);
+      for(var i=0;i<12;i++){
+        r=await sb.from('recibos').insert(pl);
+        if(!r.error)break;
+        var mm=/Could not find the '([^']+)' column/.exec(r.error.message||'');
+        if(!mm||!(mm[1] in pl))break;
+        omit.push(mm[1]);delete pl[mm[1]];
+      }
+    }
     btn.disabled=false;
     if(r.error){
       REC_OK=false;rRec();
@@ -5676,7 +5687,7 @@ async function guardarRecibo(imprimir){
     }
     registrarNumeroRecibo(d.numero);
     recGuardado=true;
-    toast('Recibo '+d.numero+' guardado \u2713','s');
+    toast('Recibo '+d.numero+' guardado \u2713'+(omit.length?' (sin las columnas: '+omit.join(', ')+')':''),'s');
     await lRecibos();
     gi('rec-num').value=proximoNumeroRecibo();
   } else if(!imprimir){
