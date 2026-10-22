@@ -1555,6 +1555,7 @@ CREATE POLICY "all" ON configuracion FOR ALL USING (true) WITH CHECK (true);</pr
     <div><h1>Recibo de Dinero</h1><div class="meta">Generador de recibos con formato profesional</div></div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-g" onclick="limpiarRecibo()">Limpiar</button>
+      <button class="btn btn-g" id="bsRec" onclick="guardarRecibo(false)">&#128190; Guardar</button>
       <button class="btn btn-p" onclick="verPrevRecibo()">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
         Vista Previa / PDF
@@ -1566,7 +1567,7 @@ CREATE POLICY "all" ON configuracion FOR ALL USING (true) WITH CHECK (true);</pr
       <div class="gp-form">
         <h3>Datos del Recibo</h3>
         <div class="fg">
-          <div class="fgg"><label>Nº Recibo</label><input type="text" id="rec-num" placeholder="REC-000101"></div>
+          <div class="fgg"><label>Nº Recibo</label><input type="text" id="rec-num" placeholder="Autom&#225;tico (ej: REC-000102)" title="Se numera solo, correlativo"></div>
           <div class="fgg"><label>Fecha</label><input type="date" id="rec-fecha"></div>
           <div class="fgg full"><label>Recibí de *</label><input type="text" id="rec-de" placeholder="Nombre del cliente o empresa"></div>
           <div class="fgg"><label>Método de pago</label>
@@ -1599,9 +1600,10 @@ CREATE POLICY "all" ON configuracion FOR ALL USING (true) WITH CHECK (true);</pr
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div style="font-size:13px;font-weight:600">Vista previa del recibo</div>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-p btn-sm" onclick="imprimirRecibo()">
+            <button class="btn btn-g btn-sm" onclick="guardarRecibo(false)">&#128190; Guardar</button>
+            <button class="btn btn-p btn-sm" onclick="guardarRecibo(true)">
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 002 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-              Imprimir / PDF
+              Guardar e Imprimir / PDF
             </button>
             <button class="btn btn-g btn-sm" onclick="gi('recPreviewWrap').style.display='none';var f=gi('recPreviewBody');var d=f.contentDocument||f.contentWindow.document;d.open();d.write('');d.close();">Cerrar</button>
           </div>
@@ -1610,6 +1612,24 @@ CREATE POLICY "all" ON configuracion FOR ALL USING (true) WITH CHECK (true);</pr
           <iframe id="recPreviewBody" style="width:100%;height:60vh;border:none;border-radius:8px;background:#fff"></iframe>
         </div>
       </div>
+    </div>
+
+    <div id="recSqlBanner" style="display:none;background:rgba(217,119,6,.1);border:1px solid #d97706;border-radius:10px;padding:14px;margin:18px auto 0;max-width:700px;font-size:13px">
+      <b>&#9888;&#65039; Falta crear la tabla de recibos (se hace una sola vez).</b> Pod&#233;s imprimir igual, pero para guardar el historial ejecut&#225; este SQL en Supabase &rarr; SQL Editor:
+      <pre id="recSql" style="white-space:pre-wrap;font-size:11px;background:rgba(0,0,0,.25);padding:10px;border-radius:8px;margin:8px 0;max-height:180px;overflow:auto"></pre>
+      <button class="btn btn-g btn-sm" onclick="copiarSql('rec')">Copiar SQL</button>
+    </div>
+    <div class="tw" style="margin-top:20px">
+      <div class="ttb">
+        <b style="font-size:14px">Recibos guardados</b>
+        <div class="sb" style="margin-left:auto"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="qRec" placeholder="Buscar n&#250;mero, cliente, concepto&#8230;" oninput="rRec()">
+        </div>
+      </div>
+      <div style="overflow-x:auto"><table class="tbl-cards">
+        <thead><tr><th>N&#176;</th><th>Fecha</th><th>Recibido de</th><th>Concepto</th><th class="tr">Monto</th><th>Acciones</th></tr></thead>
+        <tbody id="tbRec"></tbody>
+      </table></div>
     </div>
   </div>
 </div>
@@ -1795,7 +1815,7 @@ function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Cone
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
 function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='usuarios'){loadUsuarios();}if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='recibo'){initRecibo();}if(p==='gpres'){initGPres();}if(p==='taller'){rT();}if(p==='entregas'){rEnt();}closeSidebar()}
-async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lEntregas(),lCotiz(),(typeof lFE==='function'?lFE():null)]);popFjSel();popMgSel();popCtMesSel();rDash();sincronizarCotizChaco(false)}
+async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lEntregas(),lRecibos(),lCotiz(),(typeof lFE==='function'?lFE():null)]);popFjSel();popMgSel();popCtMesSel();rDash();sincronizarCotizChaco(false)}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
 async function lP(){if(!sb)return;var r=await sb.from('presupuestos').select('*').order('fecha',{ascending:false});if(r.error){toast('Error presupuestos: '+r.error.message,'e');return}PD=r.data||[];popMF('fmP',PD);usPS();rPres()}
@@ -5586,12 +5606,88 @@ function initMontoInputs(){
 // ══════════════════════════════════════════════════════════
 // RECIBO DE DINERO
 // ══════════════════════════════════════════════════════════
-var recCounter = parseInt(localStorage.getItem('bi_rec_counter')||'100');
-
+var recCounter = parseInt(localStorage.getItem('bi_rec_counter')||'101');
+var RD=[],REC_OK=true,recGuardado=false;
+var REC_SQL="create table if not exists public.recibos (\n  id uuid primary key default gen_random_uuid(),\n  numero text,\n  fecha date,\n  cliente text,\n  metodo text,\n  monto numeric,\n  moneda text default 'GS',\n  cotizacion numeric,\n  presupuesto_id uuid,\n  presupuesto_num text,\n  concepto text,\n  notas text,\n  created_at timestamptz default now()\n);\nalter table public.recibos enable row level security;\n-- Copia las mismas reglas de acceso que ya tiene ordenes_servicio\ndo $$\ndeclare p record;\nbegin\n  for p in select * from pg_policies where schemaname='public' and tablename='ordenes_servicio' loop\n    execute format('drop policy if exists %I on public.recibos','rec_'||p.policyname);\n    execute format('create policy %I on public.recibos as %s for %s to %s %s %s',\n      'rec_'||p.policyname, p.permissive, p.cmd, array_to_string(p.roles,','),\n      case when p.qual is not null then 'using ('||p.qual||')' else '' end,\n      case when p.with_check is not null then 'with check ('||p.with_check||')' else '' end);\n  end loop;\nend $$;";
+function copiarSql(k){
+  var t=(k==='rec')?REC_SQL:ENT_SQL;
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast('SQL copiado','s')},function(){toast('No se pudo copiar, seleccionalo manualmente','e')})}
+  else toast('Seleccion\u00e1 y copi\u00e1 el SQL manualmente','e');
+}
+function proximoNumeroRecibo(){
+  var max=parseInt(localStorage.getItem('bi_rec_counter'),10)||0;
+  if(max<101)max=101;
+  RD.forEach(function(r){var m=String(r.numero||'').match(/(\d+)$/);if(m){var n=parseInt(m[1],10);if(n>max&&n<10000000)max=n}});
+  return 'REC-'+String(max+1).padStart(6,'0');
+}
+function registrarNumeroRecibo(num){
+  var m=String(num||'').match(/(\d+)$/);if(!m)return;
+  var n=parseInt(m[1],10);
+  if(n>(parseInt(localStorage.getItem('bi_rec_counter'),10)||0)){recCounter=n;try{localStorage.setItem('bi_rec_counter',String(n))}catch(e){}}
+}
+async function lRecibos(){
+  if(!sb)return;
+  var r=await sb.from('recibos').select('*').order('created_at',{ascending:false});
+  if(r.error){REC_OK=false;RD=[];rRec();return}
+  REC_OK=true;RD=r.data||[];rRec();
+}
+function rRec(){
+  var tb=gi('tbRec');if(!tb)return;
+  gi('recSqlBanner').style.display=REC_OK?'none':'block';
+  if(!REC_OK)gi('recSql').textContent=REC_SQL;
+  var q=(gi('qRec').value||'').toLowerCase();
+  var rows=RD.filter(function(r){return !q||[r.numero,r.cliente,r.concepto].filter(Boolean).join(' ').toLowerCase().indexOf(q)>-1});
+  tb.innerHTML=rows.length?rows.map(function(r){
+    var sym=r.moneda==='USD'?'U$S ':'\u20b2 ';
+    return '<tr><td data-label="N\u00b0" style="font-weight:600;color:var(--accent2)">'+escE(r.numero||'\u2014')+'</td>'+
+      '<td data-label="Fecha" class="mn">'+fd(r.fecha)+'</td>'+
+      '<td data-label="Recibido de">'+escE(r.cliente||'\u2014')+'</td>'+
+      '<td data-label="Concepto" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+escE(r.concepto||'')+'">'+escE(r.concepto||'\u2014')+'</td>'+
+      '<td data-label="Monto" class="mn tr" style="white-space:nowrap">'+sym+fmt(r.monto)+'</td>'+
+      '<td data-label="Acciones"><div class="acts">'+
+        '<button class="ib" data-id="'+escE(r.id)+'" onclick="verRecibo(this.dataset.id)" title="Ver / imprimir"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.478 0-8.268-2.943-9.542-7z"/></svg></button>'+
+        '<button class="ib d" data-id="'+escE(r.id)+'" onclick="dlRec(this.dataset.id)" title="Eliminar">'+it()+'</button></div></td></tr>';
+  }).join(''):er(6,REC_OK?'Todav\u00eda no hay recibos guardados.':'Cre\u00e1 la tabla con el SQL de arriba para ver el historial.');
+}
+function verRecibo(id){
+  var r=RD.find(function(x){return String(x.id)===String(id)});if(!r)return;
+  recRender({numero:r.numero,fecha:r.fecha,cliente:r.cliente,metodo:r.metodo||'Efectivo',monto:r.monto||0,moneda:r.moneda,presupuesto_num:r.presupuesto_num,concepto:r.concepto,notas:r.notas});
+  recGuardado=true;
+}
+async function dlRec(id){if(!confirm('\u00bfEliminar este recibo guardado?'))return;await dl2('recibos',id);await lRecibos()}
+async function guardarRecibo(imprimir){
+  if(!recGuardado){
+    var d=recLeerForm();
+    if(!recValidar(d))return;
+    if(RD.some(function(r){return r.numero===d.numero})){
+      d.numero=proximoNumeroRecibo();gi('rec-num').value=d.numero;
+      toast('Ese n\u00famero ya exist\u00eda; se us\u00f3 '+d.numero,'e');
+    }
+    recRender(d);
+    var btn=gi('bsRec');btn.disabled=true;
+    var payload={numero:d.numero,fecha:d.fecha,cliente:d.cliente,metodo:d.metodo,monto:d.monto,moneda:d.moneda,cotizacion:d.cotizacion,presupuesto_id:d.presupuesto_id,presupuesto_num:d.presupuesto_num,concepto:d.concepto,notas:d.notas};
+    var r=sb?await sb.from('recibos').insert(payload):{error:{message:'sin conexi\u00f3n'}};
+    btn.disabled=false;
+    if(r.error){
+      REC_OK=false;rRec();
+      toast('No se pudo guardar el historial ('+r.error.message+').'+(imprimir?' Se imprime igual.':''),'e');
+      if(imprimir){registrarNumeroRecibo(d.numero);gi('rec-num').value=proximoNumeroRecibo();printIframeSafely(gi('recPreviewBody'))}
+      return;
+    }
+    registrarNumeroRecibo(d.numero);
+    recGuardado=true;
+    toast('Recibo '+d.numero+' guardado \u2713','s');
+    await lRecibos();
+    gi('rec-num').value=proximoNumeroRecibo();
+  } else if(!imprimir){
+    toast('Este recibo ya est\u00e1 guardado','s');return;
+  }
+  if(imprimir)printIframeSafely(gi('recPreviewBody'));
+}
 function initRecibo(){
-  // Auto numero
-  recCounter = parseInt(localStorage.getItem('bi_rec_counter')||'100');
-  gi('rec-num').value = 'REC-'+String(recCounter+1).padStart(6,'0');
+  // Auto numero (correlativo, a partir de los recibos guardados y el \u00faltimo usado)
+  gi('rec-num').value = proximoNumeroRecibo();
+  rRec();
   gi('rec-fecha').value = new Date().toISOString().slice(0,10);
   // Populate presupuestos
   var sel = gi('rec-presupuesto');
@@ -5636,6 +5732,8 @@ function limpiarRecibo(){
   gi('rec-metodo').value='Efectivo';
   gi('recPreviewWrap').style.display='none';
   gi('recPreviewBody').srcdoc='';
+  recGuardado=false;gi('rec-num').value=proximoNumeroRecibo();
+  initMon('rec');
   calcRecibo();
 }
 
@@ -5659,25 +5757,43 @@ function montoEnLetras(n){
   return partes.join(' ');
 }
 
+function recLeerForm(){
+  var sel=gi('rec-presupuesto'),presNum='';
+  if(sel.value){presNum=sel.options[sel.selectedIndex].textContent.split('\u2014')[0].trim()}
+  var moneda=(modalMonedas['rec']||'GS')==='USD'?'USD':'GS';
+  return {
+    numero:gi('rec-num').value.trim()||proximoNumeroRecibo(),
+    fecha:gi('rec-fecha').value||new Date().toISOString().slice(0,10),
+    cliente:gi('rec-de').value.trim(),
+    metodo:gi('rec-metodo').value,
+    monto:parseMonto(gi('rec-monto')),
+    moneda:moneda,
+    cotizacion:moneda==='USD'?(parseFloat(gi('recCotiz').value)||cotizacion||null):null,
+    presupuesto_id:sel.value||null,
+    presupuesto_num:presNum||null,
+    concepto:gi('rec-concepto').value.trim(),
+    notas:gi('rec-notas').value.trim()||null
+  };
+}
+function recValidar(d){
+  if(!d.cliente||!d.monto||!d.concepto){toast('Complet\u00e1 al menos: Recib\u00ed de, Monto y Concepto','e');return false}
+  return true;
+}
+function recNombreArchivo(d){
+  return 'Recibo dinero_'+String(d.cliente||'').replace(/[\\\/:*?"<>|]/g,'').replace(/\s+/g,' ').trim();
+}
 function verPrevRecibo(){
-  var de = gi('rec-de').value.trim();
-  var concepto = gi('rec-concepto').value.trim();
-  var montoRaw = parseMonto(gi('rec-monto'));
-  if(!de||!montoRaw){ toast('Complet\u00e1 al menos: Recib\u00ed de, Monto y Concepto','e'); return; }
-
-  var num = gi('rec-num').value.trim()||'REC-000001';
-  var fecha = gi('rec-fecha').value;
-  var metodo = gi('rec-metodo').value;
-  var notas = gi('rec-notas').value.trim();
-  var moneda = (modalMonedas['rec']||'GS')==='USD'?'USD':'GS';
+  var d=recLeerForm();
+  if(!recValidar(d))return;
+  recRender(d);
+}
+function recRender(d){
+  var num=escE(d.numero),fecha=d.fecha,metodo=escE(d.metodo),notas=escE(d.notas||''),moneda=d.moneda==='USD'?'USD':'GS';
+  var de=escE(d.cliente),concepto=escE(d.concepto),montoRaw=d.monto,presNum=escE(d.presupuesto_num||'');
   var sym = moneda==='USD'?'U$S ':'\u20b2 ';
   var montoFmt = sym+montoRaw.toLocaleString('es-PY')+'.-';
   var letras = montoEnLetras(montoRaw);
   var monedaNombre = moneda==='USD'?'d\u00f3lares americanos':'guaran\u00edes';
-
-  var presNum = '';
-  var sel = gi('rec-presupuesto');
-  if(sel.value){ presNum = sel.options[sel.selectedIndex].textContent.split('\u2014')[0].trim(); }
 
   var AZUL='#1B6B8A'; var VERDE='#8DC63F';
   var LOGO='https://raw.githubusercontent.com/glezcano87/biginformatica/main/logo.png';
@@ -5756,20 +5872,15 @@ function verPrevRecibo(){
   var ifr = gi('recPreviewBody');
   var doc = ifr.contentDocument || ifr.contentWindow.document;
   doc.open();
-  doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>'+html+'</body></html>');
+  doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+escE(recNombreArchivo(d))+'</title></head><body>'+html+'</body></html>');
   doc.close();
   gi('recPreviewWrap').style.display='block';
   gi('recPreviewWrap').scrollIntoView({behavior:'smooth'});
 }
 
-function imprimirRecibo(){
-  var ifr = gi('recPreviewBody');
-  printIframeSafely(ifr, function(){
-    recCounter++;
-    localStorage.setItem('bi_rec_counter', recCounter);
-    gi('rec-num').value='REC-'+String(recCounter+1).padStart(6,'0');
-  });
-}
+function imprimirRecibo(){guardarRecibo(true)}
+document.addEventListener('input',function(e){if(e.target&&e.target.closest&&e.target.closest('#page-recibo .gp-form'))recGuardado=false});
+document.addEventListener('change',function(e){if(e.target&&e.target.closest&&e.target.closest('#page-recibo .gp-form'))recGuardado=false});
 
 function toggleSidebar(){
   var s=gi('sidebar'),b=gi('hbgBtn'),o=gi('sbOverlay');
