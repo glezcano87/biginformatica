@@ -334,6 +334,120 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
 .user-row:last-child{border-bottom:none}
 .user-row .ue{font-weight:500}
 .user-row .ur{font-size:11px;color:var(--muted);margin-top:2px}
+
+.gp-item-row .rem-btn{background:rgba(239,68,68,.15);border:none;border-radius:8px;color:var(--red);cursor:pointer;padding:7px 11px;font-size:16px;font-weight:700;font-family:inherit;transition:all .15s}
+.gp-item-row .rem-btn:hover{background:rgba(239,68,68,.3)}
+/* ═══════════ MOBILE v2 — correcciones para celular ═══════════
+   Causa del "se ve pequeño": una celda con white-space:nowrap inline ensanchaba toda la página
+   y el navegador la achicaba para que entrara. Acá se blinda el ancho y se mejora la legibilidad. */
+html,body{max-width:100%;overflow-x:hidden}
+.main{min-width:0}
+.content,.tw,.ttb,.sc,.db-panel,.db-kpi,.fs-sec,.cw,.gp-form,.fgg,.pend-card,.iva-card,.balance-section{min-width:0}
+.fg>*,.fg2>*,.fg3>*,.srow>*,.srow5>*,.db-grid>*,.db-grid-3>*,.db-kpi-row>*,.pend-grid>*,.iva-grid>*{min-width:0}
+canvas,img,iframe,video{max-width:100%}
+pre{max-width:100%;overflow-x:auto}
+.ct-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.ct-tabs::-webkit-scrollbar{display:none}
+.ct-tab{flex:0 0 auto}
+
+@media(max-width:768px){
+  body{font-size:15px}
+  body,.content{overflow-x:clip}
+  .hm{display:none}
+  /* barra de cotización fija arriba: el botón del menú vive adentro y nunca tapa contenido */
+  .cotiz-bar{position:sticky;top:0;z-index:60;padding:6px 12px 6px 66px;gap:6px;min-height:56px;align-items:center;flex-wrap:nowrap}
+  .cotiz-item{flex-wrap:nowrap;gap:6px;font-size:12.5px;min-width:0;white-space:nowrap}
+  .cotiz-edit{padding:6px 10px;font-size:12px;min-height:34px}
+  #cotizFecha{display:none}
+  .hbg{top:6px;left:10px}
+  /* barra superior de cada módulo: título arriba, botones abajo a todo el ancho */
+  .topbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px;position:static}
+  .topbar>div:first-child{flex:1 1 100%;min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .topbar>div:not(:first-child){flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;min-width:0;align-items:center}
+  .topbar>select{flex:1 1 100%;width:100%;min-width:0!important}
+  .topbar>div select{flex:2 1 150px;min-width:0!important}
+  .topbar .btn{flex:1 1 auto;justify-content:center;min-height:42px}
+  /* panel lateral: el botón del menú flota sobre el logo, se deja lugar */
+  .sb-logo{padding:16px 18px 14px 74px;min-height:56px}
+  .sb-foot{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+  .user-row input[style*="min-width:120px"],#page-usuarios input[style*="min-width:120px"]{flex:1 1 100%!important;min-width:0!important}
+  #page-usuarios div:has(>input[style*="min-width:120px"]){flex-wrap:wrap!important}
+  .iva-saldo>div{text-align:left!important;width:100%}
+  .topbar h1{font-size:17px;line-height:1.25}
+  .topbar .meta{font-size:12px;line-height:1.35}
+  .content{padding:14px 14px calc(28px + env(safe-area-inset-bottom))}
+  .nav-a{padding:12px 12px;font-size:14px}
+  .nav-lbl{font-size:11px}
+  /* tarjetas de resumen */
+  .sc .lbl{font-size:10.5px}
+  .sc .val{font-size:18px;overflow-wrap:anywhere}
+  .srow>.sc:last-child:nth-child(odd),.srow5>.sc:last-child:nth-child(odd){grid-column:1/-1}
+  /* buscadores y filtros */
+  .ttb{padding:12px}
+  .ttb>div{width:100%;min-width:0}
+  .ttb>.fs{flex:0 0 auto;width:100%;min-width:0}
+  .ttb>div>.fs{flex:1 1 100%;width:100%;min-width:0}
+  .ttb b{font-size:14px}
+  .sb{padding:9px 12px}
+  /* formato tarjeta de las tablas: texto legible y nunca más ancho que la pantalla */
+  table.tbl-cards{font-size:13.5px}
+  table.tbl-cards tbody{gap:10px}
+  table.tbl-cards tr{padding:10px 14px}
+  table.tbl-cards td{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;max-width:none!important;overflow-wrap:anywhere;font-size:13.5px;line-height:1.4;padding:4px 0}
+  table.tbl-cards td::before{font-size:10px;letter-spacing:.4px}
+  table.tbl-cards .acts{gap:8px}
+  table.tbl-cards .acts .ib{width:40px;height:40px}
+  table.tbl-cards .acts .ib svg{width:17px;height:17px}
+  table.tbl-cards .acts .btn{padding:9px 12px!important;font-size:12.5px!important;min-height:40px}
+  table.tbl-cards select.bx{width:auto!important;min-height:0!important;padding:7px 10px!important}
+  .tw>div[style*="overflow-x"]{overflow-x:visible!important}
+  /* formularios: 16px evita el zoom automático de iOS al tocar un campo */
+  input,select,textarea{font-size:16px!important;min-height:44px}
+  textarea{min-height:76px}
+  input[type=checkbox],input[type=radio]{min-height:0;width:auto}
+  .btn{min-height:40px;font-size:13.5px;padding:8px 14px}
+  .moneda-btn,.gp-mb{min-height:40px;font-size:13.5px}
+  label{font-size:12.5px}
+  /* ventanas (modales) como hoja inferior */
+  .ov{align-items:flex-end;padding:0}
+  .modal{max-width:100%!important;width:100%;max-height:92vh;max-height:92dvh;-webkit-overflow-scrolling:touch}
+  .mh{padding:14px 16px;position:sticky;top:0;background:var(--surface);z-index:2}
+  .mb{padding:16px}
+  .mf{padding:12px 16px calc(12px + env(safe-area-inset-bottom));flex-wrap:wrap;position:sticky;bottom:0;background:var(--surface);z-index:2}
+  .mf .btn{flex:1 1 120px;justify-content:center;min-height:44px}
+  .tc{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom))}
+  .tt{max-width:none;font-size:14px}
+  /* contabilidad */
+  .ct-tab{padding:11px 14px;font-size:14px}
+  .iva-grid{grid-template-columns:1fr}
+  .iva-card .val{font-size:20px}
+  .iva-saldo{flex-direction:column;align-items:flex-start;padding:16px}
+  .iva-saldo .monto{font-size:24px}
+  .asiento-totales{flex-wrap:wrap;gap:12px;justify-content:space-between}
+  .balance-ecuacion .be-val{font-size:18px}
+  .page div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+  .balance-row,.balance-subtotal,.fr,.user-row,.pend-item{gap:12px}
+  .balance-row .nombre,.fr .fn{min-width:0;overflow-wrap:anywhere}
+  .balance-row .monto,.fr .fa{white-space:nowrap}
+  .fs-h,.balance-header,.db-panel-h,.pend-card-h{gap:10px;flex-wrap:wrap}
+  /* crear presupuesto / recibo */
+  .gp-form{padding:16px}
+  .gp-item-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;gap:8px;margin-bottom:10px}
+  .gp-item-row>*:first-child{grid-column:1/-1}
+  .gp-item-row .rem-btn{min-height:44px;font-size:20px}
+  .gp-item-row .calc-val{display:flex;align-items:center;justify-content:flex-end;min-height:44px;font-size:15px}
+  .gp-total-bar>div[style*="font-size:20px"]{display:none}
+  .gp-total-bar{flex-direction:column;align-items:stretch}
+  .gp-total-item{display:flex;justify-content:space-between;align-items:center;text-align:left}
+  .pdf-preview-wrap{padding:8px}
+  div[style*="background:#e8ecf0"]{padding:8px!important}
+  /* dashboard */
+  .db-panel-body{padding:14px}
+  .db-kpi-text .lbl{font-size:11px}
+  .db-kpi-text .val{font-size:17px;overflow-wrap:anywhere}
+  .db-mini-chart{height:190px}
+  .user-row{flex-wrap:wrap}
+}
 </style>
 </head>
 <body>
@@ -409,7 +523,7 @@ pre.sql{background:var(--bg);border:1px solid var(--border);border-radius:8px;pa
   <div class="cotiz-item">
     <span>&#128178; USD / &#8370;</span>
     <strong id="cotizValor">7.800</strong>
-    <button class="cotiz-edit" onclick="sincronizarCotizChaco(true)" title="Trae la cotizaci\u00f3n actual de Cambios Chaco">Sincronizar Cambios Chaco</button>
+    <button class="cotiz-edit" onclick="sincronizarCotizChaco(true)" title="Trae la cotizaci\u00f3n actual de Cambios Chaco">Sincronizar<span class="hm"> Cambios Chaco</span></button>
     <button class="cotiz-edit" onclick="editCotiz()" title="Cargar la cotizaci\u00f3n a mano">Manual</button>
   </div>
   <div style="margin-left:auto;font-size:11px;color:var(--muted)" id="cotizFecha"></div>
@@ -2952,7 +3066,7 @@ function imprimirOrdenPreview(){
 
 async function dlG(id){if(!confirm('\u00bfEliminar este gasto fijo?'))return;await dl2('gastos_fijos',id);await lG();usGF()}
 async function dl2(tbl,id){var r=await sb.from(tbl).delete().eq('id',id);if(r.error)toast('Error: '+r.error.message,'e');else toast('Eliminado \u2713','s')}
-function fmt(n){return Math.abs(n||0).toLocaleString('es-PY')}
+function fmt(n){var a=Math.abs(n||0);if(Math.abs(a*100-Math.round(a*100))>1e-6)a=Math.round(a);return a.toLocaleString('es-PY')}
 function fd(d){if(!d)return'\u2014';var[y,m,day]=d.split('-');return day+'/'+m+'/'+y}
 function curMes(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')}
 function er(c,msg){return'<tr><td colspan="'+c+'"><div class="es"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg><p>'+msg+'</p></div></td></tr>'}
@@ -3675,7 +3789,7 @@ function popReportesSel(){
   if(curVal) sm.value=curVal;
 }
 
-function fmtGs(n){ return '\u20b2 '+(Math.abs(n||0)).toLocaleString('es-PY'); }
+function fmtGs(n){ return '\u20b2 '+Math.round(Math.abs(n||0)).toLocaleString('es-PY'); }
 
 function getMesesPeriodo(per, mes){
   var hoy=new Date(); var y=hoy.getFullYear(); var m=hoy.getMonth()+1;
@@ -5167,7 +5281,7 @@ async function sincronizarCotizChaco(manual){
   var btn=document.querySelector('.cotiz-item .cotiz-edit');
   if(manual&&btn){btn.disabled=true;btn.textContent='Consultando…'}
   var res=await ccObtener();
-  if(manual&&btn){btn.disabled=false;btn.textContent='Sincronizar Cambios Chaco'}
+  if(manual&&btn){btn.disabled=false;btn.innerHTML='Sincronizar<span class="hm"> Cambios Chaco</span>'}
   if(!res){
     if(manual){
       toast('No se pudo consultar Cambios Chaco ('+ccUltimoError+'). Se mantiene ₲ '+cotizacion.toLocaleString('es-PY')+'. Podés cargarla con "Manual".','e');
@@ -5490,10 +5604,10 @@ async function loadUsuarios(){
         '</div>'+
         (isAdmin&&!isMe?
           '<div style="display:flex;gap:6px;align-items:center">'+
-            '<div style="display:flex;gap:6px;align-items:center">'+
               '<select data-u="'+u.username+'" onchange="cambiarRolUsuario(this.dataset.u,this.value)" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text);font-family:inherit">'+
               '<option value="admin"'+(u.rol==='admin'?' selected':'')+'>Admin</option>'+
-            '</select>'+
+              '<option value="usuario"'+(u.rol!=='admin'?' selected':'')+'>Usuario</option>'+
+              '</select>'+
               '<button class="ib d" data-u="'+u.username+'" onclick="eliminarUsuario(this.dataset.u)" title="Eliminar">'+it()+'</button>'+
           '</div>'
         :'<span class="bx '+(u.activo?'bg':'br')+'">'+(u.activo?'Activo':'Inactivo')+'</span>')+
