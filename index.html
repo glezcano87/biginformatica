@@ -1277,6 +1277,12 @@ pre{max-width:100%;overflow-x:auto}
             </div>
             <textarea id="gp-intro" placeholder="Ej: Nos complace presentarle el presupuesto de impresoras Epson EcoTank." style="min-height:52px" oninput="calcGPres()"></textarea>
           </div>
+          <div class="fgg full">
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin:0;color:var(--text);font-size:13px;font-weight:500">
+              <input type="checkbox" id="gp-ver-precios" checked onchange="gpCambioModoPrecios()" style="width:18px;height:18px;min-height:0;padding:0;margin-top:1px;flex-shrink:0;accent-color:var(--accent);cursor:pointer">
+              <span><b>Mostrar el precio de cada &#237;tem en el PDF</b><br><span id="gp-ver-precios-hint" style="font-size:12px;color:var(--muted);font-weight:400">Activado: cada &#237;tem sale con su monto al lado. Desactivalo para vender el proyecto completo: el PDF muestra solo los detalles y el total.</span></span>
+            </label>
+          </div>
           <div class="fgg"><label>Moneda del Presupuesto</label>
             <div class="moneda-btns">
               <button class="moneda-btn active" id="gpMonedaGS" onclick="setGPMoneda('GS',this)">&#8370; Guaran&#237;es</button>
@@ -4520,11 +4526,23 @@ function limpiarGPres(){
   gi('gp-descripcion').value='';
   gi('gp-intro').value=localStorage.getItem('bi_intro_default')||'';
   gi('gpPreviewWrap').style.display='none';
+  var vp=gi('gp-ver-precios');if(vp){vp.checked=true;gpCambioModoPrecios();}
   renderGPItems();
   calcGPres();
 }
 
-function verPrevGPres(){
+// Modo de presentación del PDF: con precio por ítem, o "proyecto" (solo detalles + total)
+function gpVerPrecios(){var c=gi('gp-ver-precios');return !c||c.checked;}
+function gpCambioModoPrecios(){
+  var h=gi('gp-ver-precios-hint');
+  if(h)h.textContent=gpVerPrecios()
+    ?'Activado: cada ítem sale con su monto al lado. Desactivalo para vender el proyecto completo: el PDF muestra solo los detalles y el total.'
+    :'Desactivado (venta de proyecto): el PDF muestra los detalles de cada ítem sin precio y solo el total final.';
+  var w=gi('gpPreviewWrap');
+  if(w&&w.style.display!=='none')verPrevGPres(true);
+}
+
+function verPrevGPres(noScroll){
   var cliente=gi('gp-cliente').value.trim();
   if(!cliente){toast('Ingres\u00e1 el nombre del cliente','e');return;}
   var items=gpItems.filter(function(it){return it.desc.trim()&&it.costo>0;});
@@ -4561,6 +4579,8 @@ function verPrevGPres(){
     'tbody td:first-child{text-align:center;font-weight:700;color:#1B6B8A}'+
     'tbody td:last-child{text-align:right;font-weight:700;color:#1B6B8A;font-variant-numeric:tabular-nums;white-space:nowrap}'+
     'tbody tr:nth-child(even){background:#f6fbf2}'+
+    'table.sin-precio thead th:last-child{text-align:left;white-space:normal}'+
+    'table.sin-precio tbody td:last-child{text-align:left;font-weight:400;color:#222;white-space:normal}'+
     '.tot{background:linear-gradient(90deg,#1B6B8A,#8DC63F);border-radius:8px;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}'+
     '.tot-l{color:rgba(255,255,255,.88);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}'+
     '.tot-v{color:#fff;font-size:22px;font-weight:900;letter-spacing:-.5px}'+
@@ -4575,23 +4595,27 @@ function verPrevGPres(){
 
   var productos=items.filter(function(it){return (it.tipo||'Producto')!=='Servicio';});
   var servicios=items.filter(function(it){return it.tipo==='Servicio';});
+  var verPrecios=gpVerPrecios();
   function gpFilas(list){
     return list.map(function(it){
       var pv=gpPrecioVenta(it);
-      return '<tr><td>'+it.qty+'</td><td>'+it.desc+'</td><td>'+gpSimboloMoneda()+pv.toLocaleString('es-PY')+'.-</td></tr>';
+      return '<tr><td>'+it.qty+'</td><td>'+it.desc+'</td>'+(verPrecios?'<td>'+gpSimboloMoneda()+pv.toLocaleString('es-PY')+'.-</td>':'')+'</tr>';
     }).join('');
   }
   function gpSubtotal(list){
     return list.reduce(function(s,it){return s+gpPrecioVenta(it);},0);
   }
-  var mostrarSubtotales=productos.length>0&&servicios.length>0;
+  var mostrarSubtotales=verPrecios&&productos.length>0&&servicios.length>0;
   var seccionesHtml='';
-  if(productos.length){
+  if(!verPrecios){
+    // Venta de proyecto: una sola tabla (productos y servicios juntos), sin precios por ítem; solo el total
+    seccionesHtml='<table class="sin-precio"><thead><tr><th>Cantidad</th><th>Detalles</th></tr></thead><tbody>'+gpFilas(productos.concat(servicios))+'</tbody></table>';
+  } else if(productos.length){
     seccionesHtml+=(mostrarSubtotales?'<div class="stl">Productos</div>':'')+
       '<table><thead><tr><th>Cantidad</th><th>Detalles</th><th>Precio</th></tr></thead><tbody>'+gpFilas(productos)+'</tbody></table>'+
       (mostrarSubtotales?'<div style="display:flex;justify-content:flex-end;margin:-6px 0 14px;font-size:12px;color:#1B6B8A;font-weight:700">Subtotal Productos: '+gpSimboloMoneda()+gpSubtotal(productos).toLocaleString('es-PY')+'.-</div>':'');
   }
-  if(servicios.length){
+  if(verPrecios&&servicios.length){
     seccionesHtml+=(mostrarSubtotales?'<div class="stl">Servicios</div>':'')+
       '<table><thead><tr><th>Cantidad</th><th>Detalles</th><th>Precio</th></tr></thead><tbody>'+gpFilas(servicios)+'</tbody></table>'+
       (mostrarSubtotales?'<div style="display:flex;justify-content:flex-end;margin:-6px 0 14px;font-size:12px;color:#1B6B8A;font-weight:700">Subtotal Servicios: '+gpSimboloMoneda()+gpSubtotal(servicios).toLocaleString('es-PY')+'.-</div>':'');
@@ -4632,7 +4656,7 @@ function verPrevGPres(){
   doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+gpNombreArchivo().replace(/&/g,'&amp;')+'</title></head><body style="margin:0;padding:0">'+html+'</body></html>');
   doc.close();
   gi('gpPreviewWrap').style.display='block';
-  gi('gpPreviewWrap').scrollIntoView({behavior:'smooth'});
+  if(noScroll!==true)gi('gpPreviewWrap').scrollIntoView({behavior:'smooth'});
 }
 
 // Nombre sugerido al guardar el PDF: Presupuesto_<descripción general>_<cliente>
