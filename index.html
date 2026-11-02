@@ -1323,6 +1323,10 @@ pre{max-width:100%;overflow-x:auto}
           <button class="gp-mb" onclick="setMargenGlobal(95,this)">95%</button>
         </div>
         <div style="font-size:12px;color:var(--muted)">Margen sobre precio de venta &mdash; igual que Excel: =costo/(1-margen%). Ej: 20% &rarr; costo/0,80 &bull; 50% &rarr; costo/0,50. Se aplica a todos los &#237;tems; pod&#233;s ajustar cada uno individualmente.</div>
+        <div style="margin-top:14px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Redondear precios hacia arriba <span id="gpRedEjemplo"></span></div>
+          <div class="moneda-btns" id="gpRedondeoBtns"></div>
+        </div>
       </div>
 
       <!-- ITEMS -->
@@ -2049,6 +2053,7 @@ function editPres(id){
     gi('gpMonedaUSD').classList.toggle('active', gpMoneda==='USD');
     if(usdTag){ gi('gpCotiz').value = usdTag[1]; gi('gpCotiz').dataset.manual='1'; }
     gpActualizarCotizWrap();
+    gpRenderRedondeo();
     renderGPItems();
     calcGPres();
 
@@ -4379,6 +4384,7 @@ function initGPres(){
     gpItems=[gpNuevoItem()];
   }
   var gc=gi('gpCotiz');if(gc&&!gc.dataset.manual)gc.value=cotizacion||'';
+  gpRenderRedondeo();
   renderGPItems();
 }
 function guardarIntroDefault(){
@@ -4396,6 +4402,7 @@ function setGPMoneda(moneda, btn){
   // los ítems todavía vacíos adoptan la moneda del presupuesto; los que ya tienen costo conservan la suya (se convierten)
   gpItems.forEach(function(it){ if(!(it.costo>0)) it.mon = moneda==='USD' ? 'USD' : gpMonDefault(); });
   gpActualizarCotizWrap();
+  gpRenderRedondeo();
   calcGPres();
   renderGPItems();
 }
@@ -4407,7 +4414,32 @@ function gpActualizarCotizWrap(){
   wrap.style.display = necesita ? 'flex' : 'none';
   if(necesita && !gi('gpCotiz').value) gi('gpCotiz').value = cotizacion;
 }
-function gpRedondear(v){ return gpMoneda==='USD' ? Math.round(v*100)/100 : Math.round(v); }
+function gpRedPasos(){ return gpMoneda==='USD' ? [0,1,5,10] : [0,1000,10000,100000]; }
+function gpRedPaso(){
+  var k='bi_gp_red_'+(gpMoneda==='USD'?'usd':'gs'),v;
+  try{v=localStorage.getItem(k)}catch(e){v=null}
+  if(v===null||v===undefined||v==='')return gpMoneda==='USD'?0:1000;   // por defecto: Gs a la mil; USD sin redondeo
+  v=parseFloat(v);return gpRedPasos().indexOf(v)>-1?v:(gpMoneda==='USD'?0:1000);
+}
+function gpSetRedondeo(v){
+  try{localStorage.setItem('bi_gp_red_'+(gpMoneda==='USD'?'usd':'gs'),String(v))}catch(e){}
+  gpRenderRedondeo();renderGPResultados();calcGPres();
+}
+function gpRenderRedondeo(){
+  var cont=gi('gpRedondeoBtns');if(!cont)return;
+  var act=gpRedPaso(),usd=gpMoneda==='USD';
+  cont.innerHTML=gpRedPasos().map(function(v){
+    var lbl=v===0?'Sin redondeo':(usd?'a U$S '+v:'a '+v.toLocaleString('es-PY'));
+    return '<button type="button" class="moneda-btn'+(v===act?' active':'')+'" onclick="gpSetRedondeo('+v+')">'+lbl+'</button>';
+  }).join('');
+  var ej=gi('gpRedEjemplo');
+  if(ej)ej.textContent=act?(usd?'\u2014 ej: 30,63 \u2192 '+(Math.ceil(30.625/act)*act):'\u2014 ej: 1.809.333 \u2192 '+(Math.ceil(1809333/act)*act).toLocaleString('es-PY')):'';
+}
+function gpRedondear(v){
+  var paso=gpRedPaso();
+  if(paso>0) v=Math.ceil(v/paso-1e-6)*paso;      // hacia arriba (tolerancia para que 1.740.000 exactos no suba)
+  return gpMoneda==='USD' ? Math.round(v*100)/100 : Math.round(v);
+}
 function gpNum(n){
   n=Math.abs(n||0);
   return gpMoneda==='USD' ? n.toLocaleString('es-PY',{minimumFractionDigits:0,maximumFractionDigits:2}) : n.toLocaleString('es-PY');
