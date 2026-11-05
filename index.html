@@ -4885,11 +4885,42 @@ function rCobros(){
       '<td data-label="Acciones"><div class="acts">'+
         (r.estado==='Pendiente'?'<button class="btn btn-p btn-sm" data-id="'+r.id+'" onclick="marcarCobrado(this.dataset.id)" style="font-size:11px;padding:4px 10px;background:var(--green);border:none;cursor:pointer">✔ Cobrado</button>':'')+
         (r.estado==='Pendiente'?'<button class="btn btn-p btn-sm" data-id="'+r.id+'" onclick="abrirCobroParcial(this.dataset.id)" style="font-size:11px;padding:4px 10px;background:#f59e0b;border:none;cursor:pointer;color:#000">½ Parcial</button>':'')+
+        (r.estado==='Pendiente'&&cbPresDe(r)?'<button class="btn btn-g btn-sm" data-id="'+r.id+'" onclick="volverAPresupuestos(this.dataset.id)" title="Sacar de Cobros Pendientes y volver a Presupuestos (queda Pendiente)" style="font-size:11px;padding:4px 10px;cursor:pointer;white-space:nowrap">↩ Presup.</button>':'')+
         '<button class="ib" onclick="editCobro(this.dataset.id)" data-id="'+r.id+'" title="Editar">'+ie()+'</button>'+
         '<button class="ib d" onclick="deleteCobro(this.dataset.id)" data-id="'+r.id+'" title="Eliminar">'+it()+'</button>'+
       '</div></td>'+
     '</tr>';
   }).join('');
+}
+
+// Presupuesto vinculado a un cobro (por id; si no, por número exacto y único)
+function cbPresDe(r){
+  var p=null;
+  if(r.presupuesto_id!=null&&r.presupuesto_id!=='') p=PD.find(function(x){return String(x.id)===String(r.presupuesto_id)});
+  if(!p&&r.presupuesto_num){
+    var c=PD.filter(function(x){return (x.numero||'')===r.presupuesto_num});
+    if(c.length===1)p=c[0];
+  }
+  return p||null;
+}
+// Devuelve el presupuesto a la lista de Presupuestos (estado Pendiente) y quita el cobro pendiente
+async function volverAPresupuestos(id){
+  var cobro=cobrosData.find(function(x){return String(x.id)===String(id)});
+  if(!cobro||cobro.estado!=='Pendiente')return;
+  var pres=cbPresDe(cobro);
+  if(!pres){toast('Este cobro no tiene un presupuesto vinculado al que volver','e');return}
+  var parcial=VD.filter(function(v){return (v.presupuesto||'')===(pres.numero||'\u0000')}).reduce(function(s,v){return s+(v.monto||0)},0);
+  var msg='\u00bfVolver este presupuesto a Presupuestos?\n\n'+(pres.numero||'S/N')+' \u2014 '+(cobro.cliente||'')+' \u2014 \u20b2 '+fmt(cobro.monto)+
+    '\n\nSe quita de Cobros Pendientes y el presupuesto queda en estado Pendiente.'+
+    (parcial>0?'\n\n\u26a0 Ojo: ya hay \u20b2 '+fmt(parcial)+' registrados en el Libro de Ventas para este presupuesto (cobros parciales). Eso NO se borra.':'');
+  if(!confirm(msg))return;
+  var r1=await sb.from('presupuestos').update({estado:'Pendiente'}).eq('id',pres.id);
+  if(r1.error){toast('Error: '+r1.error.message,'e');return}
+  var r2=await sb.from('cobros_pendientes').delete().eq('id',cobro.id);
+  if(r2.error){toast('El presupuesto volvi\u00f3 a Pendiente, pero no se pudo quitar el cobro: '+r2.error.message,'e');await Promise.all([lP(),lCobros()]);rCobros();usPS();rPres();return}
+  toast('\u21a9 '+(pres.numero||'Presupuesto')+' volvi\u00f3 a Presupuestos (Pendiente)','s');
+  await Promise.all([lP(),lCobros()]);
+  rCobros();usPS();rPres();
 }
 
 function openModalCobro(){
