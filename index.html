@@ -557,7 +557,8 @@ pre{max-width:100%;overflow-x:auto}
       <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Presupuestos Pendientes" onclick="irA('presupuestos',{tab:'pendiente'})" onkeydown="if(event.key==='Enter')irA('presupuestos',{tab:'pendiente'})"><div class="db-kpi-icon" style="background:rgba(167,139,250,.15)">&#128203;</div><div class="db-kpi-text"><div class="lbl">Presupuestos Pendientes</div><div class="val p" id="dbPP">0</div><div class="delta delta-nu" id="dbPPD">&#8212;</div></div></div>
       <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Presupuestos Aprobados" onclick="irA('presupuestos',{tab:'aprobado'})" onkeydown="if(event.key==='Enter')irA('presupuestos',{tab:'aprobado'})"><div class="db-kpi-icon" style="background:rgba(34,197,94,.12)">&#9989;</div><div class="db-kpi-text"><div class="lbl">Presupuestos Aprobados</div><div class="val g" id="dbPA">0</div><div class="delta delta-nu" id="dbPAD">&#8212;</div></div></div>
       <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Cobros Pendientes" onclick="irA('cobros')" onkeydown="if(event.key==='Enter')irA('cobros')"><div class="db-kpi-icon" style="background:rgba(245,158,11,.15)">&#128179;</div><div class="db-kpi-text"><div class="lbl">Cobros Pendientes</div><div class="val y" id="dbCobP">&#8370; 0</div><div class="delta delta-nu" id="dbCobPD">&#8212;</div></div></div>
-      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Cobros Pendientes" onclick="irA('cobros')" onkeydown="if(event.key==='Enter')irA('cobros')"><div class="db-kpi-icon" style="background:rgba(37,99,235,.15)">&#128260;</div><div class="db-kpi-text"><div class="lbl">A Cobrar este Mes</div><div class="val b" id="dbSM">&#8370; 0</div><div class="delta delta-nu" id="dbSMD">&#8212;</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Servicios Mensuales" onclick="irA('servicios')" onkeydown="if(event.key==='Enter')irA('servicios')"><div class="db-kpi-icon" style="background:rgba(37,99,235,.15)">&#128260;</div><div class="db-kpi-text"><div class="lbl">Servicios Mensuales</div><div class="val b" id="dbSM">&#8370; 0</div><div class="delta delta-nu" id="dbSMD">&#8212;</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Cobros Pendientes" onclick="irA('cobros')" onkeydown="if(event.key==='Enter')irA('cobros')"><div class="db-kpi-icon" style="background:rgba(167,139,250,.15)">&#128197;</div><div class="db-kpi-text"><div class="lbl">Cuotas del Mes</div><div class="val p" id="dbCU">&#8370; 0</div><div class="delta delta-nu" id="dbCUD">&#8212;</div></div></div>
     </div>
     <!-- CHARTS + LISTAS -->
     <div class="db-grid" style="margin-bottom:20px">
@@ -587,9 +588,15 @@ pre{max-width:100%;overflow-x:auto}
         <div class="db-panel-body" id="dbLastP"><div style="color:var(--muted);font-size:13px;padding:10px 0">Sin datos</div></div>
       </div>
     </div>
-    <div class="db-panel" style="margin-top:20px">
-      <div class="db-panel-h"><span class="title">&#128181; A Cobrar &#8212; <span id="dbSMMes">&#8212;</span></span><span class="link" onclick="irA('cobros')">Ver cobros</span></div>
-      <div class="db-panel-body" id="dbSMList"><div style="color:var(--muted);font-size:13px;padding:10px 0">Sin servicios configurados</div></div>
+    <div class="db-grid" style="margin-top:20px">
+      <div class="db-panel">
+        <div class="db-panel-h"><span class="title">&#128260; Servicios Mensuales &#8212; <span id="dbSMMes">&#8212;</span></span><span class="link" onclick="irA('servicios')">Administrar</span></div>
+        <div class="db-panel-body" id="dbSMList"><div style="color:var(--muted);font-size:13px;padding:10px 0">Sin servicios configurados</div></div>
+      </div>
+      <div class="db-panel">
+        <div class="db-panel-h"><span class="title">&#128197; Cobros Mensuales &#8212; <span id="dbCUMes">&#8212;</span></span><span class="link" onclick="irA('cobros')">Ver cobros</span></div>
+        <div class="db-panel-body" id="dbCUList"><div style="color:var(--muted);font-size:13px;padding:10px 0">Sin cuotas este mes</div></div>
+      </div>
     </div>
     <div class="db-panel" style="margin-top:20px">
       <div class="db-panel-h"><span class="title">&#128295; Taller T&#233;cnico &#8212; Estado de &#211;rdenes</span><span class="link" onclick="nav('taller',document.querySelector('[onclick*=taller]'))">Ver todas</span></div>
@@ -2507,7 +2514,8 @@ function rDash(){
   gi('dbCobPD').textContent=cobPend.length+' cobro'+(cobPend.length!==1?'s':'')+' pendiente'+(cobPend.length!==1?'s':'')+(cobVenc.length?' · '+cobVenc.length+' vencido'+(cobVenc.length!==1?'s':''):'');
   gi('dbCobPD').className='delta '+(cobVenc.length?'delta-dn':'delta-nu');
 
-  rDbACobrar();
+  rDbServiciosMes();
+  rDbCuotasMes();
 
   // Last ventas
   var lv=VD.slice(0,5);
@@ -3326,62 +3334,90 @@ function cobrosDelPeriodo(per){
   }).sort(function(a,b){return String(a.vencimiento).localeCompare(String(b.vencimiento))});
 }
 
-/* Panel "A cobrar": junta el alojamiento mensual con las cuotas y
-   anticipos que vencen en el mes, para ver todo en un solo lugar. */
-function rDbACobrar(){
+/* Progreso del plan de pago al que pertenece un cobro (anticipo + cuotas
+   de un mismo presupuesto). Devuelve null si el cobro es suelto. */
+function planDelCobro(r){
+  if(!r.presupuesto_num) return null;
+  var grupo=(cobrosData||[]).filter(function(x){
+    return x.presupuesto_num===r.presupuesto_num && x.cliente===r.cliente;
+  });
+  if(grupo.length<2) return null;
+  return {
+    total: grupo.length,
+    cobrados: grupo.filter(function(x){return x.estado==='Cobrado'}).length,
+    saldo: grupo.filter(function(x){return x.estado!=='Cobrado'})
+                .reduce(function(a,x){return a+(Number(x.monto)||0)},0)
+  };
+}
+
+/* PANEL 1 - Servicios Mensuales: el alojamiento y soporte recurrente.
+   Es facturacion que se repite todos los meses sin fecha de fin. */
+function rDbServiciosMes(){
   var cont=gi('dbSMList'); if(!cont) return;
   var per=smPeriodoActual(), hoy=smHoyISO();
   if(gi('dbSMMes')) gi('dbSMMes').textContent=smEtiqueta(per);
 
   var act=SMD.filter(function(r){return smAplica(r,per)});
-  var svPorCobrar=act.filter(function(r){return !smCobro(r.id,per)});
-  var cuotas=cobrosDelPeriodo(per);
+  var porCobrar=act.filter(function(r){return !smCobro(r.id,per)});
+  var monto=porCobrar.reduce(function(a,r){return a+(Number(r.monto)||0)},0);
+  var vencidos=porCobrar.filter(function(r){return smVence(r,per)<hoy}).length;
 
-  var montoSv=svPorCobrar.reduce(function(a,r){return a+(Number(r.monto)||0)},0);
-  var montoCu=cuotas.reduce(function(a,r){return a+(Number(r.monto)||0)},0);
-  var total=montoSv+montoCu;
-  var vencidos=svPorCobrar.filter(function(r){return smVence(r,per)<hoy}).length
-             + cuotas.filter(function(r){return String(r.vencimiento).slice(0,10)<hoy}).length;
-  var cuantos=svPorCobrar.length+cuotas.length;
-
-  if(gi('dbSM')) gi('dbSM').textContent='\u20b2 '+fmt(total);
+  if(gi('dbSM')) gi('dbSM').textContent='\u20b2 '+fmt(monto);
   if(gi('dbSMD')){
-    gi('dbSMD').textContent=cuantos?(cuantos+' por cobrar'+(vencidos?' \u00b7 '+vencidos+' vencido'+(vencidos!==1?'s':''):'')):'Todo cobrado';
-    gi('dbSMD').className='delta '+(vencidos?'delta-dn':(cuantos?'delta-nu':'delta-up'));
+    var pendInicio=SMD.filter(function(r){return r.activo&&!r.fecha_inicio}).length;
+    var txt=porCobrar.length?(porCobrar.length+' por cobrar'+(vencidos?' \u00b7 '+vencidos+' vencido'+(vencidos!==1?'s':''):'')):'Todo cobrado';
+    if(!act.length&&pendInicio) txt=pendInicio+' pendiente'+(pendInicio!==1?'s':'')+' de inicio';
+    gi('dbSMD').textContent=txt;
+    gi('dbSMD').className='delta '+(vencidos?'delta-dn':(porCobrar.length?'delta-nu':'delta-up'));
   }
 
-  var html='';
+  var lista=SMD.filter(function(r){return r.activo&&(smAplica(r,per)||!r.fecha_inicio)});
+  if(!lista.length){cont.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px 0">Sin servicios configurados</div>';return}
   var bx={'Cobrado':'bg','Por cobrar':'by','Vencido':'br','Pendiente de inicio':'bb'};
-  var sv=SMD.filter(function(r){return r.activo&&(smAplica(r,per)||!r.fecha_inicio)});
+  var html=lista.map(function(r){
+    var est=smEstado(r,per), aplica=smAplica(r,per), c=smCobro(r.id,per);
+    var sub=aplica?('vence el '+fd(smVence(r,per))):'arranca cuando cargues la fecha de inicio';
+    return '<div class="db-row"><div><div class="name">'+r.cliente+'</div><div class="tag">'+sub+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:10px">'+
+      '<span class="amt" style="color:'+(est==='Cobrado'?'var(--green)':(est==='Vencido'?'var(--red)':'var(--blue)'))+'">\u20b2 '+fmt(r.monto)+'</span>'+
+      (aplica&&!c?'<button class="btn btn-p" style="padding:4px 10px;font-size:11px" onclick="cobrarSM(\''+r.id+'\')">Cobrar</button>':'<span class="bx '+(bx[est]||'bm')+'" style="font-size:10px">'+est+'</span>')+
+      '</div></div>';
+  }).join('');
+  if(porCobrar.length>1) html+='<div style="display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid var(--text);margin-top:10px;padding-top:9px;font-weight:700"><span>Por cobrar</span><span style="font-variant-numeric:tabular-nums">\u20b2 '+fmt(monto)+'</span></div>';
+  cont.innerHTML=html;
+}
 
-  if(sv.length){
-    html+='<div style="font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--muted);text-transform:uppercase;padding:2px 0 6px">Alojamiento y soporte</div>';
-    html+=sv.map(function(r){
-      var est=smEstado(r,per), aplica=smAplica(r,per), c=smCobro(r.id,per);
-      var sub=aplica?('vence el '+fd(smVence(r,per))):'arranca cuando cargues la fecha de inicio';
-      return '<div class="db-row"><div><div class="name">'+r.cliente+'</div><div class="tag">'+r.concepto+' \u00b7 '+sub+'</div></div>'+
-        '<div style="display:flex;align-items:center;gap:10px">'+
-        '<span class="amt" style="color:'+(est==='Cobrado'?'var(--green)':(est==='Vencido'?'var(--red)':'var(--blue)'))+'">\u20b2 '+fmt(r.monto)+'</span>'+
-        (aplica&&!c?'<button class="btn btn-p" style="padding:4px 10px;font-size:11px" onclick="cobrarSM(\''+r.id+'\')">Cobrar</button>':'<span class="bx '+(bx[est]||'bm')+'" style="font-size:10px">'+est+'</span>')+
-        '</div></div>';
-    }).join('');
+/* PANEL 2 - Cobros Mensuales: las cuotas y anticipos de los sistemas
+   vendidos financiados. Tienen un total y una cantidad de cuotas: no es
+   facturacion recurrente, es el cobro de una venta ya hecha. */
+function rDbCuotasMes(){
+  var cont=gi('dbCUList'); if(!cont) return;
+  var per=smPeriodoActual(), hoy=smHoyISO();
+  if(gi('dbCUMes')) gi('dbCUMes').textContent=smEtiqueta(per);
+
+  var cuotas=cobrosDelPeriodo(per);
+  var monto=cuotas.reduce(function(a,r){return a+(Number(r.monto)||0)},0);
+  var vencidas=cuotas.filter(function(r){return String(r.vencimiento).slice(0,10)<hoy}).length;
+
+  if(gi('dbCU')) gi('dbCU').textContent='\u20b2 '+fmt(monto);
+  if(gi('dbCUD')){
+    gi('dbCUD').textContent=cuotas.length?(cuotas.length+' por cobrar'+(vencidas?' \u00b7 '+vencidas+' vencida'+(vencidas!==1?'s':''):'')):'Nada este mes';
+    gi('dbCUD').className='delta '+(vencidas?'delta-dn':(cuotas.length?'delta-nu':'delta-up'));
   }
 
-  if(cuotas.length){
-    html+='<div style="font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--muted);text-transform:uppercase;padding:'+(sv.length?'14px':'2px')+' 0 6px;'+(sv.length?'border-top:1px solid var(--border);margin-top:8px':'')+'">Cuotas y anticipos</div>';
-    html+=cuotas.map(function(r){
-      var venc=String(r.vencimiento).slice(0,10), vencido=venc<hoy;
-      return '<div class="db-row"><div><div class="name">'+(r.cliente||'\u2014')+'</div>'+
-        '<div class="tag">'+(r.descripcion||'Cobro')+' \u00b7 vence el '+fd(venc)+(r.presupuesto_num?' \u00b7 pres. '+r.presupuesto_num:'')+'</div></div>'+
-        '<div style="display:flex;align-items:center;gap:10px">'+
-        '<span class="amt" style="color:'+(vencido?'var(--red)':'var(--blue)')+'">\u20b2 '+fmt(r.monto)+'</span>'+
-        '<button class="btn btn-p" style="padding:4px 10px;font-size:11px" onclick="marcarCobrado(\''+r.id+'\')">Cobrar</button>'+
-        '</div></div>';
-    }).join('');
-  }
-
-  if(!html) html='<div style="color:var(--muted);font-size:13px;padding:10px 0">Nada por cobrar este mes</div>';
-  else if(cuantos>1) html+='<div style="display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid var(--text);margin-top:10px;padding-top:9px;font-weight:700"><span>Total del mes</span><span style="font-variant-numeric:tabular-nums">\u20b2 '+fmt(total)+'</span></div>';
+  if(!cuotas.length){cont.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px 0">Sin cuotas que venzan este mes</div>';return}
+  var html=cuotas.map(function(r){
+    var venc=String(r.vencimiento).slice(0,10), vencida=venc<hoy;
+    var plan=planDelCobro(r);
+    var sub=(r.descripcion||'Cobro')+' \u00b7 vence el '+fd(venc);
+    if(plan) sub+=' \u00b7 '+plan.cobrados+' de '+plan.total+' cobradas, saldo \u20b2 '+fmt(plan.saldo);
+    return '<div class="db-row"><div><div class="name">'+(r.cliente||'\u2014')+'</div><div class="tag">'+sub+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:10px">'+
+      '<span class="amt" style="color:'+(vencida?'var(--red)':'var(--purple, var(--blue))')+'">\u20b2 '+fmt(r.monto)+'</span>'+
+      '<button class="btn btn-p" style="padding:4px 10px;font-size:11px" onclick="marcarCobrado(\''+r.id+'\')">Cobrar</button>'+
+      '</div></div>';
+  }).join('');
+  if(cuotas.length>1) html+='<div style="display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid var(--text);margin-top:10px;padding-top:9px;font-weight:700"><span>Por cobrar</span><span style="font-variant-numeric:tabular-nums">\u20b2 '+fmt(monto)+'</span></div>';
   cont.innerHTML=html;
 }
 function er(c,msg){return'<tr><td colspan="'+c+'"><div class="es"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg><p>'+msg+'</p></div></td></tr>'}
