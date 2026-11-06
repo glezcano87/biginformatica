@@ -2538,8 +2538,8 @@ function rDash(){
   gi('dbPAD').textContent=PD.filter(r=>r.estado==='Rechazado').length+' rechazado'+(PD.filter(r=>r.estado==='Rechazado').length!==1?'s':'');
 
   // Cobros Pendientes
-  var cobPend=(cobrosData||[]).filter(r=>r.estado==='Pendiente');
-  var cobVenc=(cobrosData||[]).filter(esCobroVencido);
+  var cobPend=cobrosSueltos().filter(r=>r.estado==='Pendiente');
+  var cobVenc=cobrosSueltos().filter(esCobroVencido);
   var montoCobPend=cobPend.reduce((s,r)=>s+(r.monto||0),0);
   gi('dbCobP').textContent='₲ '+fmt(montoCobPend);
   gi('dbCobPD').textContent=cobPend.length+' cobro'+(cobPend.length!==1?'s':'')+' pendiente'+(cobPend.length!==1?'s':'')+(cobVenc.length?' · '+cobVenc.length+' vencido'+(cobVenc.length!==1?'s':''):'');
@@ -3343,7 +3343,7 @@ async function desCobrarSM(id){
 function popMesCobrosSel(){
   var sel=gi('fMesCobros'); if(!sel) return;
   var meses={};
-  (cobrosData||[]).forEach(function(r){
+  cobrosSueltos().forEach(function(r){   /* solo cobros sueltos: las cuotas tienen su propio modulo */
     var m=String(r.vencimiento||'').slice(0,7);
     if(/^\d{4}-\d{2}$/.test(m)) meses[m]=true;
   });
@@ -3358,10 +3358,11 @@ function popMesCobrosSel(){
   if(cur&&lista.indexOf(cur)>=0) sel.value=cur;
 }
 
-/* Cobros pendientes que vencen dentro del periodo 'YYYY-MM' */
+/* Cuotas de planes de pago que vencen dentro del periodo 'YYYY-MM'.
+   Solo planes: los cobros sueltos se miran en Cobros Pendientes. */
 function cobrosDelPeriodo(per){
   return (cobrosData||[]).filter(function(r){
-    return r.estado!=='Cobrado' && String(r.vencimiento||'').slice(0,7)===per;
+    return esCobroDePlan(r) && r.estado!=='Cobrado' && String(r.vencimiento||'').slice(0,7)===per;
   }).sort(function(a,b){return String(a.vencimiento).localeCompare(String(b.vencimiento))});
 }
 
@@ -3371,6 +3372,11 @@ function cobrosDelPeriodo(per){
    marcados con cuota_total: el anticipo (cuota_nro 0) y las cuotas.
    ============================================================ */
 function planKey(r){ return (r.cliente||'')+'||'+(r.presupuesto_num||''); }
+
+/* Un cobro que forma parte de un plan de pago se administra desde
+   Cobros Cuotas, no desde Cobros Pendientes. */
+function esCobroDePlan(r){ return !!(r&&r.cuota_total); }
+function cobrosSueltos(){ return (cobrosData||[]).filter(function(r){return !esCobroDePlan(r)}); }
 
 /* Todos los cobros del plan al que pertenece este cobro */
 function cobrosDelPlan(r){
@@ -3448,7 +3454,11 @@ function rCuotas(){
         '<td data-label="Vence" class="mn" style="font-size:12.5px;color:'+(vencida?'var(--red)':'var(--muted)')+'">'+(venc?fd(venc):'\u2014')+'</td>'+
         '<td data-label="Monto" class="mn tr" style="font-weight:600;white-space:nowrap">\u20b2 '+fmt(x.monto)+'</td>'+
         '<td data-label="Estado"><span class="bx '+(cobrado?'bg':(vencida?'br':'by'))+'">'+(cobrado?'Cobrada':(vencida?'Vencida':'Pendiente'))+'</span></td>'+
-        '<td data-label="" class="tr">'+(cobrado?'':'<button class="btn btn-p" style="padding:4px 11px;font-size:11px" onclick="marcarCobrado(\''+x.id+'\')">Cobrar</button>')+'</td>'+
+        '<td data-label="" class="tr"><div class="acts" style="justify-content:flex-end">'+
+          (cobrado?'':'<button class="btn btn-p" style="padding:4px 11px;font-size:11px" onclick="marcarCobrado(\''+x.id+'\')">Cobrar</button>')+
+          '<button class="ib" onclick="editCobro(\''+x.id+'\')" title="Editar">'+ie()+'</button>'+
+          '<button class="ib d" onclick="deleteCobro(\''+x.id+'\')" title="Eliminar">'+it()+'</button>'+
+        '</div></td>'+
       '</tr>';
     }).join('');
     return '<div class="tw" style="margin-bottom:16px">'+
@@ -5447,30 +5457,73 @@ function rCobros(){
   var hoy = new Date();
   popMesCobrosSel();
 
-  var rows = cobrosData.filter(function(r){
+  var rows = cobrosSueltos().filter(function(r){
     return (!q||(r.cliente||'').toLowerCase().includes(q)||(r.presupuesto_num||'').toLowerCase().includes(q)||(r.factura||'').toLowerCase().includes(q))&&
            (!est||r.estado===est)&&
            (!mesSel||String(r.vencimiento||'').slice(0,7)===mesSel);
   });
 
-  var totalPend = cobrosData.filter(function(r){return r.estado==='Pendiente'||r.estado==='Vencido';}).reduce(function(s,r){return s+(r.monto||0);},0);
-  var vencidos = cobrosData.filter(esCobroVencido).length;
-  var aldia = cobrosData.filter(function(r){
+  var enPlanes = rows.filter(function(r){return r.cuota_total}).length;
+  var sueltos = cobrosSueltos();
+  var totalPend = sueltos.filter(function(r){return r.estado==='Pendiente'||r.estado==='Vencido';}).reduce(function(s,r){return s+(r.monto||0);},0);
+  var vencidos = sueltos.filter(esCobroVencido).length;
+  var aldia = sueltos.filter(function(r){
     return r.estado!=='Cobrado' && !esCobroVencido(r);
   }).length;
-  var totalCobrado = cobrosData.filter(function(r){return r.estado==='Cobrado';}).reduce(function(s,r){return s+(r.monto||0);},0);
+  var totalCobrado = sueltos.filter(function(r){return r.estado==='Cobrado';}).reduce(function(s,r){return s+(r.monto||0);},0);
 
   gi('cb-total').textContent = '₲ '+fmt(totalPend);
   gi('cb-vencidos').textContent = vencidos;
   gi('cb-aldia').textContent = aldia;
   gi('cb-cobrados').textContent = '₲ '+fmt(totalCobrado);
-  gi('cobrosMeta').textContent = rows.length+' registro'+(rows.length!==1?'s':'')+' · Pendiente: ₲ '+fmt(totalPend);
+  var enPlanes=(cobrosData||[]).filter(function(r){return esCobroDePlan(r)&&r.estado!=='Cobrado'})
+                 .reduce(function(a,r){return a+(Number(r.monto)||0)},0);
+  gi('cobrosMeta').innerHTML = rows.length+' registro'+(rows.length!==1?'s':'')+' · Pendiente: ₲ '+fmt(totalPend)+
+    (enPlanes?' <span style="color:var(--muted)">·</span> <span style="color:var(--purple);cursor:pointer" onclick="irA(\'cuotas\')" title="Ir a Cobros Cuotas">₲ '+fmt(enPlanes)+' en planes de cuotas &rsaquo;</span>':'');
 
   var tb = gi('tblCobros');
   if(!rows.length){ tb.innerHTML=er(9,sb?'No hay cobros registrados.':'⚠️ Conecta Supabase desde Configuración.'); return; }
 
   var eb = {Pendiente:'by', Cobrado:'bg', Vencido:'br'};
-  tb.innerHTML = rows.map(function(r){
+
+  /* Las cuotas de un plan se juntan en una sola fila: si no, un plan de
+     6 cuotas ocupa 7 renglones durante medio ano. El detalle esta en
+     Cobros Cuotas. Los totales de arriba siguen contando cuota por cuota. */
+  var vistos={}, agrupadas=[];
+  rows.forEach(function(r){
+    if(!r.cuota_total){ agrupadas.push(r); return }
+    var k=planKey(r);
+    if(vistos[k]) return;
+    vistos[k]=true;
+    agrupadas.push({__plan:true, key:k, cobros:cobrosDelPlan(r).filter(function(x){
+      return rows.indexOf(x)>=0;      // respeta los filtros activos
+    })});
+  });
+
+  tb.innerHTML = agrupadas.map(function(g){
+    if(g.__plan){
+      var cs=g.cobros; if(!cs.length) return '';
+      var uno=cs[0];
+      var pend=cs.filter(function(x){return x.estado!=='Cobrado'});
+      var saldo=pend.reduce(function(a,x){return a+(Number(x.monto)||0)},0);
+      var cobradas=cs.length-pend.length;
+      var prox=pend.map(function(x){return String(x.vencimiento||'')}).filter(Boolean).sort()[0];
+      var hoyI=smHoyISO();
+      return '<tr style="background:rgba(167,139,250,.05)">'+
+        '<td data-label="Fecha" class="mn">'+fd(uno.fecha)+'</td>'+
+        '<td data-label="N&#176; Presupuesto" style="color:var(--muted);font-size:12px">'+(uno.presupuesto_num||'—')+'</td>'+
+        '<td data-label="N&#176; Factura" style="color:var(--muted);font-size:12px">—</td>'+
+        '<td data-label="Cliente" style="font-weight:600">'+(uno.cliente||'—')+'</td>'+
+        '<td data-label="Descripci&#243;n"><span class="bx" style="background:rgba(167,139,250,.18);color:var(--purple);margin-right:6px">Plan de pago</span>'+
+          '<span style="font-size:12px;color:var(--muted)">'+cobradas+' de '+cs.length+' cobradas'+
+          (prox?' · próxima '+fd(prox):'')+'</span></td>'+
+        '<td data-label="Saldo" class="mn tr" style="font-weight:700;color:'+(saldo?'var(--yellow)':'var(--green)')+'">₲ '+fmt(saldo)+'</td>'+
+        '<td data-label="Estado"><span class="bx '+(saldo?(prox&&prox<hoyI?'br':'by'):'bg')+'">'+(saldo?(prox&&prox<hoyI?'Vencida':'En curso'):'Cancelado')+'</span></td>'+
+        '<td data-label="D&#237;as" style="color:var(--muted);font-size:12px">—</td>'+
+        '<td data-label="Acciones"><div class="acts"><button class="btn btn-p" style="font-size:11px;padding:4px 11px;background:var(--purple);border:none;cursor:pointer;white-space:nowrap" onclick="irA(\'cuotas\')">Ver plan</button></div></td>'+
+      '</tr>';
+    }
+    var r=g;
     var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
     var diasColor = dias>30?'var(--red)':dias>15?'var(--yellow)':'var(--green)';
     return '<tr>'+
