@@ -481,6 +481,7 @@ pre{max-width:100%;overflow-x:auto}
       <a class="nav-a" onclick="nav('entregas',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>Entregas</a>
       <a class="nav-a" onclick="nav('taller',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Taller T&#233;cnico</a>
       <a class="nav-a" onclick="nav('gastos',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Gastos Fijos</a>
+      <a class="nav-a" onclick="nav('servicios',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5M20 9A8 8 0 006.3 5.3L4 9m16 6a8 8 0 01-13.7 3.7L4 15"/></svg>Servicios Mensuales</a>
     </div>
     <div class="nav-s">
       <span class="nav-lbl">Sistema</span>
@@ -556,6 +557,7 @@ pre{max-width:100%;overflow-x:auto}
       <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Presupuestos Pendientes" onclick="irA('presupuestos',{tab:'pendiente'})" onkeydown="if(event.key==='Enter')irA('presupuestos',{tab:'pendiente'})"><div class="db-kpi-icon" style="background:rgba(167,139,250,.15)">&#128203;</div><div class="db-kpi-text"><div class="lbl">Presupuestos Pendientes</div><div class="val p" id="dbPP">0</div><div class="delta delta-nu" id="dbPPD">&#8212;</div></div></div>
       <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Presupuestos Aprobados" onclick="irA('presupuestos',{tab:'aprobado'})" onkeydown="if(event.key==='Enter')irA('presupuestos',{tab:'aprobado'})"><div class="db-kpi-icon" style="background:rgba(34,197,94,.12)">&#9989;</div><div class="db-kpi-text"><div class="lbl">Presupuestos Aprobados</div><div class="val g" id="dbPA">0</div><div class="delta delta-nu" id="dbPAD">&#8212;</div></div></div>
       <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Cobros Pendientes" onclick="irA('cobros')" onkeydown="if(event.key==='Enter')irA('cobros')"><div class="db-kpi-icon" style="background:rgba(245,158,11,.15)">&#128179;</div><div class="db-kpi-text"><div class="lbl">Cobros Pendientes</div><div class="val y" id="dbCobP">&#8370; 0</div><div class="delta delta-nu" id="dbCobPD">&#8212;</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Servicios Mensuales" onclick="irA('servicios')" onkeydown="if(event.key==='Enter')irA('servicios')"><div class="db-kpi-icon" style="background:rgba(37,99,235,.15)">&#128260;</div><div class="db-kpi-text"><div class="lbl">Servicios Mensuales</div><div class="val b" id="dbSM">&#8370; 0</div><div class="delta delta-nu" id="dbSMD">&#8212;</div></div></div>
     </div>
     <!-- CHARTS + LISTAS -->
     <div class="db-grid" style="margin-bottom:20px">
@@ -584,6 +586,10 @@ pre{max-width:100%;overflow-x:auto}
         <div class="db-panel-h"><span class="title">&#128203; Presupuestos Recientes</span><span class="link" onclick="nav('presupuestos',document.querySelector('[onclick*=presupuestos]'))">Ver todos</span></div>
         <div class="db-panel-body" id="dbLastP"><div style="color:var(--muted);font-size:13px;padding:10px 0">Sin datos</div></div>
       </div>
+    </div>
+    <div class="db-panel" style="margin-top:20px">
+      <div class="db-panel-h"><span class="title">&#128260; Servicios Mensuales &#8212; <span id="dbSMMes">&#8212;</span></span><span class="link" onclick="irA('servicios')">Administrar</span></div>
+      <div class="db-panel-body" id="dbSMList"><div style="color:var(--muted);font-size:13px;padding:10px 0">Sin servicios configurados</div></div>
     </div>
     <div class="db-panel" style="margin-top:20px">
       <div class="db-panel-h"><span class="title">&#128295; Taller T&#233;cnico &#8212; Estado de &#211;rdenes</span><span class="link" onclick="nav('taller',document.querySelector('[onclick*=taller]'))">Ver todas</span></div>
@@ -962,6 +968,27 @@ pre{max-width:100%;overflow-x:auto}
       <div class="sc"><div class="lbl">Categor&#237;as</div><div class="val b" id="gf3">0</div></div>
     </div>
     <div class="tw"><div style="overflow-x:auto"><table class="tbl-cards"><thead><tr><th>Concepto</th><th>Categor&#237;a</th><th>Frecuencia</th><th class="tr">Monto Mensual</th><th>Estado</th><th></th></tr></thead><tbody id="tbG"></tbody></table></div></div>
+  </div>
+</div>
+
+<!-- SERVICIOS MENSUALES -->
+<div class="page" id="page-servicios">
+  <div class="topbar"><div><h1>Servicios Mensuales</h1><div class="meta">Alojamiento y soporte recurrente por cliente</div></div>
+  <button class="btn btn-p" onclick="oSM()"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4v16m8-8H4"/></svg>Nuevo Servicio</button></div>
+  <div class="content">
+    <div class="srow">
+      <div class="sc"><div class="lbl">Facturaci&#243;n Mensual</div><div class="val b" id="sm0">&#8370; 0</div></div>
+      <div class="sc"><div class="lbl">Cobrado este mes</div><div class="val g" id="sm1">&#8370; 0</div></div>
+      <div class="sc"><div class="lbl">Por cobrar este mes</div><div class="val y" id="sm2">&#8370; 0</div></div>
+      <div class="sc"><div class="lbl">Proyecci&#243;n Anual</div><div class="val b" id="sm3">&#8370; 0</div></div>
+    </div>
+    <div class="tw">
+      <div class="ttb" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <span style="font-size:13px;font-weight:600">Estado del per&#237;odo</span>
+        <select class="fs" id="smMesSel" onchange="rSM()" style="min-width:170px"></select>
+      </div>
+      <div style="overflow-x:auto"><table class="tbl-cards"><thead><tr><th>Cliente</th><th>Concepto</th><th class="tr">Monto</th><th>Vence</th><th>Vigencia</th><th>Estado del mes</th><th></th></tr></thead><tbody id="tbSM"></tbody></table></div>
+    </div>
   </div>
 </div>
 
@@ -1613,6 +1640,33 @@ CREATE POLICY "all" ON compras FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON presupuestos FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON gastos_fijos FOR ALL USING (true) WITH CHECK (true);
 
+-- SERVICIOS MENSUALES (alojamiento y soporte recurrente)
+CREATE TABLE servicios_mensuales (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  cliente text NOT NULL,
+  concepto text NOT NULL DEFAULT 'Alojamiento y soporte mensual',
+  monto numeric NOT NULL,
+  dia_cobro int NOT NULL DEFAULT 1 CHECK (dia_cobro BETWEEN 1 AND 28),
+  fecha_inicio date,          -- NULL = pendiente de inicio
+  fecha_fin date,             -- NULL = sin fecha de fin
+  activo boolean DEFAULT true,
+  notas text,
+  created_at timestamptz DEFAULT now()
+);
+CREATE TABLE servicios_cobros (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  servicio_id uuid NOT NULL REFERENCES servicios_mensuales(id) ON DELETE CASCADE,
+  periodo text NOT NULL,      -- 'YYYY-MM'
+  fecha_cobro date NOT NULL,
+  monto numeric NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE (servicio_id, periodo)
+);
+ALTER TABLE servicios_mensuales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE servicios_cobros ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "all" ON servicios_mensuales FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "all" ON servicios_cobros FOR ALL USING (true) WITH CHECK (true);
+
 -- COBROS PENDIENTES
 CREATE TABLE cobros_pendientes (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -1825,6 +1879,21 @@ CREATE POLICY "all" ON configuracion FOR ALL USING (true) WITH CHECK (true);</pr
   <div class="mf"><button class="btn btn-g" onclick="cm('mG')">Cancelar</button><button class="btn btn-p" id="bsG" onclick="sG()">Guardar</button></div>
 </div></div>
 
+<div class="ov" id="mSM"><div class="modal">
+  <div class="mh"><h2 id="mSMt">Nuevo Servicio Mensual</h2><button class="ib" onclick="cm('mSM')">&#10005;</button></div>
+  <div class="mb"><div class="fg">
+    <div class="fgg"><label>Cliente *</label><input type="text" id="smCli" placeholder="Ej: DEMACAR SERVICE"></div>
+    <div class="fgg"><label>Concepto *</label><input type="text" id="smCon" placeholder="Alojamiento y soporte mensual"></div>
+    <div class="fgg"><label>Monto mensual (&#8370;) *</label><input type="number" id="smMon" placeholder="0" min="0"></div>
+    <div class="fgg"><label>D&#237;a de cobro</label><input type="number" id="smDia" value="1" min="1" max="28"></div>
+    <div class="fgg"><label>Inicio del contrato</label><input type="date" id="smIni"><div style="font-size:11px;color:var(--muted);margin-top:4px">Vac&#237;o = pendiente de inicio, no se cobra todav&#237;a</div></div>
+    <div class="fgg"><label>Fin del contrato</label><input type="date" id="smFin"><div style="font-size:11px;color:var(--muted);margin-top:4px">Vac&#237;o = sin fecha de fin</div></div>
+    <div class="fgg"><label>Estado</label><select id="smAct"><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
+    <div class="fgg full"><label>Notas</label><input type="text" id="smNot" placeholder="Opcional"></div>
+  </div></div>
+  <div class="mf"><button class="btn btn-g" onclick="cm('mSM')">Cancelar</button><button class="btn btn-p" id="bsSM" onclick="sSM()">Guardar</button></div>
+</div></div>
+
 <!-- MODAL COBRO PARCIAL -->
 <div class="ov" id="modalCobroParcial">
   <div class="modal" style="max-width:560px">
@@ -1937,6 +2006,7 @@ CREATE POLICY "all" ON configuracion FOR ALL USING (true) WITH CHECK (true);</pr
 <script>
 var sb=null;
 var eP=null,VD=[],CD=[],PD=[],GD=[],TD=[],eV=null,eC=null,eP=null,eG=null,eT=null,fjCh=null;
+var SMD=[],SCD=[],eSM=null;
 var MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 function gcfg(){return{url:localStorage.getItem('bi_url')||'',key:localStorage.getItem('bi_key')||''}}
 function sCfg(){var u=gi('cfU').value.trim(),k=gi('cfK').value.trim();if(!u||!k){toast('Completa ambos campos','e');return}localStorage.setItem('bi_url',u);localStorage.setItem('bi_key',k);initSB(u,k)}
@@ -1944,8 +2014,8 @@ function clCfg(){localStorage.removeItem('bi_url');localStorage.removeItem('bi_k
 function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Conectado a Supabase','s');gi('cfgSt').textContent='Conectado correctamente';loadAll()}catch(e){setConn(false);toast('Error: '+e.message,'e')}}
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
 function gi(id){return document.getElementById(id)}
-function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='usuarios'){loadUsuarios();}if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='recibo'){initRecibo();}if(p==='gpres'){initGPres();}if(p==='taller'){rT();}if(p==='entregas'){rEnt();}closeSidebar()}
-async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lEntregas(),lRecibos(),lCotiz(),(typeof lFE==='function'?lFE():null)]);popFjSel();popMgSel();popCtMesSel();rDash();sincronizarCotizChaco(false)}
+function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='usuarios'){loadUsuarios();}if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='recibo'){initRecibo();}if(p==='gpres'){initGPres();}if(p==='taller'){rT();}if(p==='entregas'){rEnt();}if(p==='servicios'){popSmMesSel();rSM();}closeSidebar()}
+async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lEntregas(),lRecibos(),lCotiz(),lSM(),(typeof lFE==='function'?lFE():null)]);popFjSel();popMgSel();popCtMesSel();popSmMesSel();rDash();sincronizarCotizChaco(false)}
 async function lV(){if(!sb)return;var r=await sb.from('ventas').select('*').order('fecha',{ascending:false});if(r.error){toast('Error ventas: '+r.error.message,'e');return}VD=r.data||[];popMF('fmV',VD);rV();usV()}
 async function lC(){if(!sb)return;var r=await sb.from('compras').select('*').order('fecha',{ascending:false});if(r.error){toast('Error compras: '+r.error.message,'e');return}CD=r.data||[];popMF('fmC',CD);rC();usC()}
 async function lP(){if(!sb)return;var r=await sb.from('presupuestos').select('*').order('fecha',{ascending:false});if(r.error){toast('Error presupuestos: '+r.error.message,'e');return}PD=r.data||[];popMF('fmP',PD);usPS();rPres()}
@@ -2420,11 +2490,13 @@ function rDash(){
 
   // Cobros Pendientes
   var cobPend=(cobrosData||[]).filter(r=>r.estado==='Pendiente');
-  var cobVenc=(cobrosData||[]).filter(r=>r.estado==='Vencido');
+  var cobVenc=(cobrosData||[]).filter(esCobroVencido);
   var montoCobPend=cobPend.reduce((s,r)=>s+(r.monto||0),0);
   gi('dbCobP').textContent='₲ '+fmt(montoCobPend);
   gi('dbCobPD').textContent=cobPend.length+' cobro'+(cobPend.length!==1?'s':'')+' pendiente'+(cobPend.length!==1?'s':'')+(cobVenc.length?' · '+cobVenc.length+' vencido'+(cobVenc.length!==1?'s':''):'');
   gi('dbCobPD').className='delta '+(cobVenc.length?'delta-dn':'delta-nu');
+
+  rDbServicios();
 
   // Last ventas
   var lv=VD.slice(0,5);
@@ -3091,6 +3163,161 @@ async function dl2(tbl,id){var r=await sb.from(tbl).delete().eq('id',id);if(r.er
 function fmt(n){var a=Math.abs(n||0);if(Math.abs(a*100-Math.round(a*100))>1e-6)a=Math.round(a);return a.toLocaleString('es-PY')}
 function fd(d){if(!d)return'\u2014';var[y,m,day]=d.split('-');return day+'/'+m+'/'+y}
 function curMes(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')}
+
+/* ============================================================
+   SERVICIOS MENSUALES  (alojamiento y soporte recurrente)
+   ============================================================ */
+function smHoyISO(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function smPad(n){return String(n).padStart(2,'0')}
+function smPeriodoActual(){return smHoyISO().slice(0,7)}
+function smUltDia(per){var y=parseInt(per.slice(0,4)),m=parseInt(per.slice(5,7));return per+'-'+smPad(new Date(y,m,0).getDate())}
+function smEtiqueta(per){var y=per.slice(0,4),m=parseInt(per.slice(5,7));return MES[m-1]+' '+y}
+function smVence(sv,per){var d=Math.min(Math.max(parseInt(sv.dia_cobro)||1,1),28);return per+'-'+smPad(d)}
+function smAplica(sv,per){
+  if(!sv.activo) return false;
+  if(!sv.fecha_inicio) return false;
+  if(sv.fecha_inicio>smUltDia(per)) return false;
+  if(sv.fecha_fin&&sv.fecha_fin<per+'-01') return false;
+  return true;
+}
+function smCobro(id,per){return (SCD||[]).find(function(c){return c.servicio_id===id&&c.periodo===per})}
+function smEstado(sv,per){
+  if(smCobro(sv.id,per)) return 'Cobrado';
+  if(!smAplica(sv,per)) return sv.fecha_inicio?'Fuera de vigencia':'Pendiente de inicio';
+  return smVence(sv,per)<smHoyISO()?'Vencido':'Por cobrar';
+}
+async function lSM(){
+  if(!sb) return;
+  var r=await sb.from('servicios_mensuales').select('*').order('cliente');
+  if(r.error){ if(String(r.error.message||'').indexOf('servicios_mensuales')<0) toast('Error servicios: '+r.error.message,'e'); SMD=[]; }
+  else SMD=r.data||[];
+  var r2=await sb.from('servicios_cobros').select('*');
+  SCD=(r2&&!r2.error&&r2.data)?r2.data:[];
+  usSM(); if(gi('tbSM')) rSM();
+}
+function popSmMesSel(){
+  var s=gi('smMesSel'); if(!s) return;
+  var cur=s.value, act=smPeriodoActual(), y=parseInt(act.slice(0,4)), m=parseInt(act.slice(5,7));
+  var opts=[];
+  for(var i=11;i>=-1;i--){var d=new Date(y,m-1-i,1);opts.push(d.getFullYear()+'-'+smPad(d.getMonth()+1))}
+  s.innerHTML='';
+  opts.forEach(function(p){var o=document.createElement('option');o.value=p;o.textContent=smEtiqueta(p);s.appendChild(o)});
+  s.value=cur||act;
+}
+function usSM(){
+  var per=(gi('smMesSel')&&gi('smMesSel').value)||smPeriodoActual();
+  var act=SMD.filter(function(r){return smAplica(r,per)});
+  var mensual=act.reduce(function(a,r){return a+(Number(r.monto)||0)},0);
+  var cobrado=act.filter(function(r){return smCobro(r.id,per)}).reduce(function(a,r){return a+(Number(r.monto)||0)},0);
+  if(gi('sm0')) gi('sm0').textContent='\u20b2 '+fmt(mensual);
+  if(gi('sm1')) gi('sm1').textContent='\u20b2 '+fmt(cobrado);
+  if(gi('sm2')) gi('sm2').textContent='\u20b2 '+fmt(mensual-cobrado);
+  if(gi('sm3')) gi('sm3').textContent='\u20b2 '+fmt(mensual*12);
+}
+function rSM(){
+  var tb=gi('tbSM'); if(!tb) return;
+  var per=(gi('smMesSel')&&gi('smMesSel').value)||smPeriodoActual();
+  usSM();
+  if(!SMD.length){tb.innerHTML=er(7,sb?'No hay servicios mensuales configurados.':'\u26a0\ufe0f Conecta Supabase desde Configuracion.');return}
+  var bx={'Cobrado':'bg','Por cobrar':'by','Vencido':'br','Pendiente de inicio':'bb','Fuera de vigencia':'bm'};
+  tb.innerHTML=SMD.map(function(r){
+    var est=smEstado(r,per), aplica=smAplica(r,per), c=smCobro(r.id,per);
+    var vig=(r.fecha_inicio?fd(r.fecha_inicio):'sin iniciar')+(r.fecha_fin?' \u2192 '+fd(r.fecha_fin):'');
+    var accion='';
+    if(aplica&&!c) accion='<button class="btn btn-p" style="padding:5px 11px;font-size:11px" onclick="cobrarSM(\''+r.id+'\')">Cobrar</button>';
+    else if(c) accion='<button class="btn btn-g" style="padding:5px 11px;font-size:11px" onclick="desCobrarSM(\''+r.id+'\')" title="Cobrado el '+fd(c.fecha_cobro)+'">Deshacer</button>';
+    return '<tr>'+
+      '<td data-label="Cliente" style="font-weight:600">'+(r.cliente||'\u2014')+'</td>'+
+      '<td data-label="Concepto">'+(r.concepto||'\u2014')+(r.notas?'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+r.notas+'</div>':'')+'</td>'+
+      '<td data-label="Monto" class="mn tr" style="font-weight:600;color:var(--blue);white-space:nowrap">\u20b2 '+fmt(r.monto)+'</td>'+
+      '<td data-label="Vence" class="mn" style="font-size:12px">'+(aplica?fd(smVence(r,per)):'\u2014')+'</td>'+
+      '<td data-label="Vigencia" style="font-size:12px;color:var(--muted)">'+vig+'</td>'+
+      '<td data-label="Estado del mes"><span class="bx '+(bx[est]||'bm')+'">'+est+'</span></td>'+
+      '<td data-label="Acciones"><div class="acts">'+accion+'<button class="ib" onclick="edSM(\''+r.id+'\')" title="Editar">'+ie()+'</button><button class="ib d" onclick="dlSM(\''+r.id+'\')" title="Eliminar">'+it()+'</button></div></td>'+
+    '</tr>';
+  }).join('');
+}
+function oSM(){
+  if(!sb){toast('Conecta Supabase primero','e');return}
+  eSM=null; gi('mSMt').textContent='Nuevo Servicio Mensual'; gi('bsSM').textContent='Guardar';
+  gi('smCli').value=''; gi('smCon').value='Alojamiento y soporte mensual'; gi('smMon').value='';
+  gi('smDia').value=1; gi('smIni').value=''; gi('smFin').value=''; gi('smAct').value='true'; gi('smNot').value='';
+  gi('mSM').classList.add('open');
+}
+function edSM(id){
+  var r=SMD.find(function(x){return x.id===id}); if(!r) return;
+  eSM=id; gi('mSMt').textContent='Editar Servicio Mensual'; gi('bsSM').textContent='Actualizar';
+  gi('smCli').value=r.cliente||''; gi('smCon').value=r.concepto||''; gi('smMon').value=r.monto||'';
+  gi('smDia').value=r.dia_cobro||1; gi('smIni').value=r.fecha_inicio||''; gi('smFin').value=r.fecha_fin||'';
+  gi('smAct').value=String(r.activo); gi('smNot').value=r.notas||'';
+  gi('mSM').classList.add('open');
+}
+async function sSM(){
+  var cli=gi('smCli').value.trim(), con=gi('smCon').value.trim(), mon=parseFloat(gi('smMon').value);
+  if(!cli||!con||isNaN(mon)||mon<=0){toast('Completa cliente, concepto y monto','e');return}
+  var dia=parseInt(gi('smDia').value)||1; if(dia<1)dia=1; if(dia>28)dia=28;
+  var ini=gi('smIni').value||null, fin=gi('smFin').value||null;
+  if(ini&&fin&&fin<ini){toast('La fecha de fin no puede ser anterior al inicio','e');return}
+  var pay={cliente:cli,concepto:con,monto:mon,dia_cobro:dia,fecha_inicio:ini,fecha_fin:fin,activo:gi('smAct').value==='true',notas:gi('smNot').value.trim()||null};
+  await sv2('servicios_mensuales','bsSM',eSM,pay,'mSM','Servicio');
+  eSM=null; await lSM(); rSM(); rDash();
+}
+async function dlSM(id){
+  var r=SMD.find(function(x){return x.id===id});
+  if(!confirm('\u00bfEliminar el servicio mensual de '+((r&&r.cliente)||'este cliente')+'? Tambi\u00e9n se borra su historial de cobros.')) return;
+  await dl2('servicios_mensuales',id); await lSM(); rSM(); rDash();
+}
+async function cobrarSM(id){
+  var sv=SMD.find(function(x){return x.id===id}); if(!sv) return;
+  var per=(gi('smMesSel')&&gi('smMesSel').value)||smPeriodoActual();
+  if(smCobro(id,per)){toast('Ese mes ya figura cobrado','e');return}
+  if(!confirm('Registrar el cobro de '+sv.cliente+' \u2014 '+smEtiqueta(per)+' por \u20b2 '+fmt(sv.monto)+'?\n\nSe carga tambi\u00e9n en el Libro de Ventas.')) return;
+  var hoy=smHoyISO();
+  var r=await sb.from('servicios_cobros').insert({servicio_id:id,periodo:per,fecha_cobro:hoy,monto:sv.monto});
+  if(r.error){toast('Error al registrar el cobro: '+r.error.message,'e');return}
+  var rv=await sb.from('ventas').insert({fecha:hoy,cliente:sv.cliente,tipo:'Servicio',descripcion:sv.concepto+' \u2014 '+smEtiqueta(per),monto:sv.monto,iva:true});
+  if(rv.error) toast('Cobro registrado, pero no entr\u00f3 al Libro de Ventas: '+rv.error.message,'e');
+  else toast('\u20b2 '+fmt(sv.monto)+' cobrado y registrado en Ventas \u2713','s');
+  await Promise.all([lSM(),lV()]); rSM(); rDash();
+}
+async function desCobrarSM(id){
+  var per=(gi('smMesSel')&&gi('smMesSel').value)||smPeriodoActual();
+  var c=smCobro(id,per); if(!c) return;
+  if(!confirm('\u00bfMarcar '+smEtiqueta(per)+' como NO cobrado?\n\nLa venta ya registrada en el Libro de Ventas no se borra: si corresponde, elimin\u00e1la a mano desde Ventas.')) return;
+  var r=await sb.from('servicios_cobros').delete().eq('id',c.id);
+  if(r.error){toast('Error: '+r.error.message,'e');return}
+  toast('Cobro deshecho \u2713','s');
+  await lSM(); rSM(); rDash();
+}
+function rDbServicios(){
+  var cont=gi('dbSMList'); if(!cont) return;
+  var per=smPeriodoActual();
+  if(gi('dbSMMes')) gi('dbSMMes').textContent=smEtiqueta(per);
+  var act=SMD.filter(function(r){return smAplica(r,per)});
+  var porCobrar=act.filter(function(r){return !smCobro(r.id,per)});
+  var monto=porCobrar.reduce(function(a,r){return a+(Number(r.monto)||0)},0);
+  var vencidos=porCobrar.filter(function(r){return smVence(r,per)<smHoyISO()}).length;
+  if(gi('dbSM')) gi('dbSM').textContent='\u20b2 '+fmt(monto);
+  if(gi('dbSMD')){
+    var pendInicio=SMD.filter(function(r){return r.activo&&!r.fecha_inicio}).length;
+    var txt=porCobrar.length+' por cobrar'+(vencidos?' \u00b7 '+vencidos+' vencido'+(vencidos!==1?'s':''):'');
+    if(!act.length&&pendInicio) txt=pendInicio+' pendiente'+(pendInicio!==1?'s':'')+' de inicio';
+    gi('dbSMD').textContent=txt;
+    gi('dbSMD').className='delta '+(vencidos?'delta-dn':(porCobrar.length?'delta-nu':'delta-up'));
+  }
+  var lista=SMD.filter(function(r){return r.activo&&(smAplica(r,per)||!r.fecha_inicio)});
+  if(!lista.length){cont.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px 0">Sin servicios configurados</div>';return}
+  var bx={'Cobrado':'bg','Por cobrar':'by','Vencido':'br','Pendiente de inicio':'bb'};
+  cont.innerHTML=lista.map(function(r){
+    var est=smEstado(r,per), aplica=smAplica(r,per), c=smCobro(r.id,per);
+    var sub=aplica?('vence el '+fd(smVence(r,per))):'arranca cuando cargues la fecha de inicio';
+    return '<div class="db-row"><div><div class="name">'+r.cliente+'</div><div class="tag">'+r.concepto+' \u00b7 '+sub+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:10px">'+
+      '<span class="amt" style="color:'+(est==='Cobrado'?'var(--green)':(est==='Vencido'?'var(--red)':'var(--blue)'))+'">\u20b2 '+fmt(r.monto)+'</span>'+
+      (aplica&&!c?'<button class="btn btn-p" style="padding:4px 10px;font-size:11px" onclick="cobrarSM(\''+r.id+'\')">Cobrar</button>':'<span class="bx '+(bx[est]||'bm')+'" style="font-size:10px">'+est+'</span>')+
+      '</div></div>';
+  }).join('');
+}
 function er(c,msg){return'<tr><td colspan="'+c+'"><div class="es"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg><p>'+msg+'</p></div></td></tr>'}
 function ie(){return'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>'}
 function it(){return'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>'}
@@ -4837,6 +5064,15 @@ async function lCobros(){
   cobrosData = r.data||[];
 }
 
+/* Un cobro esta vencido cuando paso su fecha de vencimiento.
+   Si no tiene vencimiento cargado, se mantiene la regla vieja de 30 dias desde la emision. */
+function esCobroVencido(r){
+  if(!r||r.estado==='Cobrado') return false;
+  var hoyISO=(typeof smHoyISO==='function')?smHoyISO():new Date().toISOString().slice(0,10);
+  if(r.vencimiento) return String(r.vencimiento).slice(0,10) < hoyISO;
+  if(!r.fecha) return false;
+  return Math.floor((new Date(hoyISO) - new Date(String(r.fecha).slice(0,10)))/(1000*60*60*24)) > 30;
+}
 function rCobros(){
   var q = gi('qCobros').value.toLowerCase();
   var est = gi('fEstCobros').value;
@@ -4848,15 +5084,9 @@ function rCobros(){
   });
 
   var totalPend = cobrosData.filter(function(r){return r.estado==='Pendiente'||r.estado==='Vencido';}).reduce(function(s,r){return s+(r.monto||0);},0);
-  var vencidos = cobrosData.filter(function(r){
-    if(r.estado==='Cobrado') return false;
-    var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
-    return dias > 30;
-  }).length;
+  var vencidos = cobrosData.filter(esCobroVencido).length;
   var aldia = cobrosData.filter(function(r){
-    if(r.estado==='Cobrado') return false;
-    var dias = Math.floor((hoy - new Date(r.fecha))/(1000*60*60*24));
-    return dias <= 30;
+    return r.estado!=='Cobrado' && !esCobroVencido(r);
   }).length;
   var totalCobrado = cobrosData.filter(function(r){return r.estado==='Cobrado';}).reduce(function(s,r){return s+(r.monto||0);},0);
 
