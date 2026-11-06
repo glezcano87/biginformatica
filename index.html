@@ -1879,6 +1879,16 @@ CREATE POLICY "all" ON configuracion FOR ALL USING (true) WITH CHECK (true);</pr
   <div class="mf"><button class="btn btn-g" onclick="cm('mG')">Cancelar</button><button class="btn btn-p" id="bsG" onclick="sG()">Guardar</button></div>
 </div></div>
 
+<div class="ov" id="mNumDup"><div class="modal" style="max-width:540px">
+  <div class="mh"><h2>Ese n&#250;mero ya est&#225; en uso</h2><button class="ib" onclick="cerrarNumDup('cancelar')">&#10005;</button></div>
+  <div class="mb">
+    <p id="numDupTxt" style="font-size:13.5px;line-height:1.6;margin:0 0 12px"></p>
+    <div id="numDupLista" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12.5px"></div>
+    <p style="font-size:12px;color:var(--muted);margin:12px 0 0;line-height:1.5">Pod&#233;s guardar igual si es a prop&#243;sito &#8212; por ejemplo, una versi&#243;n nueva del mismo presupuesto.</p>
+  </div>
+  <div class="mf"><button class="btn btn-g" onclick="cerrarNumDup('cancelar')">Cancelar</button><button class="btn" onclick="cerrarNumDup('igual')">Guardar igual</button><button class="btn btn-p" id="numDupUsar" onclick="cerrarNumDup('usar')">Usar otro</button></div>
+</div></div>
+
 <div class="ov" id="mSM"><div class="modal">
   <div class="mh"><h2 id="mSMt">Nuevo Servicio Mensual</h2><button class="ib" onclick="cm('mSM')">&#10005;</button></div>
   <div class="mb"><div class="fg">
@@ -5011,11 +5021,58 @@ function formatDateLong(d){
   return parseInt(parts[2])+' de '+meses2[parseInt(parts[1])-1]+' de '+parts[0];
 }
 
+/* ============================================================
+   Control de numero de presupuesto repetido.
+   Se consulta la base AL GUARDAR, no al abrir el formulario:
+   entre una cosa y la otra pueden pasar horas, o puede cargar
+   otro usuario desde otra maquina.
+   ============================================================ */
+var _numDupResolve=null;
+function cerrarNumDup(accion){
+  cm('mNumDup');
+  var r=_numDupResolve; _numDupResolve=null;
+  if(r) r(accion);
+}
+async function siguienteNumeroPresDB(){
+  var max=0;
+  var r=await sb.from('presupuestos').select('numero');
+  if(!r.error&&r.data) r.data.forEach(function(x){
+    var m=String(x.numero||'').trim().match(/^([01]\d{3})$/);
+    if(m){var n=parseInt(m[1],10); if(n>max)max=n;}
+  });
+  if(max<864)max=864;
+  return String(max+1).padStart(4,'0');
+}
+async function chequearNumeroPres(numero){
+  // Solo se controla la serie 0xxx / 1xxx. Un numero con otro formato se deja pasar.
+  if(!/^[01]\d{3}$/.test(numero)) return {accion:'seguir'};
+  var r=await sb.from('presupuestos').select('id,numero,cliente,monto,fecha').eq('numero',numero);
+  if(r.error) return {accion:'seguir'};   // si la consulta falla, no se traba el guardado
+  var otros=(r.data||[]).filter(function(x){return x.id!==eP});
+  if(!otros.length) return {accion:'seguir'};
+  var sug=await siguienteNumeroPresDB();
+  gi('numDupTxt').innerHTML='El n\u00famero <b>'+numero+'</b> ya lo usa '+
+    (otros.length===1?'otro presupuesto':'otros '+otros.length+' presupuestos')+':';
+  gi('numDupLista').innerHTML=otros.map(function(x){
+    return '<div style="display:flex;justify-content:space-between;gap:12px;padding:3px 0">'+
+      '<span>'+(x.cliente||'\u2014')+'<span style="color:var(--muted)"> \u00b7 '+fd(x.fecha)+'</span></span>'+
+      '<span style="font-variant-numeric:tabular-nums;white-space:nowrap">\u20b2 '+fmt(x.monto||0)+'</span></div>';
+  }).join('');
+  gi('numDupUsar').textContent='Usar el '+sug;
+  gi('mNumDup').classList.add('open');
+  var accion=await new Promise(function(res){_numDupResolve=res});
+  if(accion==='usar')  return {accion:'usar', numero:sug};
+  if(accion==='igual') return {accion:'seguir'};
+  return {accion:'cancelar'};
+}
 async function guardarPresDesdeGP(){
   if(!sb){toast('Conecta Supabase primero','e');return;}
   var cliente=gi('gp-cliente').value.trim();
   var fecha=gi('gp-fecha').value;
   var numero=gi('gp-numero').value.trim()||('Presupuesto '+fd(fecha));
+  var decNum=await chequearNumeroPres(numero);
+  if(decNum.accion==='cancelar'){toast('Guardado cancelado','e');return;}
+  if(decNum.accion==='usar'){numero=decNum.numero;gi('gp-numero').value=numero;}
   var items=gpItems.filter(function(it){return it.desc.trim()&&it.costo>0;});
   var totalVenta=items.reduce(function(s,it){return s+gpPrecioVenta(it);},0);
   var totalGs=gpTotalGs(totalVenta);
