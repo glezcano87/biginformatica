@@ -495,7 +495,7 @@ pre{max-width:100%;overflow-x:auto}
       <a class="nav-a" onclick="nav('config',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Configuraci&#243;n</a>
     </div>
   </nav>
-  <div class="sb-foot"><div style="display:flex;align-items:center;justify-content:space-between;width:100%"><div><span class="dot" id="cDot"></span><span id="cSt">Conectando&#8230;</span></div><button onclick="doLogout()" title="Cerrar sesión" style="background:none;border:1px solid var(--border);cursor:pointer;color:var(--muted);padding:4px 8px;border-radius:6px;font-size:11px;font-family:inherit;transition:all .15s" onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">Salir</button></div><div id="sidebarUser" style="font-size:11px;color:var(--accent2);margin-top:4px;font-weight:600"></div></div>
+  <div class="sb-foot"><div style="display:flex;align-items:center;justify-content:space-between;width:100%"><div><span class="dot" id="cDot"></span><span id="cSt">Conectando&#8230;</span></div><button onclick="doLogout()" title="Cerrar sesión" style="background:none;border:1px solid var(--border);cursor:pointer;color:var(--muted);padding:4px 8px;border-radius:6px;font-size:11px;font-family:inherit;transition:all .15s" onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">Salir</button></div><div id="sidebarUser" style="font-size:11px;color:var(--accent2);margin-top:4px;font-weight:600"></div><div id="sidebarBuild" style="font-size:10px;color:var(--muted);margin-top:2px;opacity:.7" title="Versión del sistema que está corriendo en este navegador. Si no coincide con la última, recargá con Ctrl+F5."></div></div>
 </aside>
 
 
@@ -2062,6 +2062,10 @@ function sCfg(){var u=gi('cfU').value.trim(),k=gi('cfK').value.trim();if(!u||!k)
 function clCfg(){localStorage.removeItem('bi_url');localStorage.removeItem('bi_key');sb=null;setConn(false);gi('cfgSt').textContent='Configuracion eliminada.'}
 function initSB(u,k){try{sb=supabase.createClient(u,k);setConn(true);toast('Conectado a Supabase','s');gi('cfgSt').textContent='Conectado correctamente';loadAll()}catch(e){setConn(false);toast('Error: '+e.message,'e')}}
 function setConn(ok){gi('cDot').style.background=ok?'var(--green)':'#6B7280';gi('cSt').textContent=ok?'Conectado':'Sin conexion'}
+/* Version del build. Se actualiza en cada entrega para poder confirmar
+   desde el propio sistema que el navegador no esta sirviendo una copia vieja. */
+var BUILD='2026-11-08.1';
+function pintarBuild(){var b=document.getElementById('sidebarBuild'); if(b) b.textContent='Build '+BUILD;}
 function gi(id){return document.getElementById(id)}
 function nav(p,el){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-a').forEach(x=>x.classList.remove('active'));gi('page-'+p).classList.add('active');if(el)el.classList.add('active');if(p==='config'){var c=gcfg();gi('cfU').value=c.url;gi('cfK').value=c.key}if(p==='flujo')rFlujo();if(p==='margenes')rMarg();if(p==='dash')rDash();if(p==='usuarios'){loadUsuarios();}if(p==='presupuestos'){presTabActivo='todos';document.querySelectorAll('.ct-tab[id^="ptab-"]').forEach(function(x){x.classList.remove('active');});var pt=gi('ptab-todos');if(pt)pt.classList.add('active');usPS();rPres();}if(p==='contab'){popCtMesSel();rContab();}if(p==='reportes'){popReportesSel();}if(p==='cobros'){rCobros();}if(p==='recibo'){initRecibo();}if(p==='gpres'){initGPres();}if(p==='taller'){rT();}if(p==='entregas'){rEnt();}if(p==='servicios'){popSmMesSel();rSM();}if(p==='cuotas'){rCuotas();}closeSidebar()}
 async function loadAll(){await Promise.all([lV(),lC(),lP(),lG(),lAsientos(),lCobros(),lT(),lEntregas(),lRecibos(),lCotiz(),lSM(),(typeof lFE==='function'?lFE():null)]);popFjSel();popMgSel();popCtMesSel();popSmMesSel();rDash();sincronizarCotizChaco(false)}
@@ -6331,6 +6335,7 @@ async function doLogin(){
     gi('uLastAccess').textContent = new Date().toLocaleString('es-PY');
     var tu2 = gi('topbarUser'); if(tu2) tu2.textContent = unameL;
     var su=gi('sidebarUser'); if(su) su.textContent='▶ '+(currentUser.user_metadata&&currentUser.user_metadata.nombre||unameL);
+    pintarBuild();
     btn.disabled=false; btn.textContent='Iniciar Sesión';
     await loadAll();
   } catch(e){
@@ -6361,6 +6366,7 @@ async function checkSession(){
     gi('uLastAccess').textContent = new Date().toLocaleString('es-PY');
     var tu = gi('topbarUser'); if(tu) tu.textContent = uname;
     var su2=gi('sidebarUser'); if(su2) su2.textContent='▶ '+(currentUser.user_metadata&&currentUser.user_metadata.nombre||uname);
+    pintarBuild();
     showAuthScreen(false);
     await loadAll();
   } else {
