@@ -1,0 +1,71 @@
+    <!-- REPORTES v2 (BIGSYS) -->
+    <div class="db-grid-3 rp2-grid" style="margin-bottom:24px">
+      <!-- RESULTADOS Y FLUJO -->
+      <div class="db-panel">
+        <div class="db-panel-h"><span class="title">&#128200; Resultados y Flujo de Caja</span></div>
+        <div class="db-panel-body">
+          <p class="rp2-desc">Estado de resultados sin IVA, flujo de caja, posici&#243;n de IVA y gastos fijos. Opcional: detalle de ventas y compras.</p>
+          <div class="fgg rp2-f"><label>Per&#237;odo</label>
+            <select class="fs" id="rp2ResPer" onchange="rptPerChange()"><option value="mes">Mes</option><option value="trimestre">Trimestre</option><option value="semestre">Semestre</option><option value="anual">A&#241;o (enero &#8594; mes)</option><option value="todo">Todo el historial</option></select></div>
+          <div class="fgg rp2-f" id="rp2ResMesW"><label>Mes de referencia</label><select class="fs" id="rp2ResMes" style="width:100%"></select></div>
+          <label class="rp2-chk"><input type="checkbox" id="rp2ResDet" checked> Incluir detalle de movimientos</label>
+          <button class="btn btn-p rp2-btn" onclick="rptGenerar('resultados')">Generar reporte</button>
+        </div>
+      </div>
+      <!-- MARGENES -->
+      <div class="db-panel">
+        <div class="db-panel-h"><span class="title">&#127919; An&#225;lisis de M&#225;rgenes</span></div>
+        <div class="db-panel-body">
+          <p class="rp2-desc">Margen por l&#237;nea (servicios / productos), por cliente y por trabajo, alertas de margen bajo y punto de equilibrio.</p>
+          <div class="fgg rp2-f"><label>Per&#237;odo</label>
+            <select class="fs" id="rp2MarPer" onchange="rptPerChange()"><option value="anual">A&#241;o (enero &#8594; mes)</option><option value="mes">Mes</option><option value="trimestre">Trimestre</option><option value="semestre">Semestre</option><option value="todo">Todo el historial</option></select></div>
+          <div class="fgg rp2-f" id="rp2MarMesW"><label>Mes de referencia</label><select class="fs" id="rp2MarMes" style="width:100%"></select></div>
+          <button class="btn btn-p rp2-btn" onclick="rptGenerar('margenes')">Generar reporte</button>
+        </div>
+      </div>
+      <!-- BALANCE -->
+      <div class="db-panel">
+        <div class="db-panel-h"><span class="title">&#9878;&#65039; Balance General</span></div>
+        <div class="db-panel-body">
+          <p class="rp2-desc">Estado de situaci&#243;n al cierre del mes (activo, pasivo, patrimonio), resultados del ejercicio, indicadores y liquidaci&#243;n mensual de IVA.</p>
+          <div class="fgg rp2-f"><label>Al cierre de</label><select class="fs" id="rp2BalMes" style="width:100%" onchange="rptPopSel()"></select></div>
+          <div class="fgg rp2-f"><label>Saldo real de caja y bancos al cierre (&#8370;, opcional)</label><input class="fs" id="rp2CajaReal" inputmode="numeric" placeholder="Sumá tus cuentas y efectivo" onchange="rptCajaReal(this)" style="width:100%"></div>
+          <div class="fgg rp2-f"><label>Caja inicial del ejercicio (&#8370;, opcional)</label><input class="fs" id="rp2CajaIni" inputmode="numeric" placeholder="0" onchange="rptCajaIni(this)" style="width:100%"></div>
+          <button class="btn btn-p rp2-btn" onclick="rptGenerar('balance')">Generar reporte</button>
+        </div>
+      </div>
+      <!-- LIBROS IVA -->
+      <div class="db-panel">
+        <div class="db-panel-h"><span class="title">&#128218; Libros IVA Ventas y Compras</span></div>
+        <div class="db-panel-body">
+          <p class="rp2-desc">Libro de ventas y libro de compras con gravada 10%, IVA, exenta y total, y saldo de IVA del per&#237;odo.</p>
+          <div class="fgg rp2-f"><label>Per&#237;odo</label>
+            <select class="fs" id="rp2LibPer" onchange="rptPerChange()"><option value="mes">Mes</option><option value="trimestre">Trimestre</option><option value="semestre">Semestre</option><option value="anual">A&#241;o (enero &#8594; mes)</option></select></div>
+          <div class="fgg rp2-f" id="rp2LibMesW"><label>Mes de referencia</label><select class="fs" id="rp2LibMes" style="width:100%"></select></div>
+          <div class="fgg rp2-f"><label>Registros</label><select class="fs" id="rp2LibInc" style="width:100%"><option value="comp">Solo con N.&#186; de comprobante</option><option value="todos">Todos los registros</option></select></div>
+          <button class="btn btn-p rp2-btn" onclick="rptGenerar('libros')">Generar reporte</button>
+        </div>
+      </div>
+      <!-- AUDITORIA -->
+      <div class="db-panel">
+        <div class="db-panel-h"><span class="title">&#128269; Auditor&#237;a de Libros</span><span id="rp2AudBadge" class="rp2-badge"></span></div>
+        <div class="db-panel-body">
+          <p class="rp2-desc">Revisa ventas, compras y presupuestos: facturas repetidas, posibles duplicados, IVA mal marcado, producto/servicio mal clasificado y datos incompletos.</p>
+          <div class="fgg rp2-f"><label>Alcance</label>
+            <select class="fs" id="rp2AudPer" onchange="rptPerChange()"><option value="todo">Todos los registros</option><option value="anual">A&#241;o (enero &#8594; mes)</option><option value="mes">Mes</option></select></div>
+          <div class="fgg rp2-f" id="rp2AudMesW" style="display:none"><label>Mes de referencia</label><select class="fs" id="rp2AudMes" style="width:100%"></select></div>
+          <div class="fgg rp2-f"><label>Detalle</label><select class="fs" id="rp2AudNivel" style="width:100%"><option value="todos">Todos los hallazgos</option><option value="am">Solo prioridad alta y media</option></select></div>
+          <button class="btn btn-p rp2-btn" onclick="rptGenerar('auditoria')">Ejecutar auditor&#237;a</button>
+        </div>
+      </div>
+    </div>
+    <style>
+      .rp2-grid .db-panel-body{display:flex;flex-direction:column;height:calc(100% - 52px)}
+      .rp2-desc{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6}
+      .rp2-f{margin-bottom:12px}
+      .rp2-chk{display:flex;align-items:center;justify-content:flex-start;gap:8px;font-size:12.5px;color:var(--muted);margin:2px 0 12px;cursor:pointer;text-transform:none;letter-spacing:0}
+      .rp2-chk input{width:16px!important;height:16px;flex:0 0 16px;margin:0;padding:0;accent-color:#2563eb}
+      .rp2-btn{width:100%;justify-content:center;margin-top:auto}
+      .rp2-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+      .rp2-grid .db-panel-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+    </style>
