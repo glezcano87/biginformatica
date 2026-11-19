@@ -538,8 +538,11 @@ function auditar(meses){
   /* secuencia */
   var serie=todosV.filter(function(r){return r.factura && factKey(r.factura).charAt(0)!=='X';}).map(function(r){var k=factKey(r.factura);return {r:r,s:k.slice(0,7),n:+k.slice(8),f:r.fecha};});
   serie.forEach(function(a){ if(!esV[a.r.id]) return;
-    var antes=serie.filter(function(b){return b.s===a.s && b.n<a.n;}), maxB=antes.reduce(function(m,b){return (!m||b.f>m.f)?b:m;},null);
-    if(maxB && a.f<maxB.f && dias(a.f,maxB.f)>15) add('media','Factura fuera de secuencia','Venta',a.r,'N.º '+a.n+' con fecha anterior al N.º '+maxB.n+' ('+fch(maxB.f)+')');
+    var vec=serie.filter(function(b){return b.s===a.s && b.n!==a.n && Math.abs(b.n-a.n)<=8;}).sort(function(x,y){return Math.abs(x.n-a.n)-Math.abs(y.n-a.n);}).slice(0,6);
+    if(vec.length<3) return;
+    var ts=vec.map(function(b){return +new Date(b.f);}).sort(function(x,y){return x-y;}), med=ts[Math.floor(ts.length/2)];
+    var ns=vec.map(function(b){return b.n;}), lo=Math.min.apply(null,ns), hi=Math.max.apply(null,ns);
+    if(Math.abs(+new Date(a.f)-med)/864e5>25) add('media','Factura fuera de secuencia','Venta',a.r,'Las facturas vecinas (N.º '+lo+'–'+hi+') son de ~'+fch(new Date(med).toISOString().slice(0,10)));
   });
   /* IVA */
   vs.forEach(function(r){ if(r.factura && !r.iva && mto(r)>=1000) add('alta','Venta facturada marcada como exenta','Venta',r,'IVA no computado '+gs(mto(r)/11),mto(r)/11); });
@@ -559,7 +562,8 @@ function auditar(meses){
   [['Venta',vs],['Compra',cs]].forEach(function(par){ var t=par[0];
     par[1].forEach(function(r){ var d=(r.descripcion||'').trim(); if(!d) return;
       var dd=d.normalize('NFD').replace(/[̀-ͯ]/g,'');
-      var hp=RX_PROD.test(dd), hs=RX_SERV.test(t==='Compra'?dd.replace(/\bcambio\b/ig,''):dd), fuerte=RX_PROD_FUERTE.test(dd);
+      var hp=RX_PROD.test(dd), hs=RX_SERV.test(t==='Compra'?dd.replace(/\bcambio\b/ig,''):dd);
+      var fuerte=RX_PROD_FUERTE.test(dd) && RX_PROD.test(dd.replace(/^.*?(venta|compra|provisi[oó]n)\s+de\s+/i,'').split(/\s+/).slice(0,3).join(' '));
       if(r.tipo!=='Producto' && (fuerte || (hp && !hs && !(t==='Venta' && splitJob(r,par[1]))))) add('media','Concepto de producto cargado como «Servicio»',t,r,'');
       if(r.tipo==='Producto' && RX_SERV_INICIO.test(dd) && !fuerte) add('media','Concepto de servicio cargado como «Producto»',t,r,'');
     });
@@ -584,6 +588,7 @@ function auditar(meses){
       if(ka && kb && ka===kb && a.tipo!==b.tipo) continue;
       var ma=mto(a), mb=mto(b); if(Math.abs(ma-mb)>Math.max(ma,mb)*0.01) continue;
       var sim=solap(a.descripcion,b.descripcion), rec=a.fecha>=b.fecha?a:b, otro=rec===a?b:a;
+      if(ka && ka===kb && sim<0.6) continue; /* cuotas del mismo presupuesto */
       if(sim>=0.6) add('alta','Posible registro duplicado',t,rec,'Igual al del '+fch(otro.fecha)+(otro.factura?' (fact. '+otro.factura+')':' (sin factura)'),mto(rec));
       else if(ma>=1000000 && ma===mb) add('media','Monto idéntico, mismo '+(t==='Venta'?'cliente':'proveedor'),t,rec,'Igual monto que «'+corto(otro.descripcion,30)+'» del '+fch(otro.fecha));
     }
