@@ -279,7 +279,7 @@ function tablaMovs(titulo, rows, campo, etiqueta){
   var tot=sum(rows,mto), totN=sum(rows,neto);
   return '<h2>'+titulo+' ('+rows.length+')</h2><table><thead><tr><th>Fecha</th><th>Comprobante</th><th>'+etiqueta+'</th><th>Concepto</th><th>Tipo</th><th class="c">IVA</th><th class="r">Neto</th><th class="r">Total</th></tr></thead><tbody>'+
     (rows.length?rows.map(function(r){
-      return '<tr><td class="num">'+fch(r.fecha)+'</td><td class="sm">'+esc(r.factura||'—')+'</td><td>'+esc(corto(r[campo],28)||'—')+'</td><td>'+esc(corto(r.descripcion,52)||'—')+'</td><td class="sm">'+esc(r.tipo||'')+'</td><td class="c sm">'+(r.iva?'10%':'Exenta')+'</td><td class="r">'+gs(neto(r))+'</td><td class="r">'+gs(mto(r))+'</td></tr>';
+      return '<tr><td class="num">'+fch(r.fecha)+'</td><td class="num sm">'+esc(r.factura||'—')+'</td><td>'+esc(corto(r[campo],28)||'—')+'</td><td>'+esc(corto(r.descripcion,52)||'—')+'</td><td class="sm">'+esc(r.tipo||'')+'</td><td class="c sm">'+(r.iva?'10%':'Exenta')+'</td><td class="r">'+gs(neto(r))+'</td><td class="r">'+gs(mto(r))+'</td></tr>';
     }).join(''):'<tr><td colspan="8" class="mut c">Sin registros</td></tr>')+
     '<tr class="tot"><td colspan="6">Total</td><td class="r">'+gs(totN)+'</td><td class="r">'+gs(tot)+'</td></tr></tbody></table>';
 }
@@ -723,7 +723,7 @@ window.rptGenerar=function(tipo){
     else if(tipo==='auditoria'){ html=repAuditoria(val('rp2AudPer','todo'), val('rp2AudMes'), val('rp2AudNivel','todos')); titulo='Auditoría de Libros'; }
   }catch(e){ console.error(e); if(typeof toast==='function') toast('Error al generar el reporte: '+e.message,'e'); return; }
   window._rptHtml=html;
-  var t=html.match(/<title>([^<]*)<\/title>/); titulo=t?t[1].replace(/&amp;/g,'&'):titulo;
+  var t=html.match(/<title>([^<]*)<\/title>/); titulo=t?t[1].replace(/&amp;/g,'&').replace(/^BIGSYS - /,'').replace(/ - /g,' — '):titulo;
   var pt=document.getElementById('rpPreviewTitle'); if(pt) pt.textContent=titulo;
   var body=document.getElementById('rpPreviewBody');
   body.innerHTML='<iframe id="rp2Frame" title="Vista previa del reporte" style="width:100%;height:78vh;border:0;background:#e9edf2;border-radius:0 0 12px 12px;display:block"></iframe>';
