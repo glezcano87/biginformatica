@@ -463,6 +463,23 @@ function repLibros(per, mes, soloComprobante){
 
 /* ═══════════════ 5. AUDITORÍA DE LIBROS ═══════════════ */
 var SEV={alta:3,media:2,baja:1};
+/* Hallazgos marcados como revisados: compartidos en configuracion.auditoria_revisados (o localStorage si la columna no existe) */
+var REV={}, REV_DB=false;
+function revKey(regla,id){ return regla+'|'+id; }
+function sbc(){ return (typeof sb!=='undefined' && sb) ? sb : null; }
+async function cargarRevisados(){
+  var c=sbc();
+  if(c){ try{ var r=await c.from('configuracion').select('auditoria_revisados').eq('id',1).maybeSingle();
+    if(!r.error){ REV={}; ((r.data&&r.data.auditoria_revisados)||[]).forEach(function(e){ if(e&&e.k) REV[e.k]=e; }); REV_DB=true; return; } }catch(e){} }
+  REV_DB=false; try{ REV={}; JSON.parse(localStorage.getItem('bi_aud_revisados')||'[]').forEach(function(e){ if(e&&e.k) REV[e.k]=e; }); }catch(e){ REV={}; }
+}
+async function guardarRevisados(){
+  var arr=Object.keys(REV).map(function(k){return REV[k];});
+  var c=sbc();
+  if(c&&REV_DB){ var r=await c.from('configuracion').update({auditoria_revisados:arr}).eq('id',1).select('id'); if(!r.error&&r.data&&r.data.length) return 'compartido'; }
+  try{ localStorage.setItem('bi_aud_revisados', JSON.stringify(arr)); }catch(e){}
+  return 'local';
+}
 /* Explicación y acción por control (se muestra una sola vez por grupo) */
 var CTRL={
   'Monto inválido o registro de prueba':'Registros con monto menor a ₲ 1.000. Suelen ser pruebas: eliminarlos o corregir el monto.',
@@ -628,7 +645,9 @@ function auditar(meses){
   var gp=G().filter(function(g){return g.activo && esPersonal(g) && !/sueldo|salario|retiro|remuneraci/i.test(g.concepto||'');});
 
   H.sort(function(a,b){ return (SEV[b.sev]-SEV[a.sev]) || a.regla.localeCompare(b.regla) || String(b.fecha).localeCompare(String(a.fecha)); });
-  return {h:H, nombres:nombres, gastosPersonales:gp, nV:vs.length, nC:cs.length, nP:meses?0:P().length};
+  var rev=H.filter(function(x){ return x.id && REV[revKey(x.regla,x.id)]; });
+  H=H.filter(function(x){ return !(x.id && REV[revKey(x.regla,x.id)]); });
+  return {h:H, revisados:rev, nombres:nombres, gastosPersonales:gp, nV:vs.length, nC:cs.length, nP:meses?0:P().length};
 }
 function repAuditoria(per, mes, nivel){
   var P0=per==='todo'?{meses:null,label:'Todos los registros'}:resolverPeriodo(per,mes);
@@ -652,13 +671,21 @@ function repAuditoria(per, mes, nivel){
     var conDet=r.items.some(function(x){return x.det;});
     b+='<div class="ctl keep"><div class="ctl-h"><span class="badge b-'+r.sev+'">'+r.sev+'</span> <b>'+(orden.indexOf(r)+1)+'. '+esc(r.regla)+'</b> <span class="mut">· '+r.n+' caso'+(r.n>1?'s':'')+(r.imp?' · '+gs(r.imp):'')+'</span></div>'+
       '<div class="ctl-a">'+esc(CTRL[r.regla]||'')+'</div></div>'+
-      '<table class="aud"><colgroup><col style="width:66px"><col style="width:52px"><col style="width:'+(conDet?'17%':'21%')+'"><col><col style="width:'+(conDet?'15%':'18%')+'"><col style="width:76px">'+(conDet?'<col style="width:22%">':'')+'<col class="no-print" style="width:42px"></colgroup><thead><tr><th>Fecha</th><th>Registro</th><th>Cliente / proveedor</th><th>Concepto</th><th>Comprob. / presup.</th><th class="r">Monto</th>'+(conDet?'<th>Detalle</th>':'')+'<th class="no-print"></th></tr></thead><tbody>'+
+      '<table class="aud"><colgroup><col style="width:66px"><col style="width:52px"><col style="width:'+(conDet?'17%':'21%')+'"><col><col style="width:'+(conDet?'15%':'18%')+'"><col style="width:76px">'+(conDet?'<col style="width:22%">':'')+'<col class="no-print" style="width:92px"></colgroup><thead><tr><th>Fecha</th><th>Registro</th><th>Cliente / proveedor</th><th>Concepto</th><th>Comprob. / presup.</th><th class="r">Monto</th>'+(conDet?'<th>Detalle</th>':'')+'<th class="no-print"></th></tr></thead><tbody>'+
       r.items.map(function(x){
         var ed=x.id?'<button class="edit" onclick="var w=window.parent!==window?window.parent:window.opener;if(w&&w.rptEditar)w.rptEditar(\''+x.tipo+'\',\''+String(x.id).replace(/[^\w-]/g,'')+'\')">Editar</button>':'';
+        if(x.id) ed+=' <button class="edit rev" title="No volver a mostrar este hallazgo" onclick="var w=window.parent!==window?window.parent:window.opener;if(w&&w.rptRevisar)w.rptRevisar(\''+encodeURIComponent(revKey(x.regla,x.id))+'\',true)">Revisado</button>';
         var ref=[x.comp,presKey(x.pres)?'P '+presKey(x.pres):''].filter(Boolean).join(' · ');
         return '<tr><td class="num">'+fch(x.fecha)+'</td><td>'+(x.tipo==='Presupuesto'?'Presup.':x.tipo)+'</td><td class="el">'+esc(corto(x.parte,30)||'—')+'</td><td class="el" title="'+esc(x.concepto)+'">'+esc(corto(x.concepto,70)||'—')+'</td><td class="el">'+esc(corto(ref,34)||'—')+'</td><td class="r">'+gs(x.monto)+'</td>'+(conDet?'<td>'+esc(x.det)+'</td>':'')+'<td class="no-print">'+ed+'</td></tr>';
       }).join('')+'</tbody></table>';
   });
+  if(A.revisados.length){
+    b+='<h2>Hallazgos marcados como revisados ('+A.revisados.length+')</h2><div class="lead">No se cuentan arriba. Si alguno vuelve a necesitar atención, usá «Reactivar».</div>'+
+      '<table class="aud"><colgroup><col style="width:66px"><col style="width:52px"><col style="width:22%"><col><col style="width:76px"><col style="width:20%"><col class="no-print" style="width:70px"></colgroup><thead><tr><th>Fecha</th><th>Registro</th><th>Cliente / proveedor</th><th>Control</th><th class="r">Monto</th><th>Revisado</th><th class="no-print"></th></tr></thead><tbody>'+
+      A.revisados.map(function(x){ var e=REV[revKey(x.regla,x.id)]||{};
+        return '<tr><td class="num">'+fch(x.fecha)+'</td><td>'+(x.tipo==='Presupuesto'?'Presup.':x.tipo)+'</td><td class="el">'+esc(corto(x.parte,30)||'—')+'</td><td class="el">'+esc(x.regla)+'</td><td class="r">'+gs(x.monto)+'</td><td class="sm">'+esc((e.por||'')+(e.fecha?' · '+fch(String(e.fecha).slice(0,10)):''))+'</td>'+
+          '<td class="no-print"><button class="edit" onclick="var w=window.parent!==window?window.parent:window.opener;if(w&&w.rptRevisar)w.rptRevisar(\''+encodeURIComponent(revKey(x.regla,x.id))+'\',false)">Reactivar</button></td></tr>'; }).join('')+'</tbody></table>';
+  }
   if(nivel==='am' && nB) b+='<div class="note">Se omitieron '+nB+' hallazgos de prioridad baja (calidad de datos). Elegí «Todos los hallazgos» para verlos.</div>';
   if(A.nombres.length){
     b+='<h2>Nombres de clientes a unificar ('+A.nombres.length+')</h2><div class="lead">El mismo cliente escrito de distintas formas divide sus ventas en los reportes. Elegir un nombre (idealmente la razón social de la factura) y usarlo siempre.</div><table><thead><tr><th>Variantes encontradas</th></tr></thead><tbody>'+
@@ -693,8 +720,20 @@ window.rptPopSel=function(){
   if(ci&&bm&&bm.value){ var c=cajaInicial(bm.value.slice(0,4)); ci.value=c?c.toLocaleString('es-PY'):''; }
   var cre=document.getElementById('rp2CajaReal'); if(cre&&bm&&bm.value){ var r=cajaReal(bm.value); cre.value=r===null?'':r.toLocaleString('es-PY'); }
   rptPerChange();
+  rptBadge(); cargarRevisados().then(rptBadge);
+};
+function rptBadge(){
   try{ var A=auditar(null), na=A.h.filter(function(x){return x.sev==='alta';}).length, el=document.getElementById('rp2AudBadge');
     if(el){ el.textContent=na?na+' hallazgos de prioridad alta':'Sin hallazgos de prioridad alta'; el.style.background=na?'rgba(220,38,38,.15)':'rgba(22,163,74,.15)'; el.style.color=na?'#f87171':'#4ade80'; } }catch(e){ console.error(e); }
+}
+window.rptRevisar=async function(kEnc,on){
+  var k=decodeURIComponent(kEnc);
+  if(on){ var u=''; try{ var s=await sbc().auth.getUser(); u=((s.data&&s.data.user&&s.data.user.email)||'').split('@')[0]; }catch(e){}
+    REV[k]={k:k, por:u||'usuario', fecha:new Date().toISOString()}; } else delete REV[k];
+  var donde=await guardarRevisados();
+  if(typeof toast==='function') toast(on?'Marcado como revisado'+(donde==='local'?' (solo en este navegador)':''):'Hallazgo reactivado','s');
+  var fr=document.getElementById('rp2Frame'), y=0; try{ y=fr.contentWindow.scrollY; }catch(e){}
+  window.rptGenerar('auditoria', y); rptBadge();
 };
 window.rptPerChange=function(){
   [['rp2ResPer','rp2ResMesW'],['rp2MarPer','rp2MarMesW'],['rp2LibPer','rp2LibMesW'],['rp2AudPer','rp2AudMesW']].forEach(function(p){ var s=document.getElementById(p[0]), w=document.getElementById(p[1]); if(s&&w) w.style.display=s.value==='todo'?'none':''; });
@@ -712,7 +751,8 @@ window.rptCajaIni=function(el){
   el.value=v?v.toLocaleString('es-PY'):'';
 };
 function val(id,d){ var e=document.getElementById(id); return e?e.value:d; }
-window.rptGenerar=function(tipo){
+window.rptGenerar=async function(tipo, scrollY){
+  if(tipo==='auditoria'){ try{ await cargarRevisados(); }catch(e){} }
   if(!V().length && !Cc().length){ if(typeof toast==='function') toast('No hay datos cargados todavía','e'); return; }
   var html='', titulo='';
   try{
@@ -727,8 +767,9 @@ window.rptGenerar=function(tipo){
   var pt=document.getElementById('rpPreviewTitle'); if(pt) pt.textContent=titulo;
   var body=document.getElementById('rpPreviewBody');
   body.innerHTML='<iframe id="rp2Frame" title="Vista previa del reporte" style="width:100%;height:78vh;border:0;background:#e9edf2;border-radius:0 0 12px 12px;display:block"></iframe>';
-  document.getElementById('rp2Frame').srcdoc=html;
-  var pn=document.getElementById('rpPreviewPanel'); pn.style.display='block'; pn.scrollIntoView({behavior:'smooth'});
+  var frm=document.getElementById('rp2Frame'); frm.srcdoc=html;
+  if(scrollY){ frm.onload=function(){ try{ frm.contentWindow.scrollTo(0,scrollY); }catch(e){} }; }
+  var pn=document.getElementById('rpPreviewPanel'); pn.style.display='block'; if(!scrollY) pn.scrollIntoView({behavior:'smooth'});
 };
 window.rptImprimir=function(){
   if(window._rptHtml && typeof abrirEImprimirHtml==='function'){ abrirEImprimirHtml(window._rptHtml); return; }
@@ -737,6 +778,6 @@ window.rptImprimir=function(){
 window.rptCerrar=function(){ var pn=document.getElementById('rpPreviewPanel'); if(pn) pn.style.display='none'; var b=document.getElementById('rpPreviewBody'); if(b) b.innerHTML=''; window._rptHtml=null; };
 
 /* exportar para pruebas */
-window.BIGSYS_RPT={auditar:auditar, resultado:resultado, ivaMensual:ivaMensual, resolverPeriodo:resolverPeriodo, presKey:presKey, factKey:factKey, normName:normName,
+window.BIGSYS_RPT={auditar:auditar, cargarRevisados:cargarRevisados, _rev:function(){return REV;}, resultado:resultado, ivaMensual:ivaMensual, resolverPeriodo:resolverPeriodo, presKey:presKey, factKey:factKey, normName:normName,
   repResultados:repResultados, repMargenes:repMargenes, repBalance:repBalance, repLibros:repLibros, repAuditoria:repAuditoria};
 })();
