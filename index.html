@@ -546,15 +546,16 @@ pre{max-width:100%;overflow-x:auto}
       </div>
       <div class="db-hero-right">
         <div class="big" id="dbUtilidad">&#8370; 0</div>
-        <div class="lbl">Utilidad Neta del Mes</div>
+        <div class="lbl">Resultado del mes &#183; sin IVA, despu&#233;s de tu sueldo</div>
+        <div class="lbl" id="dbHeroDet" style="margin-top:6px;text-transform:none;letter-spacing:0;opacity:.9"></div>
       </div>
     </div>
     <!-- KPI ROW -->
     <div class="db-kpi-row">
-      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Ingresos del Mes" onclick="irA('ventas')" onkeydown="if(event.key==='Enter')irA('ventas')"><div class="db-kpi-icon" style="background:rgba(34,197,94,.15)">&#128176;</div><div class="db-kpi-text"><div class="lbl">Ingresos del Mes</div><div class="val g" id="dbIng">&#8370; 0</div><div class="delta" id="dbIngD">&#8212;</div></div></div>
-      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Costos del Mes" onclick="irA('compras')" onkeydown="if(event.key==='Enter')irA('compras')"><div class="db-kpi-icon" style="background:rgba(239,68,68,.15)">&#128094;</div><div class="db-kpi-text"><div class="lbl">Costos del Mes</div><div class="val r" id="dbCos">&#8370; 0</div><div class="delta" id="dbCosD">&#8212;</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Ingresos del Mes" onclick="irA('ventas')" onkeydown="if(event.key==='Enter')irA('ventas')"><div class="db-kpi-icon" style="background:rgba(34,197,94,.15)">&#128176;</div><div class="db-kpi-text"><div class="lbl">Ingresos del Mes &#183; sin IVA</div><div class="val g" id="dbIng">&#8370; 0</div><div class="delta" id="dbIngD">&#8212;</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Costos del Mes" onclick="irA('compras')" onkeydown="if(event.key==='Enter')irA('compras')"><div class="db-kpi-icon" style="background:rgba(239,68,68,.15)">&#128094;</div><div class="db-kpi-text"><div class="lbl">Costos del Mes &#183; sin IVA</div><div class="val r" id="dbCos">&#8370; 0</div><div class="delta" id="dbCosD">&#8212;</div></div></div>
       <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Margen Bruto" onclick="irA('margenes')" onkeydown="if(event.key==='Enter')irA('margenes')"><div class="db-kpi-icon" style="background:rgba(59,130,246,.15)">&#128200;</div><div class="db-kpi-text"><div class="lbl">Margen Bruto</div><div class="val b" id="dbMrg">0%</div><div class="delta delta-nu" id="dbMrgD">&#8212;</div></div></div>
-      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Gastos Fijos" onclick="irA('gastos')" onkeydown="if(event.key==='Enter')irA('gastos')"><div class="db-kpi-icon" style="background:rgba(245,158,11,.15)">&#127970;</div><div class="db-kpi-text"><div class="lbl">Gastos Fijos</div><div class="val y" id="dbGF">&#8370; 0</div><div class="delta delta-nu">Costo fijo mensual</div></div></div>
+      <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Gastos Fijos" onclick="irA('gastos')" onkeydown="if(event.key==='Enter')irA('gastos')"><div class="db-kpi-icon" style="background:rgba(245,158,11,.15)">&#127970;</div><div class="db-kpi-text"><div class="lbl">Gastos Fijos + Sueldo</div><div class="val y" id="dbGF">&#8370; 0</div><div class="delta delta-nu" id="dbGFD">Costo fijo mensual</div></div></div>
       <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Presupuestos Pendientes" onclick="irA('presupuestos',{tab:'pendiente'})" onkeydown="if(event.key==='Enter')irA('presupuestos',{tab:'pendiente'})"><div class="db-kpi-icon" style="background:rgba(167,139,250,.15)">&#128203;</div><div class="db-kpi-text"><div class="lbl">Presupuestos Pendientes</div><div class="val p" id="dbPP">0</div><div class="delta delta-nu" id="dbPPD">&#8212;</div></div></div>
       <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Presupuestos Aprobados" onclick="irA('presupuestos',{tab:'aprobado'})" onkeydown="if(event.key==='Enter')irA('presupuestos',{tab:'aprobado'})"><div class="db-kpi-icon" style="background:rgba(34,197,94,.12)">&#9989;</div><div class="db-kpi-text"><div class="lbl">Presupuestos Aprobados</div><div class="val g" id="dbPA">0</div><div class="delta delta-nu" id="dbPAD">&#8212;</div></div></div>
       <div class="db-kpi db-link" role="link" tabindex="0" title="Ir a Cobros Pendientes" onclick="irA('cobros')" onkeydown="if(event.key==='Enter')irA('cobros')"><div class="db-kpi-icon" style="background:rgba(245,158,11,.15)">&#128179;</div><div class="db-kpi-text"><div class="lbl">Cobros Pendientes</div><div class="val y" id="dbCobP">&#8370; 0</div><div class="delta delta-nu" id="dbCobPD">&#8212;</div></div></div>
@@ -2495,28 +2496,36 @@ function rDash(){
   // Current month
   var vCur=VD.filter(r=>(r.fecha||'').startsWith(cm));
   var cCur=CD.filter(r=>(r.fecha||'').startsWith(cm));
-  var tI=vCur.reduce((s,r)=>s+r.monto,0);
-  var tC=cCur.reduce((s,r)=>s+r.monto,0);
-  var tGF=gfTot(cm);
+  // Mismo criterio que los Reportes: montos sin IVA, sueldo del propietario como retiro
+  var RP=window.BIGSYS_RPT, Rc=RP?RP.resultado([cm]):null, Rp=RP?RP.resultado([pm]):null;
+  var tI=Rc?Rc.ventas:vCur.reduce((s,r)=>s+r.monto,0);
+  var tC=Rc?Rc.costo:cCur.reduce((s,r)=>s+r.monto,0);
+  var tGF=Rc?(Rc.gastosOp+Rc.retiros):gfTot(cm);
   var mb=tI-tC;
   var ut=mb-tGF;
   var mrg=tI>0?mb/tI*100:0;
+  var ivaMes=Rc?RP.ivaMensual(RP.resolverPeriodo('anual',cm).meses).slice(-1)[0]:null;
 
   // Prev month
   var vPrev=VD.filter(r=>(r.fecha||'').startsWith(pm));
   var cPrev=CD.filter(r=>(r.fecha||'').startsWith(pm));
-  var tIPrev=vPrev.reduce((s,r)=>s+r.monto,0);
-  var tCPrev=cPrev.reduce((s,r)=>s+r.monto,0);
+  var tIPrev=Rp?Rp.ventas:vPrev.reduce((s,r)=>s+r.monto,0);
+  var tCPrev=Rp?Rp.costo:cPrev.reduce((s,r)=>s+r.monto,0);
 
   // Hero
   var ue=gi('dbUtilidad');
-  ue.textContent='₲ '+fmt(ut);
+  ue.textContent=(ut<0?'− ':'')+'₲ '+fmt(ut);
   ue.className='big'+(ut<0?' neg':'');
 
   // KPIs
   gi('dbIng').textContent='₲ '+fmt(tI);
   gi('dbCos').textContent='₲ '+fmt(tC);
   gi('dbGF').textContent='₲ '+fmt(tGF);
+  if(Rc){
+    gi('dbGFD').textContent='Operativos ₲ '+fmt(Rc.gastosOp)+' · Sueldo ₲ '+fmt(Rc.retiros);
+    var det=gi('dbHeroDet');
+    if(det){ var antes=ut+Rc.retiros; det.textContent='Antes de tu sueldo: '+(antes<0?'−':'')+'₲ '+fmt(antes)+(ivaMes?(ivaMes.aPagar?' · IVA a pagar estimado: ₲ '+fmt(ivaMes.aPagar):' · IVA a favor: ₲ '+fmt(ivaMes.favor)):''); }
+  }
   gi('dbMrg').textContent=mrg.toFixed(1)+'%';
 
   // Deltas
