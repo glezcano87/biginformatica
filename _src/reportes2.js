@@ -542,7 +542,7 @@ function auditar(meses){
     if(vec.length<3) return;
     var ts=vec.map(function(b){return +new Date(b.f);}).sort(function(x,y){return x-y;}), med=ts[Math.floor(ts.length/2)];
     var ns=vec.map(function(b){return b.n;}), lo=Math.min.apply(null,ns), hi=Math.max.apply(null,ns);
-    if(Math.abs(+new Date(a.f)-med)/864e5>25) add('media','Factura fuera de secuencia','Venta',a.r,'Las facturas vecinas (N.º '+lo+'–'+hi+') son de ~'+fch(new Date(med).toISOString().slice(0,10)));
+    if(Math.abs(+new Date(a.f)-med)/864e5>30) add('media','Factura fuera de secuencia','Venta',a.r,'Las facturas vecinas (N.º '+lo+'–'+hi+') son de ~'+fch(new Date(med).toISOString().slice(0,10)));
   });
   /* IVA */
   vs.forEach(function(r){ if(r.factura && !r.iva && mto(r)>=1000) add('alta','Venta facturada marcada como exenta','Venta',r,'IVA no computado '+gs(mto(r)/11),mto(r)/11); });
