@@ -29,6 +29,7 @@
         <div class="db-panel-body">
           <p class="rp2-desc">Estado de situaci&#243;n al cierre del mes (activo, pasivo, patrimonio), resultados del ejercicio, indicadores y liquidaci&#243;n mensual de IVA.</p>
           <div class="fgg rp2-f"><label>Al cierre de</label><select class="fs" id="rp2BalMes" style="width:100%" onchange="rptPopSel()"></select></div>
+          <div class="fgg rp2-f"><label>Saldo real de caja y bancos al cierre (&#8370;, opcional)</label><input class="fs" id="rp2CajaReal" inputmode="numeric" placeholder="Sumá tus cuentas y efectivo" onchange="rptCajaReal(this)" style="width:100%"></div>
           <div class="fgg rp2-f"><label>Caja inicial del ejercicio (&#8370;, opcional)</label><input class="fs" id="rp2CajaIni" inputmode="numeric" placeholder="0" onchange="rptCajaIni(this)" style="width:100%"></div>
           <button class="btn btn-p rp2-btn" onclick="rptGenerar('balance')">Generar reporte</button>
         </div>

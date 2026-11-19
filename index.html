@@ -1175,6 +1175,7 @@ pre{max-width:100%;overflow-x:auto}
         <div class="db-panel-body">
           <p class="rp2-desc">Estado de situaci&#243;n al cierre del mes (activo, pasivo, patrimonio), resultados del ejercicio, indicadores y liquidaci&#243;n mensual de IVA.</p>
           <div class="fgg rp2-f"><label>Al cierre de</label><select class="fs" id="rp2BalMes" style="width:100%" onchange="rptPopSel()"></select></div>
+          <div class="fgg rp2-f"><label>Saldo real de caja y bancos al cierre (&#8370;, opcional)</label><input class="fs" id="rp2CajaReal" inputmode="numeric" placeholder="Sumá tus cuentas y efectivo" onchange="rptCajaReal(this)" style="width:100%"></div>
           <div class="fgg rp2-f"><label>Caja inicial del ejercicio (&#8370;, opcional)</label><input class="fs" id="rp2CajaIni" inputmode="numeric" placeholder="0" onchange="rptCajaIni(this)" style="width:100%"></div>
           <button class="btn btn-p rp2-btn" onclick="rptGenerar('balance')">Generar reporte</button>
         </div>
@@ -1199,6 +1200,7 @@ pre{max-width:100%;overflow-x:auto}
           <div class="fgg rp2-f"><label>Alcance</label>
             <select class="fs" id="rp2AudPer" onchange="rptPerChange()"><option value="todo">Todos los registros</option><option value="anual">A&#241;o (enero &#8594; mes)</option><option value="mes">Mes</option></select></div>
           <div class="fgg rp2-f" id="rp2AudMesW" style="display:none"><label>Mes de referencia</label><select class="fs" id="rp2AudMes" style="width:100%"></select></div>
+          <div class="fgg rp2-f"><label>Detalle</label><select class="fs" id="rp2AudNivel" style="width:100%"><option value="todos">Todos los hallazgos</option><option value="am">Solo prioridad alta y media</option></select></div>
           <button class="btn btn-p rp2-btn" onclick="rptGenerar('auditoria')">Ejecutar auditor&#237;a</button>
         </div>
       </div>
@@ -7449,7 +7451,7 @@ function css(landscape){
     '.hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-bottom:10px}'+
     '.brand{display:flex;gap:12px;align-items:center}.brand img{height:46px;width:auto}'+
     '.brand .n{font-size:14pt;font-weight:800;color:'+K.navy+';letter-spacing:-.2px}.brand .l{font-size:8pt;color:'+K.muted+'}.brand .d{font-size:7.5pt;color:'+K.muted+';margin-top:2px;max-width:330px}'+
-    '.doc{text-align:right}.doc .t{font-size:15pt;font-weight:800;color:'+K.navy+';line-height:1.15}.doc .p{font-size:10pt;font-weight:600;color:'+K.ink+';margin-top:3px}.doc .g{font-size:7.5pt;color:'+K.muted+';margin-top:3px}'+
+    '.doc{text-align:right;flex:1 1 auto}.doc .t{font-size:15pt;font-weight:800;color:'+K.navy+';line-height:1.15}.doc .p{font-size:10pt;font-weight:600;color:'+K.ink+';margin-top:3px}.doc .g{font-size:7.5pt;color:'+K.muted+';margin-top:3px}'+
     '.rule{height:4px;background:linear-gradient(90deg,'+K.navy+' 0,'+K.navy+' 72%,'+K.green+' 72%,'+K.green+' 100%);margin-bottom:12px;border-radius:2px}'+
     /* KPI */
     '.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 12px}.kpis.k3{grid-template-columns:repeat(3,1fr)}.kpis.k5{grid-template-columns:repeat(5,1fr)}'+
@@ -7487,6 +7489,8 @@ function css(landscape){
     '.eq .l{font-size:7pt;text-transform:uppercase;color:'+K.muted+';font-weight:700;letter-spacing:.5px}.eq .v{font-size:13pt;font-weight:800;color:'+K.navy+'}.eq .op{font-size:14pt;color:#98a2b3}'+
     '.sign{display:flex;gap:40px;margin-top:34px}.sign div{flex:1;border-top:1px solid #98a2b3;padding-top:4px;text-align:center;font-size:7.6pt;color:'+K.muted+'}'+
     '.edit{border:1px solid '+K.line+';background:#fff;border-radius:4px;font-size:7pt;padding:1px 6px;cursor:pointer;color:'+K.navy+'}'+
+    '.ctl{margin:12px 0 4px;padding:6px 9px;background:'+K.soft+';border:1px solid '+K.line+';border-radius:5px 5px 0 0;border-bottom:none}.ctl-h{font-size:8.8pt}.ctl-a{font-size:7.8pt;color:#475467;margin-top:2px}'+
+    'table.aud{font-size:7.6pt;margin-bottom:4px;table-layout:fixed}table.aud td{overflow:hidden}table.aud td.el{white-space:nowrap;text-overflow:ellipsis}.ctl{break-after:avoid}table.aud th{font-size:6.9pt;padding:4px 5px}table.aud td{padding:3px 5px}'+
     '.toolbar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid '+K.line+';padding:6px 12px;font:12px Arial;color:'+K.muted+'}';
 }
 function encabezado(titulo, periodo){
@@ -7588,7 +7592,7 @@ function repResultados(per, mes, detalle){
 
   if(P0.meses.length>1){
     b+='<h2>Evolución mensual</h2><table><thead><tr><th>Mes</th><th class="r">Ventas netas</th><th class="r">Costo de ventas</th><th class="r">Utilidad bruta</th><th class="r">Margen</th><th class="r">Gastos + retiros</th><th class="r">Resultado neto</th></tr></thead><tbody>'+
-      P0.meses.map(function(m){ var x=resultado([m]); return '<tr><td>'+mesLbl(m)+'</td><td class="r">'+gs(x.ventas)+'</td><td class="r">'+gs(x.costo)+'</td><td class="r">'+gsp(x.bruta)+'</td><td class="r">'+pct(x.ventas?x.bruta/x.ventas*100:0)+'</td><td class="r">'+gs(x.gastosOp+x.retiros)+'</td><td class="r">'+gsp(x.neto)+'</td></tr>'; }).join('')+
+      P0.meses.map(function(m){ var x=resultado([m]); return '<tr><td class="num">'+mesLbl(m)+'</td><td class="r">'+gs(x.ventas)+'</td><td class="r">'+gs(x.costo)+'</td><td class="r">'+gsp(x.bruta)+'</td><td class="r">'+pct(x.ventas?x.bruta/x.ventas*100:0)+'</td><td class="r">'+gs(x.gastosOp+x.retiros)+'</td><td class="r">'+gsp(x.neto)+'</td></tr>'; }).join('')+
       '<tr class="tot"><td>Total</td><td class="r">'+gs(R.ventas)+'</td><td class="r">'+gs(R.costo)+'</td><td class="r">'+gs(R.bruta)+'</td><td class="r">'+pct(R.ventas?R.bruta/R.ventas*100:0)+'</td><td class="r">'+gs(R.gastosOp+R.retiros)+'</td><td class="r">'+gs(R.neto)+'</td></tr></tbody></table>';
   }
 
@@ -7605,7 +7609,7 @@ function repResultados(per, mes, detalle){
   b+='<div class="note"><b>Criterios:</b> ventas y compras se toman netas de IVA (monto ÷ 1,1 cuando están gravadas). Los gastos de categoría «Personal» (sueldo del propietario, suscripciones personales) se muestran como retiros del propietario, separados del resultado operativo. '+
      (R.activoFijoBruto?'Las compras de herramientas se tratan como inversión (bien de uso), no como costo de ventas. ':'')+
      'El IVA liquidado es una estimación según los registros del sistema; la liquidación oficial es la del Formulario 120.</div>';
-  return documento('Estado de Resultados y Flujo de Caja', P0.label, b);
+  return documento('Resultados y Flujo de Caja', P0.label, b);
 }
 function tablaMovs(titulo, rows, campo, etiqueta){
   rows=rows.slice().sort(function(a,b){return String(a.fecha).localeCompare(String(b.fecha));});
@@ -7658,7 +7662,8 @@ function repMargenes(per, mes){
     top.map(function(c,i){ var u=c.i-c.c; return '<tr><td class="mut">'+(i+1)+'</td><td>'+esc(corto(c.nom,40))+'</td><td class="c">'+c.ops+'</td><td class="r">'+gs(c.i)+'</td><td class="r">'+pct(R.ventas?c.i/R.ventas*100:0)+'</td><td class="r">'+gs(c.c)+'</td><td class="r">'+gsp(u)+'</td><td class="r">'+pct(c.i?u/c.i*100:0)+'</td></tr>'; }).join('')+
     (resto.length?'<tr><td></td><td class="mut">Otros '+resto.length+' clientes</td><td class="c">'+sum(resto,function(c){return c.ops;})+'</td><td class="r">'+gs(sum(resto,function(c){return c.i;}))+'</td><td class="r">'+pct(R.ventas?sum(resto,function(c){return c.i;})/R.ventas*100:0)+'</td><td class="r">'+gs(sum(resto,function(c){return c.c;}))+'</td><td class="r">'+gs(sum(resto,function(c){return c.i-c.c;}))+'</td><td></td></tr>':'')+
     '<tr class="tot"><td></td><td>Total</td><td class="c">'+vP.length+'</td><td class="r">'+gs(R.ventas)+'</td><td class="r">100,0%</td><td class="r">'+gs(sum(cl,function(c){return c.c;}))+'</td><td class="r">'+gs(sum(cl,function(c){return c.i-c.c;}))+'</td><td></td></tr></tbody></table>';
-  if(cl.length>=3){ var t3=sum(cl.slice(0,3),function(c){return c.i;}); b+='<div class="note"><b>Concentración:</b> los 3 principales clientes representan el '+pct(R.ventas?t3/R.ventas*100:0)+' de las ventas del período.</div>'; }
+  var clR=cl.filter(function(c){return c.nom!=='(sin cliente)' && !/servicios? varios/i.test(c.nom);});
+  if(clR.length>=3){ var t3=sum(clR.slice(0,3),function(c){return c.i;}); b+='<div class="note"><b>Concentración:</b> los 3 principales clientes identificados ('+clR.slice(0,3).map(function(c){return esc(c.nom);}).join(', ')+') representan el '+pct(R.ventas?t3/R.ventas*100:0)+' de las ventas del período.'+(cl.some(function(c){return c.nom==='(sin cliente)';})?' Hay ventas sin cliente cargado que no se pueden atribuir.':'')+'</div>'; }
 
   /* por trabajo */
   b+='<h2>Rentabilidad por trabajo (presupuestos con costo)</h2><div class="lead">Ventas del período y todos los costos cargados al mismo N.º de presupuesto.</div>'+
@@ -7690,7 +7695,7 @@ function repMargenes(per, mes){
 
   if(P0.meses.length>1){
     b+='<h2>Evolución del margen</h2><table><thead><tr><th>Mes</th><th class="r">Servicios</th><th class="r">Productos</th><th class="r">Ventas netas</th><th class="r">Costo</th><th class="r">Utilidad bruta</th><th class="r">Margen</th><th style="width:18%"></th></tr></thead><tbody>'+
-      P0.meses.map(function(m){ var x=resultado([m]), mg=x.ventas?x.bruta/x.ventas*100:0; return '<tr><td>'+mesLbl(m)+'</td><td class="r">'+gs(x.vServ)+'</td><td class="r">'+gs(x.vProd)+'</td><td class="r">'+gs(x.ventas)+'</td><td class="r">'+gs(x.costo)+'</td><td class="r">'+gsp(x.bruta)+'</td><td class="r"><b>'+pct(mg)+'</b></td><td><div class="bar"><i class="'+(mg>=35?'g':'')+'" style="width:'+Math.max(0,Math.min(100,mg))+'%"></i></div></td></tr>'; }).join('')+
+      P0.meses.map(function(m){ var x=resultado([m]), mg=x.ventas?x.bruta/x.ventas*100:0; return '<tr><td class="num">'+mesLbl(m)+'</td><td class="r">'+gs(x.vServ)+'</td><td class="r">'+gs(x.vProd)+'</td><td class="r">'+gs(x.ventas)+'</td><td class="r">'+gs(x.costo)+'</td><td class="r">'+gsp(x.bruta)+'</td><td class="r"><b>'+pct(mg)+'</b></td><td><div class="bar"><i class="'+(mg>=35?'g':'')+'" style="width:'+Math.max(0,Math.min(100,mg))+'%"></i></div></td></tr>'; }).join('')+
       '</tbody></table>';
   }
   b+='<div class="note"><b>Criterios:</b> montos sin IVA. Línea según el campo «Tipo» de cada venta y compra. Los presupuestos se agrupan por número normalizado (p. ej. «834» = «0834»); los registros con «Ppto. Nro xx» se consideran sin presupuesto. La calidad de este análisis depende de que el tipo y el N.º de presupuesto estén bien cargados (ver Auditoría de libros).</div>';
@@ -7699,6 +7704,7 @@ function repMargenes(per, mes){
 
 /* ═══════════════ 3. BALANCE GENERAL ═══════════════ */
 function cajaInicial(y){ try{ return +(localStorage.getItem('bi_caja_ini_'+y)||0)||0; }catch(e){ return 0; } }
+function cajaReal(m){ try{ var v=localStorage.getItem('bi_caja_real_'+m); return v===null||v===''?null:(+v||0); }catch(e){ return null; } }
 function repBalance(mes){
   var todos=mesesConDatos(); mes=mes||todos[todos.length-1]||curMesR();
   var y=mes.slice(0,4), meses=[], i;
@@ -7707,17 +7713,18 @@ function repBalance(mes){
   var pagadoPrev=sum(iva.slice(0,-1),function(x){return x.aPagar;});
   var ci=cajaInicial(y);
   var caja=ci+R.cobros-R.pagos-R.activoFijoBruto-R.gastosOp-R.retiros-pagadoPrev;
-  var bienesUso=R.activoFijo;
+  var bienesUso=R.activoFijo, cr=cajaReal(mes), difCaja=cr===null?0:cr-caja, cajaEst=caja;
+  if(cr!==null) caja=cr;
   var actCorr=caja+last.favor, activo=actCorr+bienesUso;
   var pasivo=last.aPagar;
-  var resEj=R.operativo, patr=ci+resEj-R.retiros;
+  var resEj=R.operativo, patr=ci+resEj-R.retiros+difCaja;
   var dif=Math.round(activo-(pasivo+patr));
   var cob=COB().filter(function(c){return c.estado!=='Cobrado';}), cobT=sum(cob,mto);
   var b='';
   b+='<div class="eq"><div><div class="l">Activo</div><div class="v">'+gs(activo)+'</div></div><div class="op">=</div><div><div class="l">Pasivo</div><div class="v">'+gs(pasivo)+'</div></div><div class="op">+</div><div><div class="l">Patrimonio neto</div><div class="v">'+gsp(patr)+'</div></div></div>';
   b+='<div class="two"><div class="keep"><h2>Activo</h2><table class="fs"><tbody>'+
     '<tr class="hd"><td>Activo corriente</td><td class="r">₲</td></tr>'+
-    fila('Caja y bancos (estimado)',[gsp(caja)],'i1')+
+    fila(cr===null?'Caja y bancos (estimado)':'Caja y bancos (saldo real informado)',[gsp(caja)],'i1')+
     fila('Crédito fiscal IVA (saldo a favor)',[gs(last.favor)],'i1')+
     fila('Total activo corriente',[gsp(actCorr)],'sub')+
     '<tr class="hd"><td>Activo no corriente</td><td></td></tr>'+
@@ -7734,6 +7741,7 @@ function repBalance(mes){
     fila('Capital / caja inicial del ejercicio',[gs(ci)],'i1')+
     fila('Resultado del ejercicio (operativo)',[gsp(resEj)],'i1')+
     fila('Retiros del propietario',[gs(-R.retiros)],'i1')+
+    (cr!==null?fila('Diferencia de caja (retiros y movimientos no registrados)',[gsp(difCaja)],'i1'):'')+
     fila('TOTAL PATRIMONIO NETO',[gsp(patr)],'sub')+
     fila('TOTAL PASIVO + PATRIMONIO',[gsp(pasivo+patr)],'grand')+
     '</tbody></table></div></div>'+
@@ -7756,17 +7764,18 @@ function repBalance(mes){
     '</tbody></table></div></div>';
 
   b+='<h2>Liquidación mensual de IVA del ejercicio</h2><table><thead><tr><th>Mes</th><th class="r">IVA débito</th><th class="r">IVA crédito</th><th class="r">Saldo a favor anterior</th><th class="r">IVA a pagar</th><th class="r">Saldo a favor</th><th class="c">Estado</th></tr></thead><tbody>'+
-    iva.map(function(x,ix){ var ult=ix===iva.length-1; return '<tr><td>'+mesLbl(x.mes)+'</td><td class="r">'+gs(x.debito)+'</td><td class="r">'+gs(x.credito)+'</td><td class="r">'+gs(x.favorAnt)+'</td><td class="r">'+gs(x.aPagar)+'</td><td class="r">'+gs(x.favor)+'</td><td class="c">'+(x.aPagar?(ult?'<span class="badge b-media">Pendiente</span>':'<span class="badge b-baja">Liquidado</span>'):'<span class="badge b-ok">A favor</span>')+'</td></tr>'; }).join('')+
+    iva.map(function(x,ix){ var ult=ix===iva.length-1; return '<tr><td class="num">'+mesLbl(x.mes)+'</td><td class="r">'+gs(x.debito)+'</td><td class="r">'+gs(x.credito)+'</td><td class="r">'+gs(x.favorAnt)+'</td><td class="r">'+gs(x.aPagar)+'</td><td class="r">'+gs(x.favor)+'</td><td class="c">'+(x.aPagar?(ult?'<span class="badge b-media">Pendiente</span>':'<span class="badge b-baja">Liquidado</span>'):'<span class="badge b-ok">A favor</span>')+'</td></tr>'; }).join('')+
     '<tr class="tot"><td>Total</td><td class="r">'+gs(sum(iva,function(x){return x.debito;}))+'</td><td class="r">'+gs(sum(iva,function(x){return x.credito;}))+'</td><td></td><td class="r">'+gs(sum(iva,function(x){return x.aPagar;}))+'</td><td></td><td></td></tr></tbody></table>';
 
   b+='<div class="note"><b>Notas al balance</b><ul>'+
     '<li>Estado de situación <b>estimado</b> al '+fch(mes+'-'+new Date(+y,+mes.slice(5,7),0).getDate())+', elaborado con los registros del sistema (base percibido). No reemplaza al balance impositivo firmado por un contador.</li>'+
-    '<li>La caja se calcula como: caja inicial + cobros − pagos a proveedores − gastos fijos − retiros − IVA de meses anteriores (se asume pagado el mes siguiente).'+(ci?'':' <b>Caja inicial del ejercicio no cargada (₲ 0)</b>: indicala en la tarjeta del reporte para un saldo más preciso.')+'</li>'+
+    '<li>Caja estimada = caja inicial + cobros − pagos a proveedores − gastos fijos − retiros − IVA de meses anteriores (se asume pagado el mes siguiente): <b>'+gs(cajaEst)+'</b>.'+(ci?'':' Caja inicial del ejercicio no cargada (₲ 0).')+'</li>'+
+    (cr!==null?'<li>Se informó un saldo real de caja y bancos de <b>'+gs(cr)+'</b>. La diferencia con la caja estimada ('+gsp(difCaja)+') corresponde a retiros personales, pagos o cobros que no están registrados en el sistema.</li>':'<li><b>Para un balance real</b>, indicá en la tarjeta del reporte el saldo de caja y bancos al cierre: la diferencia con la caja estimada se mostrará como retiros o movimientos no registrados.</li>')+
     '<li>No se registran cuentas por pagar: se asume que las compras se pagan al contado.</li>'+
     (bienesUso?'<li>Las compras de herramientas se activan como bienes de uso al costo, sin depreciación.</li>':'')+
     '<li>Los cobros pendientes figuran en cuentas de orden porque, en base percibido, la venta se registra recién al cobrarse.</li></ul></div>'+
     '<div class="sign"><div>Preparado por</div><div>Revisado por (Contador/a)</div></div>';
-  return documento('Balance General', 'Al cierre de '+mesLbl(mes)+' · Ejercicio '+y, b);
+  return documento('Balance General', 'Al '+fch(mes+'-'+String(new Date(+y,+mes.slice(5,7),0).getDate()).padStart(2,'0')), b);
 }
 
 /* ═══════════════ 4. LIBROS IVA ═══════════════ */
@@ -7791,20 +7800,57 @@ function repLibros(per, mes, soloComprobante){
 
 /* ═══════════════ 5. AUDITORÍA DE LIBROS ═══════════════ */
 var SEV={alta:3,media:2,baja:1};
+/* Explicación y acción por control (se muestra una sola vez por grupo) */
+var CTRL={
+  'Monto inválido o registro de prueba':'Registros con monto menor a ₲ 1.000. Suelen ser pruebas: eliminarlos o corregir el monto.',
+  'N.º de factura repetido en distintos clientes':'Un mismo número de factura no puede corresponder a dos clientes. Corregir el número del registro marcado según el comprobante emitido.',
+  'Posible registro duplicado':'Mismo cliente o proveedor, mismo monto y concepto (o misma factura) en pocos días. Si fueron dos cobros parciales de una misma factura está bien; si no, eliminar el duplicado.',
+  'Ventas superan el presupuesto':'Lo cobrado con ese N.º de presupuesto supera el monto presupuestado: posible venta duplicada o vinculada al presupuesto equivocado.',
+  'Venta facturada marcada como exenta':'Tiene N.º de factura pero figura «Exento de IVA». Si la factura se emitió con IVA 10%, el débito fiscal del sistema queda subestimado: marcar «Gravado con IVA».',
+  'Venta gravada sin N.º de factura':'Marcadas con IVA pero sin comprobante. Cargar el N.º de factura; si fue una venta sin factura, marcarla «Exento» para que no se sume al IVA del sistema.',
+  'Crédito fiscal sin comprobante':'Compras marcadas con IVA sin N.º de factura del proveedor: sin comprobante el crédito fiscal no es deducible. Cargar la factura o marcarla «Exento».',
+  'Compra con factura marcada como exenta':'Si la factura del proveedor discrimina IVA 10%, marcarla «Gravado con IVA» para no perder el crédito fiscal.',
+  'Misma factura con fechas distintas':'La misma factura aparece en varios registros con fechas separadas. Correcto si son cobros parciales; si no, corregir la fecha o el número.',
+  'Misma factura de proveedor con fechas distintas':'Una factura de proveedor tiene una sola fecha: corregir el número o la fecha.',
+  'Factura fuera de secuencia':'La numeración de facturas no coincide con el orden de fechas (número bajo con fecha posterior, o al revés). Revisar número o fecha.',
+  'Concepto de producto cargado como «Servicio»':'El concepto describe un bien. Cambiar el tipo a «Producto»: afecta el margen por línea y el costo de productos.',
+  'Concepto de servicio cargado como «Producto»':'El concepto describe un servicio. Corregir el tipo, o la descripción si en realidad se vendió o compró un bien.',
+  'Compra cargada con la factura de venta propia':'El N.º de factura de la compra es una factura de venta de Big Informática y el «proveedor» es el cliente. Cargar el proveedor real y su factura.',
+  'Proveedor coincide con un cliente':'El proveedor figura como cliente en ventas. Si es el destino del trabajo, el proveedor real debería ser quien vendió el bien o servicio.',
+  'Compra sin proveedor':'Sin proveedor no se puede respaldar el gasto ni el crédito fiscal.',
+  'Posible bien de uso cargado como costo':'Herramientas y equipos propios no son costo de ventas. Los reportes los tratan como inversión (bien de uso).',
+  'Presupuesto «Pendiente» con ventas registradas':'Ya tiene cobros registrados: cambiar el estado a «Aprobado».',
+  'Presupuesto duplicado':'Mismo número, cliente, concepto y monto que otro presupuesto. Eliminar el que sobra.',
+  'Campo cliente con un concepto':'El campo cliente tiene un concepto en lugar de un nombre. Separar las ventas por cliente real.',
+  'Monto idéntico, mismo cliente':'Mismo monto exacto que otro registro cercano con distinto concepto. Verificar que no sea un error de copia.',
+  'Monto idéntico, mismo proveedor':'Mismo monto exacto que otro registro cercano con distinto concepto. Verificar que no sea un error de copia.',
+  'Fecha futura':'La fecha del registro es posterior a hoy.',
+  'Formato de comprobante no estándar':'Usar siempre el formato 001-001-0000000 para que el sistema detecte repetidos y la secuencia.',
+  'Concepto genérico':'Conceptos como «Servicios» o «Compra marzo» no identifican el bien o servicio. Detallarlos.',
+  'Concepto vacío':'Detallar el bien o servicio.',
+  'Venta sin cliente':'Completar el cliente (razón social o nombre).',
+  'N.º de presupuesto repetido':'El mismo número se usó en presupuestos distintos: ventas y compras de trabajos distintos se mezclan en el análisis de márgenes.',
+  'N.º de presupuesto no estándar':'Usar la numeración de 4 dígitos (0001…) para que ventas y compras se vinculen bien.'
+};
 function auditar(meses){
   var H=[], vs=V().filter(function(r){return !meses||enMeses(r,meses);}), cs=Cc().filter(function(r){return !meses||enMeses(r,meses);});
-  var todosV=V();
-  function add(sev, regla, tipo, r, obs, impacto){ H.push({sev:sev, regla:regla, tipo:tipo, id:r?r.id:null, fecha:r?r.fecha:'', parte:r?(tipo==='Venta'?r.cliente:tipo==='Compra'?r.proveedor:r.cliente):'', concepto:r?(r.descripcion||''):'', ref:r?(r.factura||r.presupuesto||r.numero||''):'', monto:r?(mto(r)):0, obs:obs, impacto:impacto==null?0:impacto}); }
+  var todosV=V(), esV={}; vs.forEach(function(r){esV[r.id]=1;});
+  function tipoDe(r){ return esV[r.id]?'Venta':'Compra'; }
+  function add(sev, regla, tipo, r, det, impacto){
+    H.push({sev:sev, regla:regla, tipo:tipo, id:r?r.id:null, fecha:r?r.fecha:'', parte:r?(tipo==='Compra'?r.proveedor:r.cliente):'', concepto:r?(r.descripcion||''):'',
+      comp:r?(tipo==='Presupuesto'?(r.numero||''):(r.factura||'')):'', pres:r&&tipo!=='Presupuesto'?(r.presupuesto||''):'', monto:r?mto(r):0, det:det||'', impacto:impacto||0});
+  }
   var nombresCli={}; todosV.forEach(function(r){ var n=normName(r.cliente); if(n) nombresCli[n]=1; });
   var factVentas={}; todosV.forEach(function(r){ if(r.factura) factVentas[factKey(r.factura)]=1; });
+  var hoy=new Date(Date.now()+864e5*2).toISOString().slice(0,10);
 
   /* — registros anómalos — */
-  vs.concat(cs).forEach(function(r){ var t=vs.indexOf(r)>=0?'Venta':'Compra';
-    if(mto(r)<1000) add('alta','Monto inválido o registro de prueba',t,r,'Monto de '+gs(mto(r))+'. Eliminar o corregir el registro.',mto(r));
-    if(r.fecha && r.fecha>new Date(Date.now()+864e5*2).toISOString().slice(0,10)) add('media','Fecha futura',t,r,'La fecha es posterior a hoy.');
+  vs.concat(cs).forEach(function(r){ var t=tipoDe(r);
+    if(mto(r)<1000) add('alta','Monto inválido o registro de prueba',t,r,'',mto(r));
+    if(r.fecha && r.fecha>hoy) add('media','Fecha futura',t,r,'');
   });
 
-  /* — comprobantes de venta — */
+  /* — facturas de venta repetidas — */
   var porFact={}; vs.forEach(function(r){ if(r.factura){ var k=factKey(r.factura); (porFact[k]=porFact[k]||[]).push(r); } });
   Object.keys(porFact).forEach(function(k){ var g=porFact[k]; if(g.length<2) return;
     var noms={}; g.forEach(function(r){ var n=normName(r.cliente); if(n) noms[n]=(noms[n]||0)+1; });
@@ -7812,7 +7858,9 @@ function auditar(meses){
     if(ns.length>1){
       var mayor=noms[ns[0]]>noms[ns[1]]?ns[0]:null, nomMayor=mayor?(g.find(function(r){return normName(r.cliente)===mayor;})||{}).cliente:'';
       g.forEach(function(r){ var n=normName(r.cliente); if(mayor && (n===mayor||!n)) return;
-        add('alta','N.º de factura repetido en distintos clientes','Venta',r,'La factura '+k+' también está cargada a '+(mayor?'«'+corto(nomMayor,24)+'»':'otro cliente ('+g.filter(function(x){return x!==r;}).map(function(x){return corto(x.cliente||'sin cliente',18);}).join(' / ')+')')+'. Corregir el número que no corresponda.',0); });
+        var otros=mayor?['«'+corto(nomMayor,22)+'»']:g.filter(function(x){return x!==r&&normName(x.cliente)!==n;}).map(function(x){return '«'+corto(x.cliente||'sin cliente',22)+'» '+fch(x.fecha);});
+        add('alta','N.º de factura repetido en distintos clientes','Venta',r,'También cargada a '+otros.join(', '));
+      });
       if(mayor) g=g.filter(function(r){ var n=normName(r.cliente); return n===mayor||!n; });
     }
     if(g.length<2) return;
@@ -7820,58 +7868,58 @@ function auditar(meses){
     if(span<=5) return;
     var dup={};
     g.forEach(function(a,i){ g.forEach(function(b,j){ if(j>i && a.fecha!==b.fecha && mto(a)===mto(b)){ var rec=a.fecha>=b.fecha?a:b, otro=rec===a?b:a; dup[rec.id]=1;
-      add('alta','Posible registro duplicado','Venta',rec,'Misma factura '+k+' y mismo monto que la venta del '+fch(otro.fecha)+'. Si fueron dos cobros parciales de la misma factura está bien; si no, es una carga duplicada.',mto(rec)); } }); });
-    g.forEach(function(r){ if(!dup[r.id]) add('media','Misma factura con fechas distintas','Venta',r,'La factura '+k+' aparece en '+g.length+' registros entre '+fch(fechas[0])+' y '+fch(fechas[fechas.length-1])+'. Si fueron cobros parciales de una misma factura está bien; si no, revisar la fecha.',0); });
+      add('alta','Posible registro duplicado','Venta',rec,'Misma factura y monto que la venta del '+fch(otro.fecha),mto(rec)); } }); });
+    g.forEach(function(r){ if(!dup[r.id]) add('media','Misma factura con fechas distintas','Venta',r,g.length+' registros entre '+fch(fechas[0])+' y '+fch(fechas[fechas.length-1])); });
   });
-  /* facturas de proveedor repetidas con fechas distintas */
   var porFC={}; cs.forEach(function(r){ if(r.factura){ var k=normName(r.proveedor)+'|'+factKey(r.factura); (porFC[k]=porFC[k]||[]).push(r); } });
   Object.keys(porFC).forEach(function(k){ var g=porFC[k]; if(g.length<2) return; var f=g.map(function(r){return r.fecha;}).sort();
-    if(dias(f[0],f[f.length-1])>5) g.forEach(function(r){ add('media','Misma factura de proveedor con fechas distintas','Compra',r,'La factura '+r.factura+' figura en '+g.length+' compras entre '+fch(f[0])+' y '+fch(f[f.length-1])+'. Una factura tiene una sola fecha: corregir el número o la fecha.'); });
+    if(dias(f[0],f[f.length-1])>5) g.forEach(function(r){ add('media','Misma factura de proveedor con fechas distintas','Compra',r,g.length+' compras entre '+fch(f[0])+' y '+fch(f[f.length-1])); });
   });
-  vs.forEach(function(r){ if(r.factura && !factValida(r.factura)) add('baja','Formato de comprobante no estándar','Venta',r,'«'+r.factura+'» → usar el formato 001-001-0000000 ('+factKey(r.factura)+').'); });
-  /* secuencia: número bajo con fecha muy posterior o número alto con fecha muy anterior */
+  vs.forEach(function(r){ if(r.factura && !factValida(r.factura)) add('baja','Formato de comprobante no estándar','Venta',r,'Correcto: '+factKey(r.factura).replace(/^X/,'?')); });
+  cs.forEach(function(r){ if(r.factura && !factValida(r.factura)) add('baja','Formato de comprobante no estándar','Compra',r,'Correcto: '+factKey(r.factura).replace(/^X/,'?')); });
+  /* secuencia */
   var serie=todosV.filter(function(r){return r.factura && factKey(r.factura).charAt(0)!=='X';}).map(function(r){var k=factKey(r.factura);return {r:r,s:k.slice(0,7),n:+k.slice(8),f:r.fecha};});
-  serie.forEach(function(a){ if(meses && !enMeses(a.r,meses)) return;
-    var antes=serie.filter(function(b){return b.s===a.s && b.n<a.n;}), maxF=antes.reduce(function(m,b){return b.f>m?b.f:m;},'');
-    if(maxF && a.f<maxF && dias(a.f,maxF)>15) add('media','Factura fuera de secuencia','Venta',a.r,'El N.º '+factKey(a.r.factura)+' tiene fecha '+fch(a.f)+', anterior a facturas de numeración menor (hasta '+fch(maxF)+'). Revisar número o fecha.');
+  serie.forEach(function(a){ if(!esV[a.r.id]) return;
+    var vec=serie.filter(function(b){return b.s===a.s && b.n!==a.n && Math.abs(b.n-a.n)<=8;}).sort(function(x,y){return Math.abs(x.n-a.n)-Math.abs(y.n-a.n);}).slice(0,6);
+    if(vec.length<3) return;
+    var ts=vec.map(function(b){return +new Date(b.f);}).sort(function(x,y){return x-y;}), med=ts[Math.floor(ts.length/2)];
+    var ns=vec.map(function(b){return b.n;}), lo=Math.min.apply(null,ns), hi=Math.max.apply(null,ns);
+    if(Math.abs(+new Date(a.f)-med)/864e5>30) add('media','Factura fuera de secuencia','Venta',a.r,'Las facturas vecinas (N.º '+lo+'–'+hi+') son de ~'+fch(new Date(med).toISOString().slice(0,10)));
   });
   /* IVA */
-  vs.forEach(function(r){ if(r.factura && !r.iva) add('alta','Venta facturada marcada como exenta','Venta',r,'Tiene comprobante pero figura «Exento de IVA»: el débito fiscal del sistema queda subestimado en '+gs(mto(r)/11)+' si la factura se emitió con IVA 10%.',mto(r)/11); });
-  var vSinF=vs.filter(function(r){return r.iva && !r.factura && mto(r)>=1000;});
-  vSinF.forEach(function(r){ add('media','Venta gravada sin N.º de factura','Venta',r,'Marcada con IVA pero sin comprobante: cargar el N.º de factura, o marcar «Exento» si fue una venta sin factura (el reporte de IVA la está sumando).',mto(r)/11); });
-  cs.forEach(function(r){ if(r.factura && !r.iva) add('media','Compra con factura marcada como exenta','Compra',r,'Si la factura del proveedor discrimina IVA 10%, se pierde un crédito fiscal de '+gs(mto(r)/11)+'.',mto(r)/11); });
-  cs.forEach(function(r){ if(r.iva && !r.factura && mto(r)>=1000) add('media','Crédito fiscal sin comprobante','Compra',r,'Compra marcada con IVA sin N.º de factura: sin comprobante el crédito fiscal de '+gs(mto(r)/11)+' no es deducible. Cargar la factura del proveedor.',mto(r)/11); });
-  cs.forEach(function(r){ if(r.factura && !factValida(r.factura)) add('baja','Formato de comprobante no estándar','Compra',r,'«'+r.factura+'» → formato esperado 001-001-0000000.'); });
+  vs.forEach(function(r){ if(r.factura && !r.iva && mto(r)>=1000) add('alta','Venta facturada marcada como exenta','Venta',r,'IVA no computado '+gs(mto(r)/11),mto(r)/11); });
+  vs.forEach(function(r){ if(r.iva && !r.factura && mto(r)>=1000) add('media','Venta gravada sin N.º de factura','Venta',r,'IVA '+gs(mto(r)/11),mto(r)/11); });
+  cs.forEach(function(r){ if(r.factura && !r.iva) add('media','Compra con factura marcada como exenta','Compra',r,'Crédito posible '+gs(mto(r)/11),mto(r)/11); });
+  cs.forEach(function(r){ if(r.iva && !r.factura && mto(r)>=1000) add('media','Crédito fiscal sin comprobante','Compra',r,'IVA '+gs(mto(r)/11),mto(r)/11); });
   /* compras con datos de la venta */
   cs.forEach(function(r){
     var fv=r.factura && factVentas[factKey(r.factura)], pc=normName(r.proveedor), esCli=pc && nombresCli[pc];
-    if(fv) add('media','Compra cargada con la factura de venta propia','Compra',r,'El N.º '+r.factura+' es una factura de venta de Big Informática'+(esCli?' y el proveedor «'+r.proveedor+'» es un cliente':'')+'. Cargar el proveedor real y su factura.');
-    else if(esCli) add('media','Proveedor coincide con un cliente','Compra',r,'«'+r.proveedor+'» figura como cliente en ventas. Si es el destino del trabajo, el proveedor real debería ser quien vendió el bien o servicio.');
-    if(!r.proveedor) add('media','Compra sin proveedor','Compra',r,'Sin proveedor no se puede respaldar el gasto ni el crédito fiscal.');
-    if(esActivoFijo(r)) add('media','Posible bien de uso cargado como costo','Compra',r,'Herramientas y equipos propios no son costo de ventas: el sistema los trata como inversión (bien de uso) en los reportes.');
+    if(fv) add('media','Compra cargada con la factura de venta propia','Compra',r,'');
+    else if(esCli) add('media','Proveedor coincide con un cliente','Compra',r,'');
+    if(!(r.proveedor||'').trim()) add('media','Compra sin proveedor','Compra',r,'');
+    if(esActivoFijo(r)) add('media','Posible bien de uso cargado como costo','Compra',r,'');
   });
-  /* — tipo vs concepto — */
+  /* tipo vs concepto */
   function splitJob(r, lista){ var k=presKey(r.presupuesto); return k && lista.some(function(x){return x!==r && presKey(x.presupuesto)===k && x.tipo==='Producto';}); }
   [['Venta',vs],['Compra',cs]].forEach(function(par){ var t=par[0];
     par[1].forEach(function(r){ var d=(r.descripcion||'').trim(); if(!d) return;
       var dd=d.normalize('NFD').replace(/[̀-ͯ]/g,'');
-      var hp=RX_PROD.test(dd), hs=RX_SERV.test(t==='Compra'?dd.replace(/\bcambio\b/ig,''):dd), fuerte=RX_PROD_FUERTE.test(dd);
-      if(r.tipo!=='Producto' && (fuerte || (hp && !hs)) && !(t==='Venta' && splitJob(r,par[1])))
-        add('media','Concepto de producto cargado como «Servicio»',t,r,'El concepto describe un bien. Cambiar el tipo a «Producto» (afecta el margen por línea y el costo de productos).');
-      if(r.tipo==='Producto' && RX_SERV_INICIO.test(dd) && !fuerte)
-        add('media','Concepto de servicio cargado como «Producto»',t,r,'El concepto describe un servicio. Corregir el tipo, o la descripción si en realidad se vendió/compró un bien.');
+      var hp=RX_PROD.test(dd), hs=RX_SERV.test(t==='Compra'?dd.replace(/\bcambio\b/ig,''):dd);
+      var fuerte=RX_PROD_FUERTE.test(dd) && RX_PROD.test(dd.replace(/^.*?(venta|compra|provisi[oó]n)\s+de\s+/i,'').split(/\s+/).slice(0,3).join(' '));
+      if(r.tipo!=='Producto' && (fuerte || (hp && !hs && !(t==='Venta' && splitJob(r,par[1]))))) add('media','Concepto de producto cargado como «Servicio»',t,r,'');
+      if(r.tipo==='Producto' && RX_SERV_INICIO.test(dd) && !fuerte) add('media','Concepto de servicio cargado como «Producto»',t,r,'');
     });
   });
-  /* — conceptos y partes — */
+  /* conceptos y partes */
   vs.forEach(function(r){
-    if(!(r.cliente||'').trim()) add('baja','Venta sin cliente','Venta',r,'Completar el cliente (razón social o nombre).');
-    else if(RX_GENERICO.test(normName(r.cliente)) || /^disco|^servicios? varios/i.test(normName(r.cliente))) add('media','Campo cliente con un concepto','Venta',r,'«'+r.cliente+'» no es un cliente. Separar las ventas por cliente real.');
+    if(!(r.cliente||'').trim()) add('baja','Venta sin cliente','Venta',r,'');
+    else if(RX_GENERICO.test(normName(r.cliente)) || /^disco|^servicios? varios/.test(normName(r.cliente))) add('media','Campo cliente con un concepto','Venta',r,'');
   });
-  vs.concat(cs).forEach(function(r){ var t=vs.indexOf(r)>=0?'Venta':'Compra'; var d=(r.descripcion||'').trim();
-    if(!d) add('baja','Concepto vacío',t,r,'Detallar el bien o servicio.');
-    else if(RX_GENERICO.test(normName(d))) add('baja','Concepto genérico',t,r,'«'+d+'» no identifica el bien o servicio. Detallarlo para que libros y márgenes sean útiles.');
+  vs.concat(cs).forEach(function(r){ var t=tipoDe(r), d=(r.descripcion||'').trim();
+    if(!d) add('baja','Concepto vacío',t,r,'');
+    else if(RX_GENERICO.test(normName(d))) add('baja','Concepto genérico',t,r,'');
   });
-  /* — posibles duplicados — */
+  /* posibles duplicados */
   function dupes(lista, t, campo){
     for(var i=0;i<lista.length;i++) for(var j=i+1;j<lista.length;j++){
       var a=lista[i], b=lista[j], na=normName(a[campo]), nb=normName(b[campo]);
@@ -7880,77 +7928,85 @@ function auditar(meses){
       if(a.factura && b.factura && factKey(a.factura)===factKey(b.factura)) continue;
       var ka=presKey(a.presupuesto), kb=presKey(b.presupuesto); if(ka && kb && ka!==kb) continue;
       if(ka && kb && ka===kb && a.tipo!==b.tipo) continue;
-      var ma=mto(a), mb=mto(b), igual=Math.abs(ma-mb)<=Math.max(ma,mb)*0.01; if(!igual) continue;
-      var sim=solap(a.descripcion,b.descripcion);
-      var rec=a.fecha>=b.fecha?a:b, otro=rec===a?b:a;
-      if(sim>=0.6) add('alta','Posible registro duplicado',t,rec,'Mismo '+(t==='Venta'?'cliente':'proveedor')+', monto y concepto que el registro del '+fch(otro.fecha)+' («'+corto(otro.descripcion,40)+'»'+(otro.factura?', fact. '+otro.factura:'')+'). Verificar si se cargó dos veces.',mto(rec));
-      else if(ma>=1000000 && ma===mb) add('media','Monto idéntico, mismo '+(t==='Venta'?'cliente':'proveedor'),t,rec,'Mismo monto exacto que el registro del '+fch(otro.fecha)+' («'+corto(otro.descripcion,40)+'»). Verificar que no sea un error de copia.',0);
+      var ma=mto(a), mb=mto(b); if(Math.abs(ma-mb)>Math.max(ma,mb)*0.01) continue;
+      var sim=solap(a.descripcion,b.descripcion), rec=a.fecha>=b.fecha?a:b, otro=rec===a?b:a;
+      if(ka && ka===kb && sim<0.6) continue; /* cuotas del mismo presupuesto */
+      if(sim>=0.6) add('alta','Posible registro duplicado',t,rec,'Igual al del '+fch(otro.fecha)+(otro.factura?' (fact. '+otro.factura+')':' (sin factura)'),mto(rec));
+      else if(ma>=1000000 && ma===mb) add('media','Monto idéntico, mismo '+(t==='Venta'?'cliente':'proveedor'),t,rec,'Igual monto que «'+corto(otro.descripcion,30)+'» del '+fch(otro.fecha));
     }
   }
-  dupes(vs.slice().sort(function(a,b){return String(a.fecha).localeCompare(String(b.fecha));}),'Venta','cliente');
-  dupes(cs.slice().sort(function(a,b){return String(a.fecha).localeCompare(String(b.fecha));}),'Compra','proveedor');
+  function porFecha(a,b){return String(a.fecha).localeCompare(String(b.fecha));}
+  dupes(vs.slice().sort(porFecha),'Venta','cliente');
+  dupes(cs.slice().sort(porFecha),'Compra','proveedor');
 
-  /* — presupuestos — */
+  /* presupuestos */
   if(!meses){
     var porNum={}; P().forEach(function(p){ var k=presKey(p.numero); if(!k) return; (porNum[k]=porNum[k]||[]).push(p); });
     Object.keys(porNum).forEach(function(k){ var g=porNum[k]; if(g.length<2) return;
-      var mismo=g.every(function(p){return normName(p.cliente)===normName(g[0].cliente)&&normName(p.descripcion)===normName(g[0].descripcion);});
-      var exacto=mismo && g.every(function(p){return +p.monto===+g[0].monto;});
-      g.forEach(function(p){ add(exacto?'media':'baja',exacto?'Presupuesto duplicado':'N.º de presupuesto repetido','Presupuesto',p,exacto?'Mismo número, cliente, concepto y monto que otro presupuesto ('+g.map(function(x){return x.estado;}).join(' / ')+'). Eliminar el que sobra.':'El N.º '+k+' se usó en '+g.length+' presupuestos ('+g.map(function(x){return corto(x.cliente,16);}).join(' / ')+'). Las ventas y compras de trabajos distintos se mezclan en el análisis de márgenes.'); });
+      var exacto=g.every(function(p){return normName(p.cliente)===normName(g[0].cliente)&&normName(p.descripcion)===normName(g[0].descripcion)&&+p.monto===+g[0].monto;});
+      g.forEach(function(p){ add(exacto?'media':'baja',exacto?'Presupuesto duplicado':'N.º de presupuesto repetido','Presupuesto',p,exacto?'Estados: '+g.map(function(x){return x.estado;}).join(' / '):g.length+' presupuestos con el N.º '+k); });
     });
-    P().forEach(function(p){ var n=String(p.numero||'').trim(); if(!/^\d{4}$/.test(n)) add('baja','N.º de presupuesto no estándar','Presupuesto',p,n?'«'+n+'» no sigue la numeración de 4 dígitos (0001…).':'Presupuesto sin número.'); });
+    P().forEach(function(p){ var n=String(p.numero||'').trim(); if(!/^\d{4}$/.test(n)) add('baja','N.º de presupuesto no estándar','Presupuesto',p,n?'':'Sin número'); });
     P().forEach(function(p){ var k=presKey(p.numero); if(!k) return; var cn=tokens(p.cliente);
       var vend=todosV.filter(function(v){ if(presKey(v.presupuesto)!==k) return false; var vt=tokens(v.cliente); return !cn.length||!vt.length||cn.some(function(t){return vt.indexOf(t)>=0;}); });
       var tv=sum(vend,mto);
-      if(p.estado==='Pendiente' && vend.length) add('media','Presupuesto «Pendiente» con ventas registradas','Presupuesto',p,'Tiene '+vend.length+' venta(s) por '+gs(tv)+'. Cambiar el estado a «Aprobado».');
-      if(+p.monto>0 && tv>+p.monto*1.02) add('alta','Ventas superan el presupuesto','Presupuesto',p,'Ventas vinculadas '+gs(tv)+' vs presupuesto '+gs(p.monto)+' (+'+gs(tv-p.monto)+'). Posible venta duplicada o vinculada al presupuesto equivocado.',tv-p.monto);
+      if(p.estado==='Pendiente' && vend.length) add('media','Presupuesto «Pendiente» con ventas registradas','Presupuesto',p,vend.length+' venta(s) por '+gs(tv));
+      if(+p.monto>0 && tv>+p.monto*1.02) add('alta','Ventas superan el presupuesto','Presupuesto',p,'Cobrado '+gs(tv)+' (exceso '+gs(tv-p.monto)+')',tv-p.monto);
     });
   }
-  /* — nombres a unificar — */
-  var nomb={}; todosV.forEach(function(r){ var n=normName(r.cliente); if(n){ (nomb[n]=nomb[n]||{});  nomb[n][(r.cliente||'').trim()]=1; } });
-  var variantes=[], keys=Object.keys(nomb);
-  keys.forEach(function(a){ var A=a.split(' '); keys.forEach(function(b){ if(a===b||a.length<4) return; var B=b.split(' '); if(A.length<B.length && A.every(function(t){return B.indexOf(t)>=0;})) variantes.push([a,b]); }); });
-  keys.forEach(function(k){ if(Object.keys(nomb[k]).length>1) variantes.push([k,k]); });
-  var grupos=[]; variantes.forEach(function(p){ var g=grupos.find(function(x){return x.indexOf(p[0])>=0||x.indexOf(p[1])>=0;}); if(g){ if(g.indexOf(p[0])<0) g.push(p[0]); if(g.indexOf(p[1])<0) g.push(p[1]); } else grupos.push(p[0]===p[1]?[p[0]]:[p[0],p[1]]); });
+  /* nombres a unificar */
+  var nomb={}; todosV.forEach(function(r){ var n=normName(r.cliente); if(n){ nomb[n]=nomb[n]||{}; nomb[n][(r.cliente||'').trim()]=1; } });
+  var pares=[], keys=Object.keys(nomb);
+  keys.forEach(function(a){ var A=a.split(' '); keys.forEach(function(b){ if(a===b||a.length<4) return; var B=b.split(' '); if(A.length<B.length && A.every(function(t){return B.indexOf(t)>=0;})) pares.push([a,b]); }); });
+  keys.forEach(function(k){ if(Object.keys(nomb[k]).length>1) pares.push([k]); });
+  var grupos=[]; pares.forEach(function(p){ var g=grupos.find(function(x){return p.some(function(k){return x.indexOf(k)>=0;});}); if(g) p.forEach(function(k){ if(g.indexOf(k)<0) g.push(k); }); else grupos.push(p.slice()); });
   var nombres=grupos.map(function(g){ var s={}; g.forEach(function(k){ Object.keys(nomb[k]).forEach(function(x){s[x]=1;}); }); return Object.keys(s); }).filter(function(x){return x.length>1;});
-
-  /* — gastos fijos — */
+  /* gastos fijos personales que no son la remuneración */
   var gp=G().filter(function(g){return g.activo && esPersonal(g) && !/sueldo|salario|retiro|remuneraci/i.test(g.concepto||'');});
 
   H.sort(function(a,b){ return (SEV[b.sev]-SEV[a.sev]) || a.regla.localeCompare(b.regla) || String(b.fecha).localeCompare(String(a.fecha)); });
   return {h:H, nombres:nombres, gastosPersonales:gp, nV:vs.length, nC:cs.length, nP:meses?0:P().length};
 }
-function repAuditoria(per, mes){
+function repAuditoria(per, mes, nivel){
   var P0=per==='todo'?{meses:null,label:'Todos los registros'}:resolverPeriodo(per,mes);
   var A=auditar(P0.meses), H=A.h, b='';
   var nA=H.filter(function(x){return x.sev==='alta';}).length, nM=H.filter(function(x){return x.sev==='media';}).length, nB=H.filter(function(x){return x.sev==='baja';}).length;
   var riesgo=sum(H.filter(function(x){return x.sev==='alta';}),function(x){return x.impacto||0;});
   var ivaR=sum(H.filter(function(x){return /sin comprobante|sin N\.º de factura|exenta/.test(x.regla);}),function(x){return x.impacto||0;});
-  var regs={}; H.forEach(function(x){ var r=regs[x.regla]||(regs[x.regla]={n:0,sev:x.sev,imp:0,ids:{}}); if(!r.ids[x.id]){ r.ids[x.id]=1; r.n++; r.imp+=x.impacto||0; } });
-  b+='<div class="kpis k5">'+kpi('Registros revisados',num(A.nV+A.nC+A.nP),A.nV+' ventas · '+A.nC+' compras'+(A.nP?' · '+A.nP+' presup.':''))+kpi('Prioridad alta',nA,'Afectan montos o IVA','r')+kpi('Prioridad media',nM,'Clasificación y respaldo','a')+kpi('Prioridad baja',nB,'Calidad de datos','')+kpi('Monto a revisar',gs(riesgo),'Duplicados y excesos','r')+'</div>';
-  b+='<h2>Resumen de hallazgos</h2><table><thead><tr><th>Control</th><th class="c">Prioridad</th><th class="c">Registros</th><th class="r">Impacto estimado</th></tr></thead><tbody>'+
-    Object.keys(regs).sort(function(a,c){return (SEV[regs[c].sev]-SEV[regs[a].sev])||regs[c].n-regs[a].n;}).map(function(k){ var r=regs[k]; return '<tr><td>'+esc(k)+'</td><td class="c"><span class="badge b-'+r.sev+'">'+r.sev+'</span></td><td class="c">'+r.n+'</td><td class="r">'+(r.imp?gs(r.imp):'<span class="mut">—</span>')+'</td></tr>'; }).join('')+
-    (H.length?'':'<tr><td colspan="4" class="c">Sin hallazgos ✓</td></tr>')+'</tbody></table>';
-  if(ivaR) b+='<div class="note"><b>IVA:</b> los controles de IVA suman '+gs(ivaR)+' de impuesto mal respaldado o mal clasificado. Conviene corregirlos antes de preparar el Formulario 120.</div>';
+  var regs={}, orden=[]; H.forEach(function(x){ var r=regs[x.regla]; if(!r){ r=regs[x.regla]={regla:x.regla,sev:x.sev,n:0,imp:0,items:[]}; orden.push(r); } r.n++; r.imp+=x.impacto||0; r.items.push(x); });
+  orden.sort(function(a,c){return (SEV[c.sev]-SEV[a.sev])||(c.imp-a.imp)||(c.n-a.n);});
+  b+='<div class="kpis k5">'+kpi('Registros revisados',num(A.nV+A.nC+A.nP),A.nV+' ventas · '+A.nC+' compras'+(A.nP?' · '+A.nP+' presup.':''))+
+    kpi('Prioridad alta',nA,'Afectan montos o IVA','r')+kpi('Prioridad media',nM,'Clasificación y respaldo','a')+kpi('Prioridad baja',nB,'Calidad de datos','')+
+    kpi('Monto a revisar',gs(riesgo),'Duplicados y excesos','r')+'</div>';
+  b+='<h2>Resumen de hallazgos</h2><table><thead><tr><th>#</th><th>Control</th><th class="c">Prioridad</th><th class="c">Casos</th><th class="r">Impacto estimado</th></tr></thead><tbody>'+
+    orden.map(function(r,i){ return '<tr><td class="mut">'+(i+1)+'</td><td>'+esc(r.regla)+'</td><td class="c"><span class="badge b-'+r.sev+'">'+r.sev+'</span></td><td class="c">'+r.n+'</td><td class="r">'+(r.imp?gs(r.imp):'<span class="mut">—</span>')+'</td></tr>'; }).join('')+
+    (H.length?'':'<tr><td colspan="5" class="c">Sin hallazgos ✓</td></tr>')+'</tbody></table>';
+  if(ivaR) b+='<div class="note"><b>IVA:</b> los controles de IVA involucran '+gs(ivaR)+' de impuesto mal respaldado o mal marcado. Conviene corregirlos antes de preparar el Formulario 120.</div>';
 
-  var secs=[['alta','Prioridad alta — corregir primero'],['media','Prioridad media'],['baja','Prioridad baja — calidad de datos']];
-  secs.forEach(function(s){ var hs=H.filter(function(x){return x.sev===s[0];}); if(!hs.length) return;
-    var compacto=s[0]==='baja';
-    b+='<h2>'+s[1]+' ('+hs.length+')</h2><table><thead><tr><th>Control</th><th>Reg.</th><th>Fecha</th><th>'+(compacto?'Cliente / proveedor':'Cliente / proveedor · concepto')+'</th><th class="r">Monto</th><th>'+(compacto?'Acción':'Observación y acción sugerida')+'</th><th class="no-print"></th></tr></thead><tbody>'+
-      hs.map(function(x){ var ed=x.id?'<button class="edit" onclick="var w=window.parent!==window?window.parent:window.opener;if(w&&w.rptEditar)w.rptEditar(\''+x.tipo+'\',\''+x.id+'\')">Editar</button>':'';
-        return '<tr><td class="sm"><b>'+esc(x.regla)+'</b></td><td class="sm">'+x.tipo+'</td><td class="num sm">'+fch(x.fecha)+'</td><td class="sm">'+esc(corto(x.parte,26)||'—')+(compacto?'':'<br><span class="mut">'+esc(corto(x.concepto,60))+(x.ref?' · '+esc(corto(x.ref,22)):'')+'</span>')+'</td><td class="r sm">'+gs(x.monto)+'</td><td class="sm">'+esc(x.obs)+'</td><td class="no-print">'+ed+'</td></tr>'; }).join('')+
-      '</tbody></table>';
+  var vis=orden.filter(function(r){ return nivel!=='am' || r.sev!=='baja'; });
+  b+='<h2 style="margin-top:18px">Detalle por control</h2><div class="lead">Cada hallazgo es una alerta para revisar, no una certeza. En la vista previa, «Editar» abre el registro para corregirlo; después volvé a ejecutar la auditoría.</div>';
+  vis.forEach(function(r,i){
+    var conDet=r.items.some(function(x){return x.det;});
+    b+='<div class="ctl keep"><div class="ctl-h"><span class="badge b-'+r.sev+'">'+r.sev+'</span> <b>'+(orden.indexOf(r)+1)+'. '+esc(r.regla)+'</b> <span class="mut">· '+r.n+' caso'+(r.n>1?'s':'')+(r.imp?' · '+gs(r.imp):'')+'</span></div>'+
+      '<div class="ctl-a">'+esc(CTRL[r.regla]||'')+'</div></div>'+
+      '<table class="aud"><colgroup><col style="width:66px"><col style="width:52px"><col style="width:'+(conDet?'17%':'21%')+'"><col><col style="width:'+(conDet?'15%':'18%')+'"><col style="width:76px">'+(conDet?'<col style="width:22%">':'')+'<col class="no-print" style="width:42px"></colgroup><thead><tr><th>Fecha</th><th>Registro</th><th>Cliente / proveedor</th><th>Concepto</th><th>Comprob. / presup.</th><th class="r">Monto</th>'+(conDet?'<th>Detalle</th>':'')+'<th class="no-print"></th></tr></thead><tbody>'+
+      r.items.map(function(x){
+        var ed=x.id?'<button class="edit" onclick="var w=window.parent!==window?window.parent:window.opener;if(w&&w.rptEditar)w.rptEditar(\''+x.tipo+'\',\''+String(x.id).replace(/[^\w-]/g,'')+'\')">Editar</button>':'';
+        var ref=[x.comp,presKey(x.pres)?'P '+presKey(x.pres):''].filter(Boolean).join(' · ');
+        return '<tr><td class="num">'+fch(x.fecha)+'</td><td>'+(x.tipo==='Presupuesto'?'Presup.':x.tipo)+'</td><td class="el">'+esc(corto(x.parte,30)||'—')+'</td><td class="el" title="'+esc(x.concepto)+'">'+esc(corto(x.concepto,70)||'—')+'</td><td class="el">'+esc(corto(ref,34)||'—')+'</td><td class="r">'+gs(x.monto)+'</td>'+(conDet?'<td>'+esc(x.det)+'</td>':'')+'<td class="no-print">'+ed+'</td></tr>';
+      }).join('')+'</tbody></table>';
   });
+  if(nivel==='am' && nB) b+='<div class="note">Se omitieron '+nB+' hallazgos de prioridad baja (calidad de datos). Elegí «Todos los hallazgos» para verlos.</div>';
   if(A.nombres.length){
     b+='<h2>Nombres de clientes a unificar ('+A.nombres.length+')</h2><div class="lead">El mismo cliente escrito de distintas formas divide sus ventas en los reportes. Elegir un nombre (idealmente la razón social de la factura) y usarlo siempre.</div><table><thead><tr><th>Variantes encontradas</th></tr></thead><tbody>'+
-      A.nombres.map(function(g){return '<tr><td class="sm">'+g.map(esc).join(' &nbsp;·&nbsp; ')+'</td></tr>';}).join('')+'</tbody></table>';
+      A.nombres.map(function(g){return '<tr><td>'+g.map(esc).join(' &nbsp;·&nbsp; ')+'</td></tr>';}).join('')+'</tbody></table>';
   }
   if(A.gastosPersonales.length){
-    b+='<h2>Gastos fijos de tipo personal</h2><table><thead><tr><th>Concepto</th><th>Categoría</th><th class="r">Mensual</th><th>Observación</th></tr></thead><tbody>'+
-      A.gastosPersonales.map(function(g){ return '<tr><td>'+esc(g.concepto)+'</td><td>'+esc(g.categoria)+'</td><td class="r">'+gs(g.monto_mensual)+'</td><td class="sm">'+(/canva|licencia|software|hosting|dominio/i.test(g.concepto)&&!/spotify|netflix/i.test(g.concepto)?'Si se usa para el negocio, pasarlo a una categoría operativa (p. ej. «Software»).':'Gasto personal: no es gasto del negocio; los reportes lo muestran como retiro del propietario.')+'</td></tr>'; }).join('')+'</tbody></table>';
+    b+='<h2>Gastos fijos de categoría «Personal»</h2><table><thead><tr><th>Concepto</th><th>Categoría</th><th class="r">Mensual</th><th>Observación</th></tr></thead><tbody>'+
+      A.gastosPersonales.map(function(g){ return '<tr><td>'+esc(g.concepto)+'</td><td>'+esc(g.categoria)+'</td><td class="r">'+gs(g.monto_mensual)+'</td><td>'+(/canva|software|hosting|dominio|office|adobe/i.test(g.concepto)?'Si se usa para el negocio, pasarlo a una categoría operativa (p. ej. «Software»).':'Gasto personal: no es del negocio. Los reportes lo muestran como retiro del propietario.')+'</td></tr>'; }).join('')+'</tbody></table>';
   }
-  b+='<div class="note"><b>Cómo se audita:</b> controles automáticos sobre los registros del sistema — comprobantes repetidos o fuera de secuencia, coherencia de IVA, tipo (producto/servicio) frente al concepto, posibles duplicados (mismo cliente o proveedor, monto y concepto en 20 días), presupuestos y calidad de datos. Cada hallazgo es una alerta para revisar, no una certeza: usá «Editar» en la vista previa para corregir el registro y volvé a generar el reporte.</div>';
-  return documento('Auditoría de Libros de Ventas y Compras', P0.label, b);
+  b+='<div class="note"><b>Controles aplicados:</b> comprobantes repetidos, fuera de secuencia o con formato no estándar; coherencia del IVA con el comprobante; tipo (producto/servicio) frente al concepto; posibles duplicados (mismo cliente o proveedor, monto y concepto dentro de 20 días); compras cargadas con datos de la venta; bienes de uso; estado y monto de presupuestos; calidad de datos y nombres de clientes.</div>';
+  return documento('Auditoría de Libros', P0.label, b);
 }
 
 /* ═══════════════ interfaz ═══════════════ */
@@ -7972,12 +8028,19 @@ window.rptPopSel=function(){
   ['rp2ResMes','rp2MarMes','rp2BalMes','rp2LibMes','rp2AudMes'].forEach(function(id){ var s=document.getElementById(id); if(!s) return; var v=s.value; s.innerHTML=opts(v||null); });
   var ci=document.getElementById('rp2CajaIni'), bm=document.getElementById('rp2BalMes');
   if(ci&&bm&&bm.value){ var c=cajaInicial(bm.value.slice(0,4)); ci.value=c?c.toLocaleString('es-PY'):''; }
+  var cre=document.getElementById('rp2CajaReal'); if(cre&&bm&&bm.value){ var r=cajaReal(bm.value); cre.value=r===null?'':r.toLocaleString('es-PY'); }
   rptPerChange();
   try{ var A=auditar(null), na=A.h.filter(function(x){return x.sev==='alta';}).length, el=document.getElementById('rp2AudBadge');
     if(el){ el.textContent=na?na+' hallazgos de prioridad alta':'Sin hallazgos de prioridad alta'; el.style.background=na?'rgba(220,38,38,.15)':'rgba(22,163,74,.15)'; el.style.color=na?'#f87171':'#4ade80'; } }catch(e){ console.error(e); }
 };
 window.rptPerChange=function(){
   [['rp2ResPer','rp2ResMesW'],['rp2MarPer','rp2MarMesW'],['rp2LibPer','rp2LibMesW'],['rp2AudPer','rp2AudMesW']].forEach(function(p){ var s=document.getElementById(p[0]), w=document.getElementById(p[1]); if(s&&w) w.style.display=s.value==='todo'?'none':''; });
+};
+window.rptCajaReal=function(el){
+  var bm=document.getElementById('rp2BalMes'); if(!bm||!bm.value) return;
+  var raw=String(el.value).trim(), v=parseInt(raw.replace(/[^\d-]/g,''),10);
+  try{ if(raw===''||isNaN(v)) localStorage.removeItem('bi_caja_real_'+bm.value); else localStorage.setItem('bi_caja_real_'+bm.value, String(v)); }catch(e){}
+  el.value=(raw===''||isNaN(v))?'':v.toLocaleString('es-PY');
 };
 window.rptCajaIni=function(el){
   var bm=document.getElementById('rp2BalMes'); if(!bm||!bm.value) return;
@@ -7994,7 +8057,7 @@ window.rptGenerar=function(tipo){
     else if(tipo==='margenes'){ html=repMargenes(val('rp2MarPer','anual'), val('rp2MarMes')); titulo='Análisis de Márgenes'; }
     else if(tipo==='balance'){ html=repBalance(val('rp2BalMes')); titulo='Balance General'; }
     else if(tipo==='libros'){ html=repLibros(val('rp2LibPer','mes'), val('rp2LibMes'), val('rp2LibInc','comp')==='comp'); titulo='Libros IVA'; }
-    else if(tipo==='auditoria'){ html=repAuditoria(val('rp2AudPer','todo'), val('rp2AudMes')); titulo='Auditoría de Libros'; }
+    else if(tipo==='auditoria'){ html=repAuditoria(val('rp2AudPer','todo'), val('rp2AudMes'), val('rp2AudNivel','todos')); titulo='Auditoría de Libros'; }
   }catch(e){ console.error(e); if(typeof toast==='function') toast('Error al generar el reporte: '+e.message,'e'); return; }
   window._rptHtml=html;
   var t=html.match(/<title>([^<]*)<\/title>/); titulo=t?t[1].replace(/&amp;/g,'&'):titulo;

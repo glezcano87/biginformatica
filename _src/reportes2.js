@@ -325,7 +325,8 @@ function repMargenes(per, mes){
     top.map(function(c,i){ var u=c.i-c.c; return '<tr><td class="mut">'+(i+1)+'</td><td>'+esc(corto(c.nom,40))+'</td><td class="c">'+c.ops+'</td><td class="r">'+gs(c.i)+'</td><td class="r">'+pct(R.ventas?c.i/R.ventas*100:0)+'</td><td class="r">'+gs(c.c)+'</td><td class="r">'+gsp(u)+'</td><td class="r">'+pct(c.i?u/c.i*100:0)+'</td></tr>'; }).join('')+
     (resto.length?'<tr><td></td><td class="mut">Otros '+resto.length+' clientes</td><td class="c">'+sum(resto,function(c){return c.ops;})+'</td><td class="r">'+gs(sum(resto,function(c){return c.i;}))+'</td><td class="r">'+pct(R.ventas?sum(resto,function(c){return c.i;})/R.ventas*100:0)+'</td><td class="r">'+gs(sum(resto,function(c){return c.c;}))+'</td><td class="r">'+gs(sum(resto,function(c){return c.i-c.c;}))+'</td><td></td></tr>':'')+
     '<tr class="tot"><td></td><td>Total</td><td class="c">'+vP.length+'</td><td class="r">'+gs(R.ventas)+'</td><td class="r">100,0%</td><td class="r">'+gs(sum(cl,function(c){return c.c;}))+'</td><td class="r">'+gs(sum(cl,function(c){return c.i-c.c;}))+'</td><td></td></tr></tbody></table>';
-  if(cl.length>=3){ var t3=sum(cl.slice(0,3),function(c){return c.i;}); b+='<div class="note"><b>Concentración:</b> los 3 principales clientes representan el '+pct(R.ventas?t3/R.ventas*100:0)+' de las ventas del período.</div>'; }
+  var clR=cl.filter(function(c){return c.nom!=='(sin cliente)' && !/servicios? varios/i.test(c.nom);});
+  if(clR.length>=3){ var t3=sum(clR.slice(0,3),function(c){return c.i;}); b+='<div class="note"><b>Concentración:</b> los 3 principales clientes identificados ('+clR.slice(0,3).map(function(c){return esc(c.nom);}).join(', ')+') representan el '+pct(R.ventas?t3/R.ventas*100:0)+' de las ventas del período.'+(cl.some(function(c){return c.nom==='(sin cliente)';})?' Hay ventas sin cliente cargado que no se pueden atribuir.':'')+'</div>'; }
 
   /* por trabajo */
   b+='<h2>Rentabilidad por trabajo (presupuestos con costo)</h2><div class="lead">Ventas del período y todos los costos cargados al mismo N.º de presupuesto.</div>'+
@@ -366,6 +367,7 @@ function repMargenes(per, mes){
 
 /* ═══════════════ 3. BALANCE GENERAL ═══════════════ */
 function cajaInicial(y){ try{ return +(localStorage.getItem('bi_caja_ini_'+y)||0)||0; }catch(e){ return 0; } }
+function cajaReal(m){ try{ var v=localStorage.getItem('bi_caja_real_'+m); return v===null||v===''?null:(+v||0); }catch(e){ return null; } }
 function repBalance(mes){
   var todos=mesesConDatos(); mes=mes||todos[todos.length-1]||curMesR();
   var y=mes.slice(0,4), meses=[], i;
@@ -374,17 +376,18 @@ function repBalance(mes){
   var pagadoPrev=sum(iva.slice(0,-1),function(x){return x.aPagar;});
   var ci=cajaInicial(y);
   var caja=ci+R.cobros-R.pagos-R.activoFijoBruto-R.gastosOp-R.retiros-pagadoPrev;
-  var bienesUso=R.activoFijo;
+  var bienesUso=R.activoFijo, cr=cajaReal(mes), difCaja=cr===null?0:cr-caja, cajaEst=caja;
+  if(cr!==null) caja=cr;
   var actCorr=caja+last.favor, activo=actCorr+bienesUso;
   var pasivo=last.aPagar;
-  var resEj=R.operativo, patr=ci+resEj-R.retiros;
+  var resEj=R.operativo, patr=ci+resEj-R.retiros+difCaja;
   var dif=Math.round(activo-(pasivo+patr));
   var cob=COB().filter(function(c){return c.estado!=='Cobrado';}), cobT=sum(cob,mto);
   var b='';
   b+='<div class="eq"><div><div class="l">Activo</div><div class="v">'+gs(activo)+'</div></div><div class="op">=</div><div><div class="l">Pasivo</div><div class="v">'+gs(pasivo)+'</div></div><div class="op">+</div><div><div class="l">Patrimonio neto</div><div class="v">'+gsp(patr)+'</div></div></div>';
   b+='<div class="two"><div class="keep"><h2>Activo</h2><table class="fs"><tbody>'+
     '<tr class="hd"><td>Activo corriente</td><td class="r">₲</td></tr>'+
-    fila('Caja y bancos (estimado)',[gsp(caja)],'i1')+
+    fila(cr===null?'Caja y bancos (estimado)':'Caja y bancos (saldo real informado)',[gsp(caja)],'i1')+
     fila('Crédito fiscal IVA (saldo a favor)',[gs(last.favor)],'i1')+
     fila('Total activo corriente',[gsp(actCorr)],'sub')+
     '<tr class="hd"><td>Activo no corriente</td><td></td></tr>'+
@@ -401,6 +404,7 @@ function repBalance(mes){
     fila('Capital / caja inicial del ejercicio',[gs(ci)],'i1')+
     fila('Resultado del ejercicio (operativo)',[gsp(resEj)],'i1')+
     fila('Retiros del propietario',[gs(-R.retiros)],'i1')+
+    (cr!==null?fila('Diferencia de caja (retiros y movimientos no registrados)',[gsp(difCaja)],'i1'):'')+
     fila('TOTAL PATRIMONIO NETO',[gsp(patr)],'sub')+
     fila('TOTAL PASIVO + PATRIMONIO',[gsp(pasivo+patr)],'grand')+
     '</tbody></table></div></div>'+
@@ -428,7 +432,8 @@ function repBalance(mes){
 
   b+='<div class="note"><b>Notas al balance</b><ul>'+
     '<li>Estado de situación <b>estimado</b> al '+fch(mes+'-'+new Date(+y,+mes.slice(5,7),0).getDate())+', elaborado con los registros del sistema (base percibido). No reemplaza al balance impositivo firmado por un contador.</li>'+
-    '<li>La caja se calcula como: caja inicial + cobros − pagos a proveedores − gastos fijos − retiros − IVA de meses anteriores (se asume pagado el mes siguiente).'+(ci?'':' <b>Caja inicial del ejercicio no cargada (₲ 0)</b>: indicala en la tarjeta del reporte para un saldo más preciso.')+'</li>'+
+    '<li>Caja estimada = caja inicial + cobros − pagos a proveedores − gastos fijos − retiros − IVA de meses anteriores (se asume pagado el mes siguiente): <b>'+gs(cajaEst)+'</b>.'+(ci?'':' Caja inicial del ejercicio no cargada (₲ 0).')+'</li>'+
+    (cr!==null?'<li>Se informó un saldo real de caja y bancos de <b>'+gs(cr)+'</b>. La diferencia con la caja estimada ('+gsp(difCaja)+') corresponde a retiros personales, pagos o cobros que no están registrados en el sistema.</li>':'<li><b>Para un balance real</b>, indicá en la tarjeta del reporte el saldo de caja y bancos al cierre: la diferencia con la caja estimada se mostrará como retiros o movimientos no registrados.</li>')+
     '<li>No se registran cuentas por pagar: se asume que las compras se pagan al contado.</li>'+
     (bienesUso?'<li>Las compras de herramientas se activan como bienes de uso al costo, sin depreciación.</li>':'')+
     '<li>Los cobros pendientes figuran en cuentas de orden porque, en base percibido, la venta se registra recién al cobrarse.</li></ul></div>'+
@@ -686,12 +691,19 @@ window.rptPopSel=function(){
   ['rp2ResMes','rp2MarMes','rp2BalMes','rp2LibMes','rp2AudMes'].forEach(function(id){ var s=document.getElementById(id); if(!s) return; var v=s.value; s.innerHTML=opts(v||null); });
   var ci=document.getElementById('rp2CajaIni'), bm=document.getElementById('rp2BalMes');
   if(ci&&bm&&bm.value){ var c=cajaInicial(bm.value.slice(0,4)); ci.value=c?c.toLocaleString('es-PY'):''; }
+  var cre=document.getElementById('rp2CajaReal'); if(cre&&bm&&bm.value){ var r=cajaReal(bm.value); cre.value=r===null?'':r.toLocaleString('es-PY'); }
   rptPerChange();
   try{ var A=auditar(null), na=A.h.filter(function(x){return x.sev==='alta';}).length, el=document.getElementById('rp2AudBadge');
     if(el){ el.textContent=na?na+' hallazgos de prioridad alta':'Sin hallazgos de prioridad alta'; el.style.background=na?'rgba(220,38,38,.15)':'rgba(22,163,74,.15)'; el.style.color=na?'#f87171':'#4ade80'; } }catch(e){ console.error(e); }
 };
 window.rptPerChange=function(){
   [['rp2ResPer','rp2ResMesW'],['rp2MarPer','rp2MarMesW'],['rp2LibPer','rp2LibMesW'],['rp2AudPer','rp2AudMesW']].forEach(function(p){ var s=document.getElementById(p[0]), w=document.getElementById(p[1]); if(s&&w) w.style.display=s.value==='todo'?'none':''; });
+};
+window.rptCajaReal=function(el){
+  var bm=document.getElementById('rp2BalMes'); if(!bm||!bm.value) return;
+  var raw=String(el.value).trim(), v=parseInt(raw.replace(/[^\d-]/g,''),10);
+  try{ if(raw===''||isNaN(v)) localStorage.removeItem('bi_caja_real_'+bm.value); else localStorage.setItem('bi_caja_real_'+bm.value, String(v)); }catch(e){}
+  el.value=(raw===''||isNaN(v))?'':v.toLocaleString('es-PY');
 };
 window.rptCajaIni=function(el){
   var bm=document.getElementById('rp2BalMes'); if(!bm||!bm.value) return;
