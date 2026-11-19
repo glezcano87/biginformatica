@@ -546,7 +546,7 @@ pre{max-width:100%;overflow-x:auto}
       </div>
       <div class="db-hero-right">
         <div class="big" id="dbUtilidad">&#8370; 0</div>
-        <div class="lbl">Resultado del mes &#183; sin IVA, despu&#233;s de tu sueldo</div>
+        <div class="lbl">Resultado del mes &#183; sin IVA, despu&#233;s de retiros</div>
         <div class="lbl" id="dbHeroDet" style="margin-top:6px;text-transform:none;letter-spacing:0;opacity:.9"></div>
       </div>
     </div>
@@ -2522,9 +2522,9 @@ function rDash(){
   gi('dbCos').textContent='₲ '+fmt(tC);
   gi('dbGF').textContent='₲ '+fmt(tGF);
   if(Rc){
-    gi('dbGFD').textContent='Operativos ₲ '+fmt(Rc.gastosOp)+' · Sueldo ₲ '+fmt(Rc.retiros);
+    gi('dbGFD').textContent='Operativos ₲ '+fmt(Rc.gastosOp)+' · Retiros (sueldo y personales) ₲ '+fmt(Rc.retiros);
     var det=gi('dbHeroDet');
-    if(det){ var antes=ut+Rc.retiros; det.textContent='Antes de tu sueldo: '+(antes<0?'−':'')+'₲ '+fmt(antes)+(ivaMes?(ivaMes.aPagar?' · IVA a pagar estimado: ₲ '+fmt(ivaMes.aPagar):' · IVA a favor: ₲ '+fmt(ivaMes.favor)):''); }
+    if(det){ var antes=ut+Rc.retiros; det.textContent='Antes de retiros del propietario: '+(antes<0?'−':'')+'₲ '+fmt(antes)+(ivaMes?(ivaMes.aPagar?' · IVA a pagar estimado: ₲ '+fmt(ivaMes.aPagar):' · IVA a favor: ₲ '+fmt(ivaMes.favor)):''); }
   }
   gi('dbMrg').textContent=mrg.toFixed(1)+'%';
 
@@ -2532,7 +2532,7 @@ function rDash(){
   function delta(cur,prev,el){
     if(!prev){el.textContent='Sin mes anterior';el.className='delta delta-nu';return}
     var d=cur-prev,pct=(d/prev*100);
-    el.textContent=(d>=0?'+':'')+'₲ '+fmt(d)+' ('+pct.toFixed(1)+'% vs mes ant.)';
+    el.textContent=(d>=0?'+':'− ')+'₲ '+fmt(d)+' ('+(pct>=0?'+':'')+pct.toFixed(1)+'% vs mes ant.)';
     el.className='delta '+(d>=0?'delta-up':'delta-dn');
   }
   delta(tI,tIPrev,gi('dbIngD'));
